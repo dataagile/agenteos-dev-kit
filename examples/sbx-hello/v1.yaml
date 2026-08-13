@@ -1,0 +1,16 @@
+# Agente mínimo que passou pelo ciclo completo (write→validate→publish)
+# contra o sandbox da TBC em 13/08/2026. Use como ponto de partida.
+id: sbx-hello
+slug: sbx-hello
+name: Hello Sandbox
+version: 0.1.0
+description: Agente minimo de exemplo do fluxo de autoria via MCP.
+category: demo
+trigger:
+  type: chat
+nodes:
+  - id: saudacao        # id e key com o MESMO valor (ver README, limitações)
+    key: saudacao
+    type: llm_step
+    prompt: "Diga ola ao usuario e explique em 1 frase o que e o AgenteOS."
+    model_ref: default
