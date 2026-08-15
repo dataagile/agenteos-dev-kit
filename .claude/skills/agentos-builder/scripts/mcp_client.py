@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Thin MCP client for agentos-builder (T017/T018, feature 024).
 
-Wraps `spec.list/read/write/validate/publish` over the AgenteOS MCP server's
-JSON-RPC endpoint (protocolo MCP nativo, servido em `{MCP_URL}/mcp` pelo nginx
-do ambiente): `POST {MCP_URL}/mcp {"jsonrpc": "2.0", "method": "tools/call",
-"params": {"name": ..., "arguments": ...}}` + `Authorization: Bearer <key>`.
-O servidor é stateless (cada POST é autônomo — validado ao vivo no sandbox-tbc,
-13/08/2026); nomes de tool usam underscore (`spec_write`), o "." é mapeado aqui.
+Wraps as 11 tools do servidor — `spec.list/read/write/validate/publish/
+node_types/context/models/connectors/tools/revise` — over the AgenteOS MCP
+server's JSON-RPC endpoint (protocolo MCP nativo, servido em `{MCP_URL}/mcp`
+pelo nginx do ambiente): `POST {MCP_URL}/mcp {"jsonrpc": "2.0", "method":
+"tools/call", "params": {"name": ..., "arguments": ...}}` + `Authorization:
+Bearer <key>`. O servidor é stateless (cada POST é autônomo — validado ao vivo
+no sandbox-tbc, 13/08/2026); nomes de tool usam underscore (`spec_write`),
+o "." é mapeado aqui.
 
 Auth: reads `MCP_URL` + `MCP_KEY` from env, validated on every call (the
 server re-validates too — this client does not cache a verdict). Missing or
@@ -16,13 +18,14 @@ content — that would mask MCP gaps and defeat the point of the 024
 core/sandbox split (see SKILL.md's Auth section).
 
 Zero hardcode: no agent/slug/ERP name here — pure protocol wrapper, stdlib
-only (no new dependency for 5 thin HTTP calls).
+only (no new dependency for thin HTTP calls).
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from typing import Any
@@ -40,13 +43,30 @@ class McpClientError(Exception):
         self.details = details or {}
 
 
+# Códigos do catálogo (`interfaces/mcp-tools.md`) — o parse de erro-texto só promove
+# prefixos DESTA lista a `.code`; qualquer outro prefixo minúsculo (ex.: "yaml: ...")
+# fica intacto na mensagem, como a docstring de McpClientError promete.
+_KNOWN_CODES = ("unauthorized", "not_found", "immutable_published", "validation_failed", "parse_error")
+_CODE_RE = re.compile(rf"^({'|'.join(_KNOWN_CODES)}):\s*(.*)$", re.S)
+
+
+def _parse_tool_error(text: str) -> McpClientError:
+    """Erro de tool vindo como TEXTO pelo /mcp ("codigo: mensagem" — visto ao vivo:
+    "not_found: Nenhuma versão publicada..."); sem este parse o `.code` prometido
+    nas docstrings vinha sempre None."""
+    m = _CODE_RE.match(text)
+    if m:
+        return McpClientError(m.group(2), code=m.group(1))
+    return McpClientError(text)
+
+
 def _env(name: str) -> str:
     value = os.environ.get(name, "").strip()
     if not value:
         raise McpClientError(
             f"{name} não configurado. agentos-builder não lê/escreve "
             "a raiz deste repositório diretamente — configure MCP_URL (endpoint do MCP) "
-            "e MCP_KEY (chave emitida via mcp_server.auth.issue_key para o seu tenant) "
+            "e MCP_KEY (chave emitida pelo admin do ambiente: python -m mcp_server.admin issue-key) "
             "antes de usar este skill. Sem fallback ao filesystem local."
         )
     return value
@@ -91,7 +111,7 @@ def _call(tool: str, params: dict[str, Any]) -> dict[str, Any]:
         try:
             parsed = json.loads(text)
         except (ValueError, TypeError):
-            raise McpClientError(text)
+            raise _parse_tool_error(text)
         raise McpClientError(parsed.get("message", text), code=parsed.get("code"), details=parsed.get("details") or {})
     if result.get("structuredContent") is not None:
         return result["structuredContent"]  # type: ignore[no-any-return]
@@ -109,10 +129,17 @@ def read_spec(slug: str, version: str) -> dict[str, Any]:
     return _call("spec.read", {"slug": slug, "version": version})
 
 
-def write_draft(slug: str, version: str, content: str) -> dict[str, Any]:
+def write_draft(slug: str, version: str, content: str, templates: dict[str, str] | None = None) -> dict[str, Any]:
     """Cria/edita um draft. Levanta `McpClientError(code="immutable_published")`
-    se a versão já está publicada, ou `code="parse_error"` se o YAML é inválido."""
-    return _call("spec.write", {"slug": slug, "version": version, "content": content})
+    se a versão já está publicada, ou `code="parse_error"` se o YAML é inválido.
+
+    `templates` (DAI-595): os `.j2` do agente viajam JUNTO da spec, como
+    `{nome_do_arquivo: conteúdo em texto}` — ex.: `{"entrega.md.j2": "..."}`.
+    Sem isso, agente cuja entrega sai por template não tem como ser autorado."""
+    params: dict[str, Any] = {"slug": slug, "version": version, "content": content}
+    if templates is not None:
+        params["templates"] = templates
+    return _call("spec.write", params)
 
 
 def validate(content: str) -> dict[str, Any]:
@@ -144,6 +171,33 @@ def models() -> dict[str, Any]:
     """Model aliases of the authenticated tenant, for `model_ref` / `intent_model_ref`
     (063/#484 G-04). `available` says which are usable now."""
     return _call("spec.models", {})
+
+
+def connectors() -> list[dict[str, Any]]:
+    """Connectors (conexões a ERP) do tenant — a fonte para `connector_id` num nó.
+    Discovery, não memória: nunca preencha connector_id de cabeça. Escopo: spec.read."""
+    return _call("spec.connectors", {})["connectors"]  # type: ignore[no-any-return]
+
+
+def tools() -> list[dict[str, Any]]:
+    """Tools de MCP-servers do tenant — a fonte para `tool_name` num nó `tool`.
+    Escopo: spec.read."""
+    return _call("spec.tools", {})["tools"]  # type: ignore[no-any-return]
+
+
+def revise(slug: str) -> dict[str, str]:
+    """Abre a PRÓXIMA versão em draft a partir da última published (DAI-591).
+    Published é imutável — revisar = novo draft semeado dela, depois o ciclo
+    normal write→validate→publish.
+
+    Retorna `{"slug", "version", "state": "draft", "seeded_from"}` — `version`
+    é a nova (use-a no `write_draft`/`publish` seguintes) e `seeded_from` a
+    published que serviu de semente. Idempotente: se o draft da próxima versão
+    já existe, devolve-o sem re-semear (não sobrescreve edições em andamento).
+
+    Escopo: spec.write (cavalga — ver README). `code="not_found"` se o slug
+    não tem published."""
+    return _call("spec.revise", {"slug": slug})
 
 
 def publish(slug: str, version: str) -> dict[str, Any]:

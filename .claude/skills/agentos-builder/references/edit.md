@@ -32,8 +32,8 @@ If the requested edit is (or amounts to) changing `slug`, refuse immediately per
 If the target is under `published/`, classify the edit before writing:
 
 - **Non-behavioral metadata only** (typo in `description`, a comment, a cosmetic `metadata.tags` tweak) — conceptually an in-place edit of the existing `vN.yaml` is fine, **but the MCP's `spec.write` tool only ever writes to `drafts/` (`specs_service.write_draft` — there is no server-side path that targets `published/`)**. There is currently **no MCP-mediated way to edit an already-published spec in place**, even for a trivial typo. This is a real MCP-server gap (`dogfood.md`), not a skill limitation to work around — do not fall back to Write/Edit on the published YAML directly to fulfill this request; tell the user the operation isn't available via MCP yet and point them at `/w1` for a manual, coordinated fix in the meantime.
-- **Anything behavioral** (node graph, `config_schema` shape/defaults/required-ness, `trigger`, `io`) — never an in-place edit regardless of MCP support: publish a new draft version and go through Publish (`vN+1.yaml`) instead, with a `change_class` review. Published specs are already seeded into the catalog/DB, so a silent behavioral change to the same version file diverges the YAML from what's running. Ask the user to confirm the version bump and `change_class` (patch/minor/major) before proceeding.
-- If the resulting `change_class` is `major`, surface the R8 guard reminder: the seed's duplicate/major-version guard applies to active contracts without `version_pinned` — flag this so the user isn't surprised later at `make seed-catalog-dry-run` time.
+- **Anything behavioral** (node graph, `config_schema` shape/defaults/required-ness, `trigger`, `io`) — never an in-place edit regardless of MCP support: abra a próxima versão com `mcp_client.revise(slug)` (semeia o draft `vN+1` a partir da última published, idempotente, e devolve a `version` a usar), edite ESSE draft e siga o Publish flow, with a `change_class` review. Published specs are already seeded into the catalog/DB, so a silent behavioral change to the same version file diverges the YAML from what's running. Ask the user to confirm the version bump and `change_class` (patch/minor/major) before proceeding.
+- If the resulting `change_class` is `major`, surface the R8 guard reminder (`lifecycle.md` §5): major com contratos ativos sem `version_pinned` pode ser rejeitado ou quebrar tenants na plataforma.
 
 ## 6. Diff before write
 
@@ -41,13 +41,12 @@ Assemble the proposed new YAML content in memory/scratch (never written into `dr
 
 ## 7. Write sequence
 
-This sequence only applies to a **draft** target, or a **published** target going through a new version (§5's behavioral path — which lands as a new *draft* version first, then Publish). An in-place edit of an already-published `vN.yaml` has no MCP path at all right now (§5) — stop there, don't reach this sequence.
+This sequence only applies to a **draft** target, or a **published** target going through a new version (§5's behavioral path — o draft `vN+1` vem do `mcp_client.revise(slug)`, nunca montado à mão; use a `version` que ele retornou nos passos abaixo). An in-place edit of an already-published `vN.yaml` has no MCP path at all right now (§5) — stop there, don't reach this sequence.
 
 1. On confirmation, validate: `mcp_client.validate(new_content)`.
 2. **Pydantic errors** (blocking) → show them, fix with the user, do not write. Loop back to step 3/6.
 3. **Pydantic clean** → `mcp_client.write_draft(slug, version, new_content)`. `McpClientError(code="immutable_published")` here means the (slug, version) is already published — confirms this should have gone through a version bump instead.
 4. Report `validate`'s errors (JSON-Schema structural), if any — non-blocking but real, call them out. No `known_drift` bucket (see `lifecycle.md` §7) — every non-blocking error is reported flat.
-5. Suggest `make seed-catalog-dry-run`.
 
 ## Boundary reminder
 

@@ -64,7 +64,6 @@ For each node:
 3. **Pydantic errors present** (blocking) → show them, fix the offending answers with the user, do not proceed to write. Loop back to the relevant interview step, update the draft content, re-validate.
 4. **Pydantic clean** → `mcp_client.write_draft(slug, "0.1", content)`. This both re-validates server-side and performs the write; `McpClientError(code="parse_error")` means the YAML itself is malformed (show the message) and `code="immutable_published"` should never happen here (0.1 is a fresh slug) — if it does, stop and say the slug collided with something already published.
 5. Report the `validate` result's `errors` (JSON-Schema structural — trigger shape, node `oneOf`, condition grammar), if any — non-blocking but real; suggest fixes. There is no `known_drift` bucket in the MCP validator (see `lifecycle.md` §7) — every non-blocking error is reported flat, not sub-classified as "expected drift" vs "novel."
-6. Suggest `make seed-catalog-dry-run` to validate against the catalog seed locally.
 
 ## Boundary reminders during the interview
 
