@@ -13,7 +13,7 @@ Do not assume `published/<slug>/v<major>.yaml` from memory — call `mcp_client.
 2. **Target version.** Read the draft's own `version` field (e.g. `"0.5.0"`) and propose the publish target: `<major>` of that semver, e.g. `0.5.0` → `v0.yaml` is almost never right for a *first* publish — the normal first-publish case is `version: "1.0.0"` written into the YAML and `published/<slug>/v1.yaml` as the destination. If the draft's version is still pre-1.0 (`0.x.y`), ask explicitly whether this publish should bump it to `1.0.0` (the typical "first public release" move) or publish as-is at its current major — don't silently rewrite semver the user didn't ask for.
 3. **`change_class` coherence.** Compare the draft's `change_class` field against what's being asked of the version bump:
    - `0.x → 1.0.0` (first publish of a previously-unpublished slug) is the **normal case** — no special warning needed even if `change_class` says `major`, because there are no existing contracts on an unpublished slug.
-   - If the target slug **already has a published version** and this publish's `change_class` is `major`, surface the R8 warning verbatim (see below) before proceeding — this is the one case that mirrors a real seed-time rejection.
+   - If the target slug **already has a published version** and this publish's `change_class` is `major`, surface the R8 warning verbatim (see below) before proceeding — this is the one case the platform can reject.
 
 ### R8 warning (verbatim — use exactly this wording when the condition applies)
 
@@ -42,10 +42,7 @@ Condition to show this: `change_class == "major"` **and** the target slug alread
 
 6. **Ask whether to delete the original (pre-bump) draft.** This refers to the draft at its *original* slug/version (e.g. `v0.5`), not the new bumped-version draft step 5.1 just created (which mirrors what's now published — no reason to delete it right after creating it). Default answer: **keep it.** Deleting a draft is Remove's job (`remove.md`, local filesystem + git-clean gate — there is no MCP delete tool). Only delete on the user's explicit request, and only after confirming the publish write actually succeeded.
 
-7. **Não há passo de seed.** `spec.publish` já entra no catálogo do ambiente na hora — o relatório de sucesso do servidor é a confirmação. (Os alvos `make seed-catalog*` são do monorepo da plataforma e não existem neste repositório.)
-
 ## What Publish never does
 
-- Não existe seed manual a rodar — a entrada no catálogo é efeito do próprio `spec.publish`.
 - Never renames a slug (a slug rename is a coordinated YAML+DB-migration change — out of scope, redirect to `/w1`, per SKILL.md's boundary).
 - Never overwrites an existing `published/<slug>/v<major>.yaml` silently — a version collision at that exact path is exactly what step 2's collision check exists to catch before the write is attempted (and `spec.publish` itself is idempotent no-op on an already-published version, per `interfaces/mcp-tools.md` — it never silently clobbers different content under the same path).

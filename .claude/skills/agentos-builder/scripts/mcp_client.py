@@ -66,7 +66,7 @@ def _env(name: str) -> str:
         raise McpClientError(
             f"{name} não configurado. agentos-builder não lê/escreve "
             "a raiz deste repositório diretamente — configure MCP_URL (endpoint do MCP) "
-            "e MCP_KEY (chave emitida via mcp_server.auth.issue_key para o seu tenant) "
+            "e MCP_KEY (chave emitida pelo admin do ambiente: python -m mcp_server.admin issue-key) "
             "antes de usar este skill. Sem fallback ao filesystem local."
         )
     return value
@@ -195,10 +195,8 @@ def revise(slug: str) -> dict[str, str]:
     published que serviu de semente. Idempotente: se o draft da próxima versão
     já existe, devolve-o sem re-semear (não sobrescreve edições em andamento).
 
-    Escopo: spec.write (cavalga; a chave de autoria do README já autoriza —
-    comprovado ao vivo no sandbox-tbc em 14/08: chamada com a chave de 6 scopes
-    autorizou e chegou ao handler). `code="not_found"` se o slug não tem
-    published."""
+    Escopo: spec.write (cavalga — ver README). `code="not_found"` se o slug
+    não tem published."""
     return _call("spec.revise", {"slug": slug})
 
 

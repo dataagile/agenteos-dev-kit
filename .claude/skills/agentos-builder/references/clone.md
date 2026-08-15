@@ -39,4 +39,3 @@ If either signal is present:
 3. **Pydantic errors** (blocking) → show them, fix, do not write. (Should be rare since content is carried over from an already-valid source, but the identity fields are new and can still collide or mistype.)
 4. **Pydantic clean** → `mcp_client.write_draft(new_slug, "0.1", content)`.
 5. Report `validate`'s errors (JSON-Schema structural), if any — non-blocking. No `known_drift` bucket (see `lifecycle.md` §7) — every non-blocking error is reported flat.
-6. Nada de seed manual — quando o clone for publicado, o `spec_publish` entra no catálogo do ambiente sozinho.

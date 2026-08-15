@@ -33,7 +33,7 @@ If the target is under `published/`, classify the edit before writing:
 
 - **Non-behavioral metadata only** (typo in `description`, a comment, a cosmetic `metadata.tags` tweak) — conceptually an in-place edit of the existing `vN.yaml` is fine, **but the MCP's `spec.write` tool only ever writes to `drafts/` (`specs_service.write_draft` — there is no server-side path that targets `published/`)**. There is currently **no MCP-mediated way to edit an already-published spec in place**, even for a trivial typo. This is a real MCP-server gap (`dogfood.md`), not a skill limitation to work around — do not fall back to Write/Edit on the published YAML directly to fulfill this request; tell the user the operation isn't available via MCP yet and point them at `/w1` for a manual, coordinated fix in the meantime.
 - **Anything behavioral** (node graph, `config_schema` shape/defaults/required-ness, `trigger`, `io`) — never an in-place edit regardless of MCP support: abra a próxima versão com `mcp_client.revise(slug)` (semeia o draft `vN+1` a partir da última published, idempotente, e devolve a `version` a usar), edite ESSE draft e siga o Publish flow, with a `change_class` review. Published specs are already seeded into the catalog/DB, so a silent behavioral change to the same version file diverges the YAML from what's running. Ask the user to confirm the version bump and `change_class` (patch/minor/major) before proceeding.
-- If the resulting `change_class` is `major`, surface the R8 guard reminder: the seed's duplicate/major-version guard applies to active contracts without `version_pinned` — flag this so the user isn't surprised later no seed do catálogo da plataforma.
+- If the resulting `change_class` is `major`, surface the R8 guard reminder (`lifecycle.md` §5): major com contratos ativos sem `version_pinned` pode ser rejeitado ou quebrar tenants na plataforma.
 
 ## 6. Diff before write
 
@@ -47,7 +47,6 @@ This sequence only applies to a **draft** target, or a **published** target goin
 2. **Pydantic errors** (blocking) → show them, fix with the user, do not write. Loop back to step 3/6.
 3. **Pydantic clean** → `mcp_client.write_draft(slug, version, new_content)`. `McpClientError(code="immutable_published")` here means the (slug, version) is already published — confirms this should have gone through a version bump instead.
 4. Report `validate`'s errors (JSON-Schema structural), if any — non-blocking but real, call them out. No `known_drift` bucket (see `lifecycle.md` §7) — every non-blocking error is reported flat.
-5. Nada de seed manual — publicou, entrou no catálogo (o `spec_publish` semeia sozinho).
 
 ## Boundary reminder
 

@@ -27,7 +27,6 @@ Every operation calls `scripts/mcp_client.py`, which reads `MCP_URL` and `MCP_KE
 
 Explicit non-goals — always refuse and redirect to `/w1`:
 - Creating or editing a node executor (`executors.py` / `interpreter.py`) or any agent-runtime code.
-- Sugerir ou rodar qualquer alvo `make seed-catalog*` — são do monorepo da plataforma e não existem neste repositório; o `spec_publish` já semeia o catálogo sozinho (regra 4).
 - Renaming a published slug. Lesson from feature 007 (PR #149): a slug rename requires a YAML change **and** a DB migration together, done as one coordinated delivery — this skill cannot do half of that safely. Refuse and point to `/w1`.
 - Editing anything under `spec/`, `.reversa/`, `_reversa_sdd/`, or `_reversa_forward/` — spec material is append-only and out of this skill's remit entirely.
 
@@ -38,7 +37,7 @@ Explicit non-goals — always refuse and redirect to `/w1`:
    - **Blocking**: pydantic errors (`ok: false`) → show them, do not write.
    - **Non-blocking**: JSON-Schema structural errors (`ok: true`, `errors` non-empty) → call them out, but proceed if the user confirms.
 3. **Discovery, not memory.** Never hardcode or recall from a previous run which node types, agents, connectors, tools de MCP-server, aliases de modelo or schema fields exist. Always call fresh, every time: `mcp_client.node_types()` (catálogo de tipos de nó, com `runtime_ready`, + shape de `trigger`/`spec_level`), `mcp_client.context()` (o que resolve em `{{ }}` por escopo — ler ANTES de escrever qualquer `.j2`), `mcp_client.connectors()` (fonte do `connector_id`), `mcp_client.tools()` (fonte do `tool_name`) e `mcp_client.models()` (fonte do `model_ref`/`intent_model_ref`).
-4. **Publicou, entrou no catálogo.** `spec_publish` semeia o catálogo do ambiente na hora e o servidor é o gate final de validação — não existe passo manual de seed neste repositório (os alvos `make seed-catalog*` são do monorepo da plataforma e NÃO existem aqui; não os sugira).
+4. **Publicou, entrou no catálogo.** `spec_publish` semeia o catálogo do ambiente na hora e o servidor é o gate final de validação — não existe (nem sugira) passo manual de seed.
 
 **Shared rules detail.** The rules above are the summary. Lifecycle state, versioning/`change_class` semantics, the R8 guard, the git-backup doctrine, the slug-rename ban (including the disguised Clone+Remove composition), and the canonical DAI-526 drift explanation are all documented once, in full, in `references/lifecycle.md` — every operation file below points there instead of restating them.
 
