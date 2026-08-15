@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Thin MCP client for agentos-builder (T017/T018, feature 024).
 
-Wraps `spec.list/read/write/validate/publish` over the AgenteOS MCP server's
-JSON-RPC endpoint (protocolo MCP nativo, servido em `{MCP_URL}/mcp` pelo nginx
-do ambiente): `POST {MCP_URL}/mcp {"jsonrpc": "2.0", "method": "tools/call",
-"params": {"name": ..., "arguments": ...}}` + `Authorization: Bearer <key>`.
-O servidor é stateless (cada POST é autônomo — validado ao vivo no sandbox-tbc,
-13/08/2026); nomes de tool usam underscore (`spec_write`), o "." é mapeado aqui.
+Wraps as 11 tools do servidor — `spec.list/read/write/validate/publish/
+node_types/context/models/connectors/tools/revise` — over the AgenteOS MCP
+server's JSON-RPC endpoint (protocolo MCP nativo, servido em `{MCP_URL}/mcp`
+pelo nginx do ambiente): `POST {MCP_URL}/mcp {"jsonrpc": "2.0", "method":
+"tools/call", "params": {"name": ..., "arguments": ...}}` + `Authorization:
+Bearer <key>`. O servidor é stateless (cada POST é autônomo — validado ao vivo
+no sandbox-tbc, 13/08/2026); nomes de tool usam underscore (`spec_write`),
+o "." é mapeado aqui.
 
 Auth: reads `MCP_URL` + `MCP_KEY` from env, validated on every call (the
 server re-validates too — this client does not cache a verdict). Missing or
@@ -16,13 +18,14 @@ content — that would mask MCP gaps and defeat the point of the 024
 core/sandbox split (see SKILL.md's Auth section).
 
 Zero hardcode: no agent/slug/ERP name here — pure protocol wrapper, stdlib
-only (no new dependency for 5 thin HTTP calls).
+only (no new dependency for thin HTTP calls).
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from typing import Any
@@ -91,6 +94,12 @@ def _call(tool: str, params: dict[str, Any]) -> dict[str, Any]:
         try:
             parsed = json.loads(text)
         except (ValueError, TypeError):
+            # Pelo /mcp o erro de tool chega como TEXTO "codigo: mensagem" (visto ao
+            # vivo: "not_found: Nenhuma versão publicada..."); sem este parse o
+            # `.code` prometido nas docstrings vinha sempre None.
+            m = re.match(r"^([a-z_]+):\s*(.*)$", text, re.S)
+            if m:
+                raise McpClientError(m.group(2), code=m.group(1))
             raise McpClientError(text)
         raise McpClientError(parsed.get("message", text), code=parsed.get("code"), details=parsed.get("details") or {})
     if result.get("structuredContent") is not None:
@@ -165,11 +174,20 @@ def tools() -> list[dict[str, Any]]:
     return _call("spec.tools", {})["tools"]  # type: ignore[no-any-return]
 
 
-def revise(slug: str) -> dict[str, Any]:
+def revise(slug: str) -> dict[str, str]:
     """Abre a PRÓXIMA versão em draft a partir da última published (DAI-591).
     Published é imutável — revisar = novo draft semeado dela, depois o ciclo
-    normal write→validate→publish. Escopo: spec.write (cavalga; a chave de
-    autoria do README já autoriza). `code="not_found"` se o slug não tem published."""
+    normal write→validate→publish.
+
+    Retorna `{"slug", "version", "state": "draft", "seeded_from"}` — `version`
+    é a nova (use-a no `write_draft`/`publish` seguintes) e `seeded_from` a
+    published que serviu de semente. Idempotente: se o draft da próxima versão
+    já existe, devolve-o sem re-semear (não sobrescreve edições em andamento).
+
+    Escopo: spec.write (cavalga; a chave de autoria do README já autoriza —
+    comprovado ao vivo no sandbox-tbc em 14/08: chamada com a chave de 6 scopes
+    autorizou e chegou ao handler). `code="not_found"` se o slug não tem
+    published."""
     return _call("spec.revise", {"slug": slug})
 
 

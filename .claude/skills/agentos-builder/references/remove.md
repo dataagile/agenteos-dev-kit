@@ -45,4 +45,4 @@ Before deleting, check whether the Remove target is the **source** of a same-ses
 2. If its parent directory (`drafts/<slug>/`) is now empty, remove the empty directory too — don't leave a dangling empty slug folder.
 3. Confirm what was deleted (path) and remind the user this was a filesystem delete, not a git operation — if the file was tracked and committed, `git log` still has it; if it was untracked, it's gone.
 
-No `make seed-catalog-dry-run` suggestion here — Remove has nothing to seed; that suggestion is for writes, not deletions.
+Remove não toca o catálogo — só o draft local; nada a semear.

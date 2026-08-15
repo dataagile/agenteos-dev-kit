@@ -5,7 +5,7 @@ The transversal rules every operation file cross-references instead of restating
 ## 1. Draft → Published lifecycle
 
 - **`drafts/<slug>/vN.yaml`** is the free-editing state. A draft has no catalog/DB entanglement — Edit is unrestricted in-place, Remove is allowed (with the git-clean gate, see §4), Clone reads from it freely.
-- **`published/<slug>/v<major>.yaml`** is the seeded-into-the-catalog state (via the separate, user-run `make seed-catalog` — this skill never runs that). Once published, a spec is no longer "just a file" — a DB row and possibly live contracts depend on it existing at that exact path with that exact content shape. This is why published editing rules are stricter (§2) and Remove refuses outright (see `remove.md`).
+- **`published/<slug>/v<major>.yaml`** is the seeded-into-the-catalog state (o `spec_publish` semeia o catálogo do ambiente na hora — não há seed manual neste repositório). Once published, a spec is no longer "just a file" — a DB row and possibly live contracts depend on it existing at that exact path with that exact content shape. This is why published editing rules are stricter (§2) and Remove refuses outright (see `remove.md`).
 - **Publish** (`publish.md`) is the one-way, explicit gate from draft to published. There is no corresponding "unpublish" operation in this skill — taking a published spec out of the catalog is a contract-drain operation through `/w1`, not a file operation.
 
 ## 2. Editing rules by state

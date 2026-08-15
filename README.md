@@ -22,6 +22,11 @@ A chave de autoria precisa exatamente destes scopes — menos que isso dá 401
 spec.list spec.read spec.node_types spec.validate spec.write spec.publish
 ```
 
+As demais tools não têm escopo próprio — cavalgam nestes: `spec_context`,
+`spec_models`, `spec_connectors` e `spec_tools` em `spec.read`; `spec_revise`
+em `spec.write` (comprovado ao vivo no sandbox-tbc, 14/08/2026). A lista acima
+já autoriza a superfície inteira.
+
 ## Conectando o Claude Code
 
 O endpoint é o **`/mcp`** do ambiente (JSON-RPC sobre TLS):
