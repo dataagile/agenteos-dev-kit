@@ -6,7 +6,8 @@ Repositório de **autoria de agentes** via MCP. Só specs de trabalho do dev
 ## Não-negociável
 
 - **Toda operação de spec passa pelo MCP** (`/agentos-builder`): list, read,
-  write, validate, publish. Sem fallback a filesystem quando o MCP falhar —
+  write, validate, publish, revise e a discovery (node_types, context,
+  connectors, tools, models). Sem fallback a filesystem quando o MCP falhar —
   reporte o erro.
 - **Zero import/código do core da plataforma.** Falta algo para autorar =
   gap do MCP Server — reportar ao time da plataforma, não contornar.

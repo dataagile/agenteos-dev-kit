@@ -23,7 +23,7 @@ Every operation calls `scripts/mcp_client.py`, which reads `MCP_URL` and `MCP_KE
 
 **Standard refusal** (use verbatim, adapt only the noun for what was asked):
 
-> That's outside what agentos-builder does — I only read and write AgentSpec YAML under `drafts/` e `published/` deste repo. For [creating a node executor / running the catalog seed / renaming a published slug / anything touching runtime, DB, or spec material], use the W1 flow (`/w1`) instead.
+> That's outside what agentos-builder does — I only read and write AgentSpec YAML under `drafts/` e `published/` deste repo. For [creating a node executor / renaming a published slug / anything touching runtime, DB, or spec material], use the W1 flow (`/w1`) instead.
 
 Explicit non-goals — always refuse and redirect to `/w1`:
 - Creating or editing a node executor (`executors.py` / `interpreter.py`) or any agent-runtime code.

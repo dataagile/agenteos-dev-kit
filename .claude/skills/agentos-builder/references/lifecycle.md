@@ -37,9 +37,9 @@ Git is the **only** backup mechanism this skill uses. There is no parallel `back
 
 ## 5. R8 guard
 
-Mirrors the real catalog seed's own guard (`scripts/seed-catalog.py`'s `_check_major_active_contracts`): at seed time, a `major` version bump on a slug that already has active contracts without `version_pinned` set is rejected, unless `--allow-major` is passed to the real seed.
+Guarda R8 do catálogo da plataforma: uma versão `major` num slug que já tem contratos ativos sem `version_pinned` pode ser rejeitada ou quebrar tenants no update.
 
-This skill has **no database access** and cannot check for active contracts itself — so wherever this guard applies (Edit or Publish producing `change_class: major` on an already-published slug), it is a **warning only**, not an enforced block. Surface it so the user can check with whoever owns the contracts data before running the real seed, rather than being surprised by a rejection later. See `publish.md`'s R8 warning for the exact wording used.
+This skill has **no database access** and cannot check for active contracts itself — so wherever this guard applies (Edit or Publish producing `change_class: major` on an already-published slug), it is a **warning only**, not an enforced block. Surface it so the user can check with the admin do ambiente (quem enxerga os contratos) before publishing, rather than being surprised later. See `publish.md`'s R8 warning for the exact wording used.
 
 ## 6. Slug rename — banned everywhere, including disguised as Clone+Remove
 

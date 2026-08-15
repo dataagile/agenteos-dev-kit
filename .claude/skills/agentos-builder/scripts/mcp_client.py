@@ -43,6 +43,23 @@ class McpClientError(Exception):
         self.details = details or {}
 
 
+# Códigos do catálogo (`interfaces/mcp-tools.md`) — o parse de erro-texto só promove
+# prefixos DESTA lista a `.code`; qualquer outro prefixo minúsculo (ex.: "yaml: ...")
+# fica intacto na mensagem, como a docstring de McpClientError promete.
+_KNOWN_CODES = ("unauthorized", "not_found", "immutable_published", "validation_failed", "parse_error")
+_CODE_RE = re.compile(rf"^({'|'.join(_KNOWN_CODES)}):\s*(.*)$", re.S)
+
+
+def _parse_tool_error(text: str) -> McpClientError:
+    """Erro de tool vindo como TEXTO pelo /mcp ("codigo: mensagem" — visto ao vivo:
+    "not_found: Nenhuma versão publicada..."); sem este parse o `.code` prometido
+    nas docstrings vinha sempre None."""
+    m = _CODE_RE.match(text)
+    if m:
+        return McpClientError(m.group(2), code=m.group(1))
+    return McpClientError(text)
+
+
 def _env(name: str) -> str:
     value = os.environ.get(name, "").strip()
     if not value:
@@ -94,13 +111,7 @@ def _call(tool: str, params: dict[str, Any]) -> dict[str, Any]:
         try:
             parsed = json.loads(text)
         except (ValueError, TypeError):
-            # Pelo /mcp o erro de tool chega como TEXTO "codigo: mensagem" (visto ao
-            # vivo: "not_found: Nenhuma versão publicada..."); sem este parse o
-            # `.code` prometido nas docstrings vinha sempre None.
-            m = re.match(r"^([a-z_]+):\s*(.*)$", text, re.S)
-            if m:
-                raise McpClientError(m.group(2), code=m.group(1))
-            raise McpClientError(text)
+            raise _parse_tool_error(text)
         raise McpClientError(parsed.get("message", text), code=parsed.get("code"), details=parsed.get("details") or {})
     if result.get("structuredContent") is not None:
         return result["structuredContent"]  # type: ignore[no-any-return]

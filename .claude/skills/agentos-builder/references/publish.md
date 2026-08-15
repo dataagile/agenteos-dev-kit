@@ -9,6 +9,7 @@ Do not assume `published/<slug>/v<major>.yaml` from memory — call `mcp_client.
 ## Interview
 
 1. **Which draft.** Call `mcp_client.list_specs(state="draft")`, filter for the slug. If more than one version exists under that slug, ask which one — never guess.
+   - **Partindo de uma versão JÁ PUBLICADA** (não há draft ainda): `mcp_client.revise(slug)` abre o draft da próxima versão semeado da última published (idempotente) e retorna a `version`. **Essa `version` retornada é a fonte única do alvo** — ela substitui a proposta do passo 2 e é a que os passos de escrita usam; não recalcule major por conta própria, e edite o draft que o revise devolveu em vez de montar outro com `write_draft` numa versão diferente.
 2. **Target version.** Read the draft's own `version` field (e.g. `"0.5.0"`) and propose the publish target: `<major>` of that semver, e.g. `0.5.0` → `v0.yaml` is almost never right for a *first* publish — the normal first-publish case is `version: "1.0.0"` written into the YAML and `published/<slug>/v1.yaml` as the destination. If the draft's version is still pre-1.0 (`0.x.y`), ask explicitly whether this publish should bump it to `1.0.0` (the typical "first public release" move) or publish as-is at its current major — don't silently rewrite semver the user didn't ask for.
 3. **`change_class` coherence.** Compare the draft's `change_class` field against what's being asked of the version bump:
    - `0.x → 1.0.0` (first publish of a previously-unpublished slug) is the **normal case** — no special warning needed even if `change_class` says `major`, because there are no existing contracts on an unpublished slug.
@@ -16,7 +17,7 @@ Do not assume `published/<slug>/v<major>.yaml` from memory — call `mcp_client.
 
 ### R8 warning (verbatim — use exactly this wording when the condition applies)
 
-> This skill has no database access and cannot check for active contracts itself. At seed time, a `major` version is rejected if the product has active contracts without `version_pinned` set (R8, `scripts/seed-catalog.py:136-156` `_check_major_active_contracts`) — unless `--allow-major` is passed to the real seed. Confirm with whoever owns the contracts data that this is safe, or expect the seed to reject it.
+> This skill has no database access and cannot check for active contracts itself. Na plataforma, uma versão `major` de um produto que tem contratos ativos sem `version_pinned` pode ser rejeitada ou quebrar tenants no update (guarda R8 do catálogo). Confirme com o admin do ambiente que os contratos do slug estão pinados (ou que não há contratos ativos) antes de publicar um major.
 
 Condition to show this: `change_class == "major"` **and** the target slug already has at least one file under `published/<slug>/`. Do not show it for a slug's first publish.
 
@@ -26,7 +27,7 @@ Condition to show this: `change_class == "major"` **and** the target slug alread
    - **Pydantic errors present → refuse to publish.** Show the errors, stop here. A spec that fails the blocking check has no business entering the catalog.
    - **JSON-Schema structural errors present** (trigger shape, node `oneOf`, condition grammar) → pause and confirm, do not silently proceed. A spec about to become part of the live catalog deserves a human look at these even though they're non-blocking. Ask the user to confirm they still want to publish as-is, and only continue on explicit confirmation. There is no `known_drift` bucket (see `lifecycle.md` §7) — every non-blocking error is reported flat, not pre-filtered as "expected G6/DAI-526 baseline."
 
-2. **Slug+version collision check across BOTH states** — mirrors `scripts/seed-catalog.py`'s `_detect_duplicates` semantics (same `(slug, version)` tuple uniqueness): `mcp_client.list_specs()` (no state filter) already enumerates every `(slug, version, state)` in the store — confirm the `(slug, version)` pair this publish is about to write does not already exist anywhere else in the catalog. A collision here is exactly what the real seed would reject with "Slug+versão duplicado" — catch it before the write, not after.
+2. **Slug+version collision check across BOTH states** — o catálogo exige `(slug, version)` único: `mcp_client.list_specs()` (no state filter) already enumerates every `(slug, version, state)` in the store — confirm the `(slug, version)` pair this publish is about to write does not already exist anywhere else in the catalog. Catch the collision before the write, not after.
 
 3. **Node-type readiness banner.** Call `mcp_client.node_types()` fresh (never reuse an earlier run). Check every node in the draft's `nodes` list against the returned `runtime_ready` set:
    - **All nodes `runtime_ready: true`** → drop any "DRAFT — não carrega no runtime atual" banner and draft-only node callouts from the header comment (see `create.md`'s header-comment precedent) — the spec is fully runnable, the warning is stale.
@@ -35,12 +36,7 @@ Condition to show this: `change_class == "major"` **and** the target slug alread
 4. **Bump the `version` field** in the YAML content to the confirmed publish version (step 1 of the interview) — this happens in memory, not by hand-editing the draft file in place.
 
 5. **Write the bumped draft, then publish it — two MCP calls, not one.** The MCP has no single "write straight to published" tool; `spec.publish` only promotes a *draft that already exists on disk at exactly that (slug, version)* (`specs_service.publish_spec` copies `drafts/<slug>/v<major>.yaml` → `published/<slug>/v<major>.yaml` verbatim — it does not rewrite the YAML's internal `version:` field for you).
-
-   Se a base é uma versão JÁ PUBLICADA (revisão), não monte o draft à mão:
-   `mcp_client.revise(slug)` abre o draft da próxima versão já semeado da
-   última published (idempotente) e devolve a `version` a usar nos passos
-   abaixo.
-   1. `mcp_client.write_draft(slug, "<major>", bumped_content)` — lands the bumped content as a draft at the target version (e.g. `drafts/<slug>/v1.yaml`). This re-validates server-side (blocking on pydantic).
+   1. `mcp_client.write_draft(slug, "<major>", bumped_content)` — lands the bumped content as a draft at the target version (e.g. `drafts/<slug>/v1.yaml`). This re-validates server-side (blocking on pydantic). `<major>` é a versão do interview — que, no caminho de revisão, é exatamente a `version` que o `revise` retornou (passo 1): escrever nela ATUALIZA o draft semeado, nunca cria um paralelo.
    2. `mcp_client.publish(slug, "<major>")` — promotes that exact draft to `published/<slug>/v<major>.yaml`. The server re-validates once more and refuses with `McpClientError(code="validation_failed")` if it doesn't pass — treat that as a hard stop, not a warning; something changed between step 5.1 and here (shouldn't happen, but the server is the final gate).
    3. Never use the Write/Edit tool to place the published file directly — same rule as Create.
 
