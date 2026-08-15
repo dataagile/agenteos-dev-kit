@@ -109,10 +109,17 @@ def read_spec(slug: str, version: str) -> dict[str, Any]:
     return _call("spec.read", {"slug": slug, "version": version})
 
 
-def write_draft(slug: str, version: str, content: str) -> dict[str, Any]:
+def write_draft(slug: str, version: str, content: str, templates: dict[str, str] | None = None) -> dict[str, Any]:
     """Cria/edita um draft. Levanta `McpClientError(code="immutable_published")`
-    se a versão já está publicada, ou `code="parse_error"` se o YAML é inválido."""
-    return _call("spec.write", {"slug": slug, "version": version, "content": content})
+    se a versão já está publicada, ou `code="parse_error"` se o YAML é inválido.
+
+    `templates` (DAI-595): os `.j2` do agente viajam JUNTO da spec, como
+    `{nome_do_arquivo: conteúdo em texto}` — ex.: `{"entrega.md.j2": "..."}`.
+    Sem isso, agente cuja entrega sai por template não tem como ser autorado."""
+    params: dict[str, Any] = {"slug": slug, "version": version, "content": content}
+    if templates is not None:
+        params["templates"] = templates
+    return _call("spec.write", params)
 
 
 def validate(content: str) -> dict[str, Any]:
@@ -144,6 +151,26 @@ def models() -> dict[str, Any]:
     """Model aliases of the authenticated tenant, for `model_ref` / `intent_model_ref`
     (063/#484 G-04). `available` says which are usable now."""
     return _call("spec.models", {})
+
+
+def connectors() -> list[dict[str, Any]]:
+    """Connectors (conexões a ERP) do tenant — a fonte para `connector_id` num nó.
+    Discovery, não memória: nunca preencha connector_id de cabeça. Escopo: spec.read."""
+    return _call("spec.connectors", {})["connectors"]  # type: ignore[no-any-return]
+
+
+def tools() -> list[dict[str, Any]]:
+    """Tools de MCP-servers do tenant — a fonte para `tool_name` num nó `tool`.
+    Escopo: spec.read."""
+    return _call("spec.tools", {})["tools"]  # type: ignore[no-any-return]
+
+
+def revise(slug: str) -> dict[str, Any]:
+    """Abre a PRÓXIMA versão em draft a partir da última published (DAI-591).
+    Published é imutável — revisar = novo draft semeado dela, depois o ciclo
+    normal write→validate→publish. Escopo: spec.write (cavalga; a chave de
+    autoria do README já autoriza). `code="not_found"` se o slug não tem published."""
+    return _call("spec.revise", {"slug": slug})
 
 
 def publish(slug: str, version: str) -> dict[str, Any]:
