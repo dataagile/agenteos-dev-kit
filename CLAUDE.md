@@ -22,8 +22,9 @@ consequências reais. As três que mais custam tempo:
 
 1. O veredito do approval é `aprovar.decision.decision`, não `aprovar.decision`
    (o de fora é o dict do item). Comparar errado = humano aprova e nada escreve.
-2. Nó `approval` sem `config.headline_template` derruba a `/inbox` do tenant
-   INTEIRA — inclusive os itens dos outros agentes.
+2. Approval que gera item sem `action` derruba a `/inbox` do tenant INTEIRA —
+   inclusive os itens dos outros agentes. Declare `config.context_from` no nó
+   `approval`, apontando um passo que produza lista.
 3. `spec_publish` grava o arquivo ANTES de validar o catálogo: publish recusado
    ainda queima o número da versão, e não há unpublish. O `id` da spec é ESTÁVEL
    entre versões — mudá-lo é a causa mais comum da recusa.

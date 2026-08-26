@@ -78,10 +78,9 @@ Um exemplo mínimo que passou pelo ciclo inteiro está em
 ## Limitações conhecidas
 
 > 📌 **Leia [`ARMADILHAS.md`](ARMADILHAS.md) antes de publicar o primeiro agente.**
-> São armadilhas medidas ao vivo, cada uma custou tempo de alguém: o veredito do
-> approval está duas camadas abaixo do que parece, `approval` sem
-> `headline_template` derruba a fila de aprovações inteira, e um publish
-> rejeitado ainda queima o número da versão.
+> Cada uma custou tempo de alguém: o veredito do approval está duas camadas
+> abaixo do que parece, um approval que gera item sem `action` derruba a fila de
+> aprovações inteira, e um publish rejeitado ainda queima o número da versão.
 
 - **Não existe unpublish/delete** (DAI-637): o que você publicar fica no
   catálogo do ambiente. Valide bem antes do `spec_publish`; versão errada

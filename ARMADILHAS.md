@@ -1,7 +1,14 @@
 # Armadilhas conhecidas
 
-Cada item aqui **custou tempo de alguém**. Todos foram medidos ao vivo contra um
-sandbox real — não são suposições sobre como a plataforma deveria funcionar.
+Cada item aqui **custou tempo de alguém**. Nada é suposição sobre como a
+plataforma deveria funcionar: tudo foi **medido ao vivo num sandbox real ou
+verificado no código da plataforma**.
+
+Os dois têm força diferente, e o documento marca qual é qual:
+
+- **📏 medido** — aconteceu, com run/evidência.
+- **🔍 código** — lido na fonte da plataforma, mas ainda não exercitado por um
+  autor. Encontrou exceção na prática? **Corrija aqui.**
 
 Leia antes de publicar o primeiro agente. As duas primeiras seções são as que
 mais queimam tempo.
@@ -39,27 +46,53 @@ desenhado fail-*open*, teria escrito sem aprovação.
 > Desenhe sempre fail-closed: a condition libera a escrita, nunca a bloqueia.
 > Foi o que transformou este erro em "não fez nada" em vez de "fez sem aprovar".
 
-Medido em 26/08/2026 (`test-sftp` v3 → v4).
+**Nota para grafo simples:** acima, `items` e `aprovados` aparecem preenchidos —
+mas num approval **sem `context_from`** os dois vêm **vazios**, que é o caso de
+quem está começando. `status` e `decision.decision` continuam iguais; só a lista
+some. O porquê está na §2.
+
+📏 Medido em 26/08/2026 (`test-sftp` v3 → v4).
 
 ---
 
-## 2. Nó `approval` sem `headline_template` derruba a `/inbox` INTEIRA
+## 2. Approval que gera item SEM `action` derruba a `/inbox` INTEIRA
 
-Se a sua spec não declara `config.headline_template` no nó `approval`, o item
-nasce com `action` vazio — e a fila de aprovações **não renderiza**, com
-`Cannot read properties of undefined (reading 'replace')`.
+### O sintoma (📏 medido, repro determinística 3×)
+
+Um item de approval que nasce com `action` vazio faz a fila de aprovações **não
+renderizar**: `Cannot read properties of undefined (reading 'replace')`.
 
 Não é só o seu card: a página cai por inteiro, levando junto **os itens de todos
 os outros agentes do tenant**. A única saída é decidir o item por API
-(`POST /api/v1/approval-items/<id>/decide`).
+(`POST /api/v1/approval-items/<id>/decide`) — HITL sem UI.
 
-**Sempre declare `headline_template` em nó `approval`.**
+Repro: `/inbox` normal → roda agente cujo approval gera item sem `action` →
+`/inbox` quebra → decide por API → `/inbox` volta.
 
 O front foi blindado (PR #586 da plataforma: item malformado vira card feio, não
-página fora do ar), mas o item continua sem headline — quem consertar o card não
-conserta a sua spec.
+página fora do ar). Mas **o item continua sem headline** — quem conserta o card
+não conserta a sua spec.
 
-Medido em 26/08/2026, com repro determinística.
+### Como evitar (🔍 código — a cura ainda NÃO foi confirmada por um run)
+
+O `action` é montado a partir de **`config.context_from`**: o runtime só entra no
+bloco que monta o card quando `context_from` está declarado **e** aponta para um
+passo que existe em `step_results`. Sem isso, o item nasce sem `action` — foi o
+caso do `test-sftp`, um approval simples sem passo de lista a montante.
+
+O `headline_template` é **opcional dentro desse bloco** (tem default
+`"{count} {noun} — R$ {total:.2f}"`) e só é lido depois que o `context_from`
+resolveu. Ou seja: declarar `headline_template` sozinho, sem `context_from`,
+provavelmente **não** resolve.
+
+Contra-evidência que sustenta isso: **nenhuma spec publicada declara
+`headline_template`**, e mesmo assim os cards da `fin-pagamentos` têm headline —
+ela usa `context_from` + `amount_path`/`title_path`/`supplier_name_path`.
+
+**Recomendação enquanto não há confirmação:** um nó `approval` deve ter um passo
+a montante produzindo lista e apontá-lo em `context_from`. Se você provar o
+comportamento num run, **atualize esta seção** — ela é a única aqui cuja cura
+ainda não foi exercitada.
 
 ---
 
@@ -80,16 +113,20 @@ daquela versão está queimado para sempre; você segue para a próxima.
   versão para outra dá `Slug já em uso por outro AgentSpec` — e queima a versão.
   Confira com `spec_read` de um agente que já tenha várias versões publicadas.
 - Toda property do `config_schema` precisa de `title` e `description` (lint D-02).
-- Major novo (`2.0.0` → `3.0.0`) com contrato ativo é recusado sem `allow_major`.
+- **O gate de major olha o campo `change_class`, NÃO o dígito do semver.** Só
+  recusa quando `change_class: "major"` **e** existe contrato `active` com
+  `version_pinned` NULL — aí exige `allow_major`. Publicar `3.0.0` e `4.0.0` com
+  contrato ativo passa normalmente se a spec declarar `change_class: "minor"`
+  (📏 medido: as duas foram semeadas sem `allow_major`).
 
-Medido em 26/08/2026: `test-sftp` v2 ficou publicada, fora do catálogo, sem como
-limpar.
+📏 Medido em 26/08/2026: `test-sftp` v2 ficou publicada, fora do catálogo, sem
+como limpar.
 
 ---
 
 ## 4. `config.when` funciona em nó de escrita — e é avaliado DEPOIS da condition
 
-`config.when` vale para `sftp_op` (provado em 26/08: com `operacao: put`, os nós
+📏 `config.when` vale para `sftp_op` (medido em 26/08: com `operacao: put`, os nós
 `mover` e `deletar` vieram com `reason: when_false` enquanto `criar` executou).
 
 Mas atenção à ordem: se um `condition` a montante pular os nós, eles nunca
@@ -103,6 +140,12 @@ condition anterior que já desviou o fluxo — confira o `reason` de cada nó pu
 ---
 
 ## 5. Chat só dispara run se a spec declarar `chat_system_prompt`
+
+> **🔍 Seção lida no código da plataforma**, ainda não exercitada por um autor.
+> O que foi 📏 medido aqui: o concierge responde texto e manda clicar
+> "Executar", e o POST desse botão manda `input: {conversation_id}` — **sem**
+> campo de mensagem. O resto abaixo (marcador, shape do `run.input`, guard)
+> vem da fonte. Provou na prática? Corrija aqui.
 
 Se o seu agente conversa mas nunca executa — o concierge responde texto e manda
 clicar "Executar" — **não é limitação da plataforma**. A ponte chat→run existe,
@@ -146,9 +189,11 @@ ESCOLHER entre opções fixas do config — nunca para compor o path.
 `spec_connectors` devolve o `config` público de cada conexão (sem segredos).
 Olhe **antes** de escrever a spec:
 
-- **`allowed_ops`** — uma conexão `read_only` recusa escrita no executor, com
-  `error_class: cap`. Isso é comportamento correto, não bug da sua spec. E é a
-  forma independente de confirmar que a mudança feita na UI pegou de fato.
+- **`allowed_ops`** — 📏 o campo aparece no `spec_connectors` e é a forma
+  independente de confirmar que a mudança feita na UI pegou de fato (antes, só
+  dava para confiar na tela). 🔍 Uma conexão `read_only` recusa escrita **no
+  executor** com `error_class: cap` — comportamento correto, não bug da sua
+  spec.
 - **`base_dir`** — é o jail da conexão. Se for `/`, qualquer path relativo
   alcança tudo o que aquele usuário SFTP enxerga. Informação de segurança que
   muda como você desenha o path.
@@ -171,12 +216,13 @@ Olhe **antes** de escrever a spec:
 ## 8. Convenções que a validação não pega
 
 - Cada nó precisa de `id` **e** `key` com o mesmo valor.
-- `spec_write` sem o parâmetro `templates` grava `templates: []` — se a spec
+- 🔍 `spec_write` sem o parâmetro `templates` grava `templates: []` — se a spec
   referencia um `.j2`, ela quebra em execução. Mande os templates no mesmo write.
 - A chave de versão do store é o **major puro** (`"0"`, `"1"`), não `"0.1"`. O
   semver completo vive no campo `version:` de dentro do YAML.
-- `idempotency_key` de escrita é injetada pelo runtime (`<run_id>_<no>_<i>`) —
-  o autor **não** declara em `sftp_op`. (Em `http_request`, declara.)
+- 📏 `idempotency_key` de escrita é injetada pelo runtime — o autor **não**
+  declara em `sftp_op`. (Em `http_request`, declara.) Visto num run real:
+  `<run_id>_criar_0`.
 
 ---
 
