@@ -89,10 +89,31 @@ Contra-evidência que sustenta isso: **nenhuma spec publicada declara
 `headline_template`**, e mesmo assim os cards da `fin-pagamentos` têm headline —
 ela usa `context_from` + `amount_path`/`title_path`/`supplier_name_path`.
 
-**Recomendação enquanto não há confirmação:** um nó `approval` deve ter um passo
-a montante produzindo lista e apontá-lo em `context_from`. Se você provar o
-comportamento num run, **atualize esta seção** — ela é a única aqui cuja cura
-ainda não foi exercitada.
+### ⚠️ Isto NÃO é caso exótico — é o approval mínimo
+
+Um nó `approval` **sem `context_from`** produz item com `action`, `items` e
+`aprovados` **todos vazios**. E um approval sem passo anterior que produza lista
+é exatamente o que se escreve num grafo simples — o primeiro agente de quase
+todo autor.
+
+Ou seja: **todo mundo que começa cai nisto.** Não é borda, é o caminho comum.
+
+Duas consequências práticas:
+
+- Se a sua `/inbox` quebrou logo no primeiro agente com approval, o problema
+  provavelmente é este, e não algo que você escreveu errado.
+- Exigir `headline_template` não seria conserto suficiente: o caso mínimo não
+  tem `context_from`, e sem ele o `headline_template` nem chega a ser lido.
+
+**Recomendação enquanto não há confirmação:** se o card precisa mostrar conteúdo,
+o `approval` precisa de um passo a montante produzindo lista, apontado em
+`context_from`. Se o seu grafo não tem esse passo naturalmente, saiba que o item
+vai nascer vazio.
+
+O experimento que fecharia esta seção (ainda não feito): approval **com**
+`context_from` apontando um passo que produza lista **e** `headline_template`
+declarado junto — só assim dá para separar o que cada um faz. Se você rodar,
+**atualize aqui**; é a única seção deste documento cuja cura não foi exercitada.
 
 ---
 
