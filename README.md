@@ -77,9 +77,18 @@ Um exemplo mínimo que passou pelo ciclo inteiro está em
 
 ## Limitações conhecidas
 
+> 📌 **Leia [`ARMADILHAS.md`](ARMADILHAS.md) antes de publicar o primeiro agente.**
+> São armadilhas medidas ao vivo, cada uma custou tempo de alguém: o veredito do
+> approval está duas camadas abaixo do que parece, `approval` sem
+> `headline_template` derruba a fila de aprovações inteira, e um publish
+> rejeitado ainda queima o número da versão.
+
 - **Não existe unpublish/delete** (DAI-637): o que você publicar fica no
   catálogo do ambiente. Valide bem antes do `spec_publish`; versão errada
   publicada exige limpeza manual pelo admin.
+- **`spec_publish` não é atômico:** o arquivo é gravado ANTES da validação do
+  catálogo. Publish recusado ("nada foi semeado") ainda deixa a versão no disco,
+  imutável — some com o número. Detalhe e checklist em `ARMADILHAS.md` §3.
 - Cada nó da spec deve ter `id` **e** `key` com o mesmo valor (compatibilidade
   entre as duas camadas de validação em imagens antigas).
 
