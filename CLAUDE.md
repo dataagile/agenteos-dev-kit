@@ -31,9 +31,11 @@ As três que mais custam tempo:
    ainda queima o número da versão, e não há unpublish. O `id` da spec é ESTÁVEL
    entre versões — mudá-lo é a causa mais comum da recusa.
 
-E uma que não custa tempo, custa segurança: **não use `when` em nó `approval`**
-— ali o mecanismo não é fail-closed, e o pior caso é o run seguir sem o humano
-(§4).
+E uma que não custa tempo, custa segurança: **não use `when` em nó `approval`**.
+O `config.when` do approval só reconhece três formas de expressão; qualquer
+outra (`>`, `>=`, truthiness pura, um typo) avalia `False` — e ali `False`
+significa **pular a aprovação humana**, sem erro. Erro de escrita e "dispense o
+humano" são indistinguíveis. Detalhe e tabela na §4.
 
 Ao descobrir uma armadilha nova, **acrescente lá** — o kit é o que impede o
 próximo autor de repetir o mesmo tropeço.

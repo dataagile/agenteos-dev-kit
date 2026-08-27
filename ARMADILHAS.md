@@ -121,6 +121,11 @@ o `approval` precisa de um passo a montante produzindo lista, apontado em
 `context_from`. Se o seu grafo não tem esse passo naturalmente, saiba que o item
 vai nascer vazio.
 
+> 🔴 **Ao declarar `context_from`, leia a §4 antes.** O gate de alçada só roda
+> quando o `context_from` resolve — então seguir esta recomendação é o que ativa
+> o caminho onde um `config.when` mal escrito **pula a aprovação humana**. Se
+> você declarar `context_from`, não use `when` no mesmo nó.
+
 O experimento que fecharia esta seção (ainda não feito): approval **com**
 `context_from` apontando um passo que produza lista **e** `headline_template`
 declarado junto — só assim dá para separar o que cada um faz. Se você rodar,
@@ -196,30 +201,74 @@ chegam a avaliar o `when`. Um `when` que "não funcionou" quase sempre é uma
 condition anterior que já desviou o fluxo — confira o `reason` de cada nó pulado:
 `when_false` (o when barrou) é diferente de `condition_jump` (nem chegou lá).
 
-### ⚠️ Exceção do `approval` — a única do doc onde errar significa escrita sem aprovação
+### 🔴 Exceção do `approval` — a única do doc onde errar significa escrita sem aprovação
 
-🔍 **Lido no código** (`executors.py::_execute_approval`, passo 1), **não medido
-por run** — e é a claim mais séria daqui, então leia o que ela diz e o que não
-diz:
+**NÃO use `when` em nó `approval`.** Não é cautela: num dos dois caminhos, uma
+expressão fora de três formas exatas **pula o humano em silêncio**.
 
-- O `when` de um nó `approval` é tratado **fora** do caminho normal: o gate geral
-  do runtime pula `node_type == "approval"` de propósito, e o executor avalia o
-  `when` dele antes de qualquer chamada ao HITL.
-- O executor **espera um booleano já avaliado**. Se receber outra coisa, ele
-  **loga um warning e cai em truthiness** — não recusa, não levanta.
-- Consequência: um `when` que chegue como **string não-vazia** avalia como
-  **verdadeiro** e a aprovação **acontece** (não é pulada). Já um valor falsy
-  (`""`, `0`, `None` não é o caso — `None` é tratado antes) faria o nó devolver
-  `{"status": "skipped", "reason": "when_false"}` — ou seja, **pular a aprovação
-  humana sem erro nenhum**.
+Existem **dois** campos `when` diferentes num nó approval, com códigos e
+comportamentos distintos. Confunda-os e você tira a conclusão errada.
 
-**A regra prática é a mesma nos dois casos: não use `when` em nó `approval`.** O
-ganho é nenhum e a superfície de erro é a única do documento cujo pior caso é
-seguir sem o humano.
+#### `config.when` (dentro do `config`) — 🔴 o perigoso
 
-> Isto **contradiz de propósito** a regra de fail-closed da §1: aqui o mecanismo
-> não protege sozinho, e a proteção é você não usar o recurso. Se alguém provar
-> o comportamento num run, atualize esta seção para 📏.
+Avaliado pelo gate de alçada (`hatchet_app.py`, bloco `if node_type ==
+"approval"`), via `_evaluate_condition_expr`. Esse avaliador reconhece
+**exatamente três formas**:
+
+```
+len(<path>) <op> <int>
+<path> == 'string'   /  <path> != 'string'
+<path> == null       /  <path> != null
+```
+
+Qualquer outra coisa loga um warning e devolve `False` — e ali `False` significa
+**`_skip_approval = True`**. Executei o avaliador (🔍 + execução isolada):
+
+| `config.when` | avalia | efeito |
+|---|---|---|
+| `config.alcada_hitl != null` | True | pede aprovação ✅ |
+| `config.total > 1000` | False | **pula o humano** 🔴 |
+| `config.total >= 1000` | False | **pula o humano** 🔴 |
+| `config.exige_aprovacao` | False | **pula o humano** 🔴 |
+| `config.alcada_hitl != nulo` (typo) | False | **pula o humano** 🔴 |
+
+**Erro de escrita e "dispense a aprovação" são indistinguíveis.**
+
+A linha mais traiçoeira é a truthiness pura (`config.<flag>`): ela **é** válida
+no `when` de um nó normal — o gate genérico documenta `config.<key>` como
+"bare truthiness" — e **não é** reconhecida no approval. Mesma sintaxe, num nó
+pula o nó, no approval pula o humano. O autor não precisa inventar nada: basta
+repetir o que viu funcionando em outro nó.
+
+> ⚠️ **A §2 leva você para dentro desta região.** O gate de alçada só roda quando
+> o `context_from` resolve. Ou seja, quem segue o conselho da §2 (declarar
+> `context_from` para não derrubar a `/inbox`) é exatamente quem passa a ser
+> afetado por isto. E **sem `context_from` o `config.when` é ignorado por
+> inteiro** — a aprovação sempre acontece. Consequência prática: testar no
+> approval mínimo dá **falso negativo**; você conclui que o problema não existe.
+
+#### `node.when` (topo do nó) — o menos grave
+
+Avaliado em `executors.py::_execute_approval` (passo 1). O executor espera um
+**booleano já avaliado**; recebendo outra coisa, loga warning e cai em
+truthiness. Logo, uma **string não-vazia avalia verdadeiro e a aprovação
+acontece**. Só um falsy literal devolveria `{"status": "skipped", "reason":
+"when_false"}`.
+
+#### Estado hoje
+
+- 🔍 **Não há regressão viva.** As três specs publicadas que usam `when` em
+  approval (`fin-pagamentos` v3, `-pix` v1, `-cnab` v1) usam todas
+  `config.alcada_hitl != null` — forma reconhecida. É **sorte histórica**, não
+  proteção: conferir em produção e ver funcionando não desmente nada.
+- 🔍 **Não há defesa em autoria.** O lint que roda antes da promoção valida o
+  `config_schema`; não olha `when` nem `approval`. Uma spec com `when` inválido
+  **publica limpa**.
+
+> Esta seção **contradiz de propósito** a regra de fail-closed da §1: aqui o
+> mecanismo não protege sozinho, e a proteção é não usar o recurso. Achado do
+> PR monitor; tier 🔍 + execução isolada do avaliador — nenhum run foi feito.
+> Quem provar num run, atualize para 📏.
 
 ---
 
