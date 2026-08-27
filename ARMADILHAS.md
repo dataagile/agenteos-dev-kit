@@ -45,6 +45,10 @@ desenhado fail-*open*, teria escrito sem aprovação.
 
 > Desenhe sempre fail-closed: a condition libera a escrita, nunca a bloqueia.
 > Foi o que transformou este erro em "não fez nada" em vez de "fez sem aprovar".
+>
+> **Uma exceção existe e não é sua para consertar:** o `when` de um nó
+> `approval` não é fail-closed — ver §4. Por isso a regra lá é não usar `when`
+> em approval.
 
 **Por que o erro é silencioso:** numa `condition`, um caminho que **não
 resolve** é tratado como `None` (🔍 `hatchet_app.py`, docstring de
@@ -192,8 +196,30 @@ chegam a avaliar o `when`. Um `when` que "não funcionou" quase sempre é uma
 condition anterior que já desviou o fluxo — confira o `reason` de cada nó pulado:
 `when_false` (o when barrou) é diferente de `condition_jump` (nem chegou lá).
 
-**Exceção que vale conhecer:** o `when` de um nó `approval` é fail-**open** — um
-`when` ilegível PULA a aprovação em vez de barrar. Não use `when` em approval.
+### ⚠️ Exceção do `approval` — a única do doc onde errar significa escrita sem aprovação
+
+🔍 **Lido no código** (`executors.py::_execute_approval`, passo 1), **não medido
+por run** — e é a claim mais séria daqui, então leia o que ela diz e o que não
+diz:
+
+- O `when` de um nó `approval` é tratado **fora** do caminho normal: o gate geral
+  do runtime pula `node_type == "approval"` de propósito, e o executor avalia o
+  `when` dele antes de qualquer chamada ao HITL.
+- O executor **espera um booleano já avaliado**. Se receber outra coisa, ele
+  **loga um warning e cai em truthiness** — não recusa, não levanta.
+- Consequência: um `when` que chegue como **string não-vazia** avalia como
+  **verdadeiro** e a aprovação **acontece** (não é pulada). Já um valor falsy
+  (`""`, `0`, `None` não é o caso — `None` é tratado antes) faria o nó devolver
+  `{"status": "skipped", "reason": "when_false"}` — ou seja, **pular a aprovação
+  humana sem erro nenhum**.
+
+**A regra prática é a mesma nos dois casos: não use `when` em nó `approval`.** O
+ganho é nenhum e a superfície de erro é a única do documento cujo pior caso é
+seguir sem o humano.
+
+> Isto **contradiz de propósito** a regra de fail-closed da §1: aqui o mecanismo
+> não protege sozinho, e a proteção é você não usar o recurso. Se alguém provar
+> o comportamento num run, atualize esta seção para 📏.
 
 ---
 

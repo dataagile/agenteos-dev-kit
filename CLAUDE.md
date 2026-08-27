@@ -17,8 +17,9 @@ Repositório de **autoria de agentes** via MCP. Só specs de trabalho do dev
 
 ## Antes de publicar
 
-Leia [`ARMADILHAS.md`](ARMADILHAS.md) — armadilhas medidas ao vivo, com as
-consequências reais. As três que mais custam tempo:
+Leia [`ARMADILHAS.md`](ARMADILHAS.md) — armadilhas **medidas ao vivo (📏) ou
+verificadas no código da plataforma (🔍)**, cada uma marcada com a sua origem.
+As três que mais custam tempo:
 
 1. O veredito do approval é `aprovar.decision.decision`, não `aprovar.decision`
    (o de fora é o dict do item). Comparar errado = humano aprova e nada escreve.
@@ -29,6 +30,10 @@ consequências reais. As três que mais custam tempo:
 3. `spec_publish` grava o arquivo ANTES de validar o catálogo: publish recusado
    ainda queima o número da versão, e não há unpublish. O `id` da spec é ESTÁVEL
    entre versões — mudá-lo é a causa mais comum da recusa.
+
+E uma que não custa tempo, custa segurança: **não use `when` em nó `approval`**
+— ali o mecanismo não é fail-closed, e o pior caso é o run seguir sem o humano
+(§4).
 
 Ao descobrir uma armadilha nova, **acrescente lá** — o kit é o que impede o
 próximo autor de repetir o mesmo tropeço.
