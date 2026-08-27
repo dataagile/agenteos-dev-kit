@@ -47,7 +47,8 @@ desenhado fail-*open*, teria escrito sem aprovação.
 > Foi o que transformou este erro em "não fez nada" em vez de "fez sem aprovar".
 
 **Por que o erro é silencioso:** numa `condition`, um caminho que **não
-resolve** é tratado como `None` (🔍 `hatchet_app.py:1054-1057`) — não levanta,
+resolve** é tratado como `None` (🔍 `hatchet_app.py`, docstring de
+`_eval_condition`) — não levanta,
 não avisa, apenas compara falso e o fluxo segue pelo ramo negativo. Um erro de
 digitação no caminho tem exatamente a mesma aparência de "o humano rejeitou".
 Ao depurar, confira primeiro se o caminho existe no output do passo anterior.
@@ -151,10 +152,11 @@ daquela versão está queimado para sempre; você segue para a próxima.
 Junte as duas coisas acima e o resultado é perverso (🔍 código):
 
 1. `change_class: "major"` num slug com contrato ativo **não pinado** faz o
-   catálogo recusar o publish (`seed.py:100`).
+   catálogo recusar o publish (guard R8, em `agent_specs/seed.py::upsert_spec`).
 2. Essa recusa cai no **mesmo** `report.rejeitados` de qualquer outra — e o
-   arquivo **já foi gravado** antes (`spec_publish.py:79` grava, `:87` só então
-   chama o seed).
+   arquivo **já foi gravado** antes: em `mcp_server/tools/spec_publish.py`, a
+   chamada a `specs_service.publish_spec()` (promove o arquivo) vem **antes** da
+   chamada a `seed_spec()` (valida o catálogo).
 
 Ou seja: **a declaração honesta queima o número da versão permanentemente**, e
 declarar `minor` passa liso. O autor que classifica direito é punido; o que
@@ -167,6 +169,13 @@ recusado — o número já terá ido embora.
 
 Consequência para quem lê o histórico: `change_class` de spec publicada **não é
 confiável** como registro do tamanho da mudança. Olhe o diff, não o campo.
+
+> **Nota para quem for consertar isto na plataforma:** o caminho do contrato
+> hub→spoke (`platform_contract.py::_ingest_material`) já faz na ordem certa —
+> valida o schema, roda o lint D-02, chama o `seed_spec` e **só então** escreve
+> os templates em disco. É o molde; o `spec_publish` do MCP é que está invertido.
+> Verificado em 27/08/2026: `publish_spec` tem **um único** call site antes de
+> `seed_spec`, então o conserto é num lugar só.
 
 📏 Medido em 26/08/2026: `test-sftp` v2 ficou publicada, fora do catálogo, sem
 como limpar.
