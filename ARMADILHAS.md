@@ -229,16 +229,30 @@ Qualquer outra coisa loga um warning e devolve `False` — e ali `False` signifi
 | `config.alcada_hitl != null` | True | pede aprovação ✅ |
 | `config.total > 1000` | False | **pula o humano** 🔴 |
 | `config.total >= 1000` | False | **pula o humano** 🔴 |
-| `config.exige_aprovacao` | False | **pula o humano** 🔴 |
+| `config.exige_aprovacao` (truthiness pura) | False | **pula o humano** 🔴 |
+| `config.notificar_resumo_suprimido != true` | False | **pula o humano** 🔴 |
 | `config.alcada_hitl != nulo` (typo) | False | **pula o humano** 🔴 |
 
 **Erro de escrita e "dispense a aprovação" são indistinguíveis.**
 
-A linha mais traiçoeira é a truthiness pura (`config.<flag>`): ela **é** válida
-no `when` de um nó normal — o gate genérico documenta `config.<key>` como
-"bare truthiness" — e **não é** reconhecida no approval. Mesma sintaxe, num nó
-pula o nó, no approval pula o humano. O autor não precisa inventar nada: basta
-repetir o que viu funcionando em outro nó.
+#### As duas gramáticas se CRUZAM — copiar de outro nó é a armadilha
+
+Não é "o approval aceita menos". Cada gate aceita formas que o outro não aceita:
+
+| forma | nó normal | `approval` |
+|---|---|---|
+| `config.<key>` (truthiness pura) | ✅ | 🔴 pula o humano |
+| `config.<key> != true` / `== true` | ✅ | 🔴 pula o humano |
+| `config.<key> == 'string'` / `!=` | ✅ | ✅ |
+| `config.<key> == null` / `!= null` | ✅ | ✅ |
+| `len(<path>) <op> <int>` | ❌ | ✅ |
+
+As duas primeiras linhas são o risco real, porque **têm precedente vivo para
+copiar**: a truthiness pura e o `!= true` são formas documentadas do gate
+genérico, e o `!= true` aparece textualmente numa spec publicada
+(`config.notificar_resumo_suprimido != true`). O autor não precisa inventar
+nada — basta copiar de um nó que viu funcionando, e no approval aquilo vira
+"dispense o humano".
 
 > ⚠️ **A §2 leva você para dentro desta região.** O gate de alçada só roda quando
 > o `context_from` resolve. Ou seja, quem segue o conselho da §2 (declarar

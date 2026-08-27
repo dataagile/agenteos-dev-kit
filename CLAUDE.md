@@ -33,8 +33,10 @@ As três que mais custam tempo:
 
 E uma que não custa tempo, custa segurança: **não use `when` em nó `approval`**.
 O `config.when` do approval só reconhece três formas de expressão; qualquer
-outra (`>`, `>=`, truthiness pura, um typo) avalia `False` — e ali `False`
-significa **pular a aprovação humana**, sem erro. Erro de escrita e "dispense o
+outra (`>`, `>=`, truthiness pura, `!= true`, um typo) avalia `False` — e ali
+`False` significa **pular a aprovação humana**, sem erro. Pior: truthiness pura
+e `!= true` são formas VÁLIDAS no `when` de um nó normal, com precedente em
+spec publicada — copiar de outro nó é o caminho mais provável para o erro. Erro de escrita e "dispense o
 humano" são indistinguíveis. Detalhe e tabela na §4.
 
 Ao descobrir uma armadilha nova, **acrescente lá** — o kit é o que impede o
