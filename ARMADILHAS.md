@@ -46,6 +46,12 @@ desenhado fail-*open*, teria escrito sem aprovação.
 > Desenhe sempre fail-closed: a condition libera a escrita, nunca a bloqueia.
 > Foi o que transformou este erro em "não fez nada" em vez de "fez sem aprovar".
 
+**Por que o erro é silencioso:** numa `condition`, um caminho que **não
+resolve** é tratado como `None` (🔍 `hatchet_app.py:1054-1057`) — não levanta,
+não avisa, apenas compara falso e o fluxo segue pelo ramo negativo. Um erro de
+digitação no caminho tem exatamente a mesma aparência de "o humano rejeitou".
+Ao depurar, confira primeiro se o caminho existe no output do passo anterior.
+
 **Nota para grafo simples:** acima, `items` e `aprovados` aparecem preenchidos —
 mas num approval **sem `context_from`** os dois vêm **vazios**, que é o caso de
 quem está começando. `status` e `decision.decision` continuam iguais; só a lista
@@ -139,6 +145,28 @@ daquela versão está queimado para sempre; você segue para a próxima.
   `version_pinned` NULL — aí exige `allow_major`. Publicar `3.0.0` e `4.0.0` com
   contrato ativo passa normalmente se a spec declarar `change_class: "minor"`
   (📏 medido: as duas foram semeadas sem `allow_major`).
+
+### ⚠️ O incentivo está invertido: declarar `major` honestamente CUSTA uma versão
+
+Junte as duas coisas acima e o resultado é perverso (🔍 código):
+
+1. `change_class: "major"` num slug com contrato ativo **não pinado** faz o
+   catálogo recusar o publish (`seed.py:100`).
+2. Essa recusa cai no **mesmo** `report.rejeitados` de qualquer outra — e o
+   arquivo **já foi gravado** antes (`spec_publish.py:79` grava, `:87` só então
+   chama o seed).
+
+Ou seja: **a declaração honesta queima o número da versão permanentemente**, e
+declarar `minor` passa liso. O autor que classifica direito é punido; o que
+subdeclara, não.
+
+**Enquanto isso não mudar:** se a sua mudança é mesmo major e o slug tem
+contrato ativo não pinado, alinhe com o admin do ambiente **antes** de publicar
+(`allow_major`, ou pinar o contrato numa versão). Não descubra pelo publish
+recusado — o número já terá ido embora.
+
+Consequência para quem lê o histórico: `change_class` de spec publicada **não é
+confiável** como registro do tamanho da mudança. Olhe o diff, não o campo.
 
 📏 Medido em 26/08/2026: `test-sftp` v2 ficou publicada, fora do catálogo, sem
 como limpar.

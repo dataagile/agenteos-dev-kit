@@ -82,9 +82,10 @@ Um exemplo mínimo que passou pelo ciclo inteiro está em
 > abaixo do que parece, um approval que gera item sem `action` derruba a fila de
 > aprovações inteira, e um publish rejeitado ainda queima o número da versão.
 
-- **Não existe unpublish/delete** (DAI-637): o que você publicar fica no
-  catálogo do ambiente. Valide bem antes do `spec_publish`; versão errada
-  publicada exige limpeza manual pelo admin.
+- **Não existe unpublish/delete pelo MCP** (DAI-637): o que você publicar fica
+  no catálogo do ambiente. Limpar exige um admin com acesso ao volume — pelo
+  caminho de autoria, **o número da versão está queimado**. Valide bem antes do
+  `spec_publish`; não conte com desfazer.
 - **`spec_publish` não é atômico:** o arquivo é gravado ANTES da validação do
   catálogo. Publish recusado ("nada foi semeado") ainda deixa a versão no disco,
   imutável — some com o número. Detalhe e checklist em `ARMADILHAS.md` §3.

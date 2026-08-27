@@ -23,9 +23,9 @@ consequências reais. As três que mais custam tempo:
 1. O veredito do approval é `aprovar.decision.decision`, não `aprovar.decision`
    (o de fora é o dict do item). Comparar errado = humano aprova e nada escreve.
 2. Approval que gera item sem `action` derruba a `/inbox` do tenant INTEIRA —
-   inclusive os itens dos outros agentes. E o approval MÍNIMO (sem
-   `config.context_from`) é justamente o que produz item vazio: todo autor
-   começando cai nisto.
+   inclusive os itens dos outros agentes (📏 medido). O approval mínimo (sem
+   `config.context_from`) **aparentemente** é o que produz item vazio — elo lido
+   no código, ainda não provado por run: ver `ARMADILHAS.md` §2.
 3. `spec_publish` grava o arquivo ANTES de validar o catálogo: publish recusado
    ainda queima o número da versão, e não há unpublish. O `id` da spec é ESTÁVEL
    entre versões — mudá-lo é a causa mais comum da recusa.
