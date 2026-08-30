@@ -305,12 +305,16 @@ escrita, custo zero de catálogo (ver §9).
 ### 🔴 O outro jeito de pular o humano — e este não exige que você erre nada
 
 📏 Medido no mesmo ciclo (run `26b5c8b6-6477-4f9d-b599-e5b459c8aa3c`): o nó de
-listagem **falhou** (erro de infra), o `transform` a jusante devolveu `[]`, e o
-`approval` veio `skipped` com `reason: empty_context` — run **completed**.
+listagem **falhou** — no run medido, porque a config não resolveu e o
+`connection_id` chegou cru ao executor (ver §9) —, o `transform` a jusante
+devolveu `[]`, e o `approval` veio `skipped` com `reason: empty_context` — run
+**completed**.
 
 **Um passo anterior falhando esvazia o `context_from`, e a aprovação humana é
-pulada em silêncio.** O caso do `when` exige um typo do autor; este dispara
-sozinho quando o ERP ou o SFTP está fora do ar.
+pulada em silêncio.** O guard olha só `len(items_raw) == 0` e **não pergunta por
+que** o passo anterior falhou — então vale igual para ERP ou SFTP fora do ar,
+ainda que não tenha sido essa a causa no run acima. O caso do `when` exige um
+typo do autor; este dispara sem ninguém errar nada.
 
 O mecanismo comum aos dois está em `_APPROVED_STATUSES`, que inclui
 `"skipped"` — o halt-check depois do approval deixa passar, por desenho (uma
@@ -439,12 +443,33 @@ com braço de controle, num draft descartável, custo zero.
 
 Duas coisas que só se descobrem usando (📏):
 
-- **Não faz merge da config do tenant, MAS aplica os defaults do
-  `config_schema`.** Property com `default` resolve; property **sem** default
-  chega ao executor como **template cru** (`{{config.x}}` literal). Foi o que
-  fez um `sftp_op` de teste responder 500 — o `connection_id` chegou literal.
-  Se o seu draft depende de conexão, declare `default` no `config_schema` ou
-  espere o erro.
+- **Faz merge da config da instância draft** (desde 28/08). O que engana é o
+  caso em que **não existe instância draft para mergear** — aí sobra só a
+  camada de defaults do `config_schema`, e property sem `default` chega ao
+  executor como **template cru** (`{{config.x}}` literal). Foi o que fez um
+  `sftp_op` de teste responder 500: o `connection_id` chegou literal.
+
+  **O aviso está no retorno do próprio `spec_write`**, e é fácil de ignorar:
+
+  ```json
+  {"state": "draft", "instance": "instancia_nao_draft_existente"}
+  ```
+
+  Acontece quando o slug já tem instância **não**-draft.
+
+  ⚠️ **A correção NÃO é pôr `default` no `config_schema`.** Isso cria uma
+  property com default que não deveria existir em spec publicada — conexão vem
+  da ativação, é o padrão de todas as publicadas. O caminho certo é **preencher
+  a config do rascunho na tela de configuração**. `default` só se justifica em
+  draft descartável de experimento.
+- 📏 **Property `required` marcada `x-company-scoped`, sem instância draft, nem
+  chega a rodar nó nenhum:** o run morre em `COMPANY_CONFIG_INCOMPLETE`
+  (*"preencha na tela de Parâmetros da empresa"*). É fail-closed deliberado —
+  melhor que estourar no primeiro nó —, mas tem uma consequência incômoda que
+  liga esta seção à §3: **se o `test_run` nunca fica verde, o gate de publish
+  não deixa publicar.** Preencher a config da empresa deixa de ser conveniência
+  e vira pré-requisito. (Achado em 30/08; a cadeia completa ainda está sendo
+  levantada com o time da plataforma.)
 - **Grafo só de leitura é o que torna o teste barato.** Sem nó de escrita, não
   há efeito colateral em ERP, SFTP ou ledger — dá para repetir à vontade e
   variar uma linha por vez, que é o que transforma observação em medição.
