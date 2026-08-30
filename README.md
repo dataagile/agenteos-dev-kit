@@ -75,6 +75,13 @@ a fonte da verdade é o store do ambiente.
 Um exemplo mínimo que passou pelo ciclo inteiro está em
 [`examples/sbx-hello/v1.yaml`](examples/sbx-hello/v1.yaml).
 
+Um exemplo **completo**, validado ponta a ponta contra um SFTP real em 26/08/2026, está em
+[`examples/test-sftp/v4.yaml`](examples/test-sftp/v4.yaml): nó `sftp_op` (put/move/delete/list)
+com aprovação humana obrigatória antes de escrever, gate da escrita na decisão do humano
+(`aprovar.decision.decision`), `when` por operação e template de resposta. O cabeçalho do
+arquivo explica cada decisão de desenho e o que foi medido em runtime — inclusive por que ele
+NÃO tem nó `agent`. Os tropeços do caminho estão em [`ARMADILHAS.md`](ARMADILHAS.md).
+
 ## Limitações conhecidas
 
 > 📌 **Leia [`ARMADILHAS.md`](ARMADILHAS.md) antes de publicar o primeiro agente.**

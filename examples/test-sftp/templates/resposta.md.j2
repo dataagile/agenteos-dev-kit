@@ -1,0 +1,21 @@
+# Operação SFTP — resultado
+
+**Run:** {{ run.run_id | default("") }} · {{ run.timestamp | default("") }}
+
+- Operação configurada: **{{ config.operacao | default("none") }}**
+- Arquivo: `{{ config.pasta | default("entrada") }}/{{ config.arquivo | default("teste.txt") }}`
+{% if config.operacao == 'move' %}- Destino: `{{ config.pasta | default("entrada") }}/{{ config.destino }}`{% endif %}
+
+## Aprovação
+{% set ap = steps.aprovar | default({}) %}
+- Status: **{{ ap.status | default("desconhecido") }}**{% if ap.decision is defined %} · decisão: **{{ ap.decision }}**{% endif %}
+
+## Execução
+- criar: {{ steps.criar.status | default("não executado") }}
+- mover: {{ steps.mover.status | default("não executado") }}
+- deletar: {{ steps.deletar.status | default("não executado") }}
+
+## Pasta `{{ config.pasta | default("entrada") }}` após a operação
+```
+{{ steps.listar.result | default("(listagem indisponível)") }}
+```
