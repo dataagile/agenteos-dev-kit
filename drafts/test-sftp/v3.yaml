@@ -36,9 +36,10 @@
 # e se `aprovar.decision` é literalmente 'approved'. Os dois falham FECHADO: gate ilegível
 # pula o nó, condition que não resolve cai no ramo falso → vai para `listar` sem escrever.
 #
-# Conexão: "SFTP Protheus TBC — DEV" (b744c7bc…) está `allowed_ops: read_write` e
-# `base_dir: "/"` (medido via spec_connectors em 26/08) — o jail é a RAIZ do usuário SFTP,
-# então `pasta` é a única proteção contra alcançar o resto do que aquele usuário enxerga.
+# Antes de desenhar a escrita, leia o `config` da conexão no `spec_connectors`:
+# `allowed_ops` diz se ela aceita escrita, e `base_dir` é o jail. Se o `base_dir` for a raiz
+# do usuário, `pasta` passa a ser a ÚNICA proteção contra alcançar tudo que ele enxerga —
+# escolha-a como se fosse um controle de segurança, porque é. Ver ARMADILHAS.md §6.
 
 id: "agt_test_sftp_v1"   # ESTÁVEL por slug — o catálogo casa o produto pelo id,
                          # não pela versão (o mesmo faz agente-smartview: id
@@ -166,5 +167,5 @@ nodes:
       output_format: "markdown"
 
 metadata:
-  author: "fswtbc05@gmail.com"
+  author: "dev-kit (exemplo)"
   tags: [teste, sftp, integracao, deterministico]

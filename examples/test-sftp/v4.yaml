@@ -41,9 +41,10 @@
 # 4.0.0 corrige o caminho. `config.when` no `sftp_op` SEGUE NÃO PROVADO: os nós foram
 # pulados pelo condition_jump antes de o `when` ser avaliado.
 #
-# Conexão: "SFTP Protheus TBC — DEV" (b744c7bc…) está `allowed_ops: read_write` e
-# `base_dir: "/"` (medido via spec_connectors em 26/08) — o jail é a RAIZ do usuário SFTP,
-# então `pasta` é a única proteção contra alcançar o resto do que aquele usuário enxerga.
+# Antes de desenhar a escrita, leia o `config` da conexão no `spec_connectors`:
+# `allowed_ops` diz se ela aceita escrita, e `base_dir` é o jail. Se o `base_dir` for a raiz
+# do usuário, `pasta` passa a ser a ÚNICA proteção contra alcançar tudo que ele enxerga —
+# escolha-a como se fosse um controle de segurança, porque é. Ver ARMADILHAS.md §6.
 
 id: "agt_test_sftp_v1"   # ESTÁVEL por slug — o catálogo casa o produto pelo id,
                          # não pela versão (o mesmo faz agente-smartview: id
@@ -112,6 +113,15 @@ nodes:
     key: aprovar
     # Sem `when`: o when de approval é a EXCEÇÃO fail-OPEN (when ilegível PULA a aprovação
     # humana em silêncio). Aprovação incondicional é a única forma segura aqui.
+    #
+    # E sem `context_from`, DE PROPÓSITO — apesar da §2 do ARMADILHAS.md avisar que approval
+    # sem ele nasce com `action` vazio. É troca consciente: `context_from` é o que ATIVA os
+    # dois caminhos que pulam o humano (📏 medido: `when` fora da gramática →
+    # `alcada_below_threshold`; passo anterior que falha → `empty_context`). Sem ele o bloco
+    # de alçada nem roda e a aprovação SEMPRE acontece — que é o que este agente precisa,
+    # porque a operação vem de `config` e não de uma lista de itens a aprovar.
+    # O preço é o card sem headline da §2. Se a sua spec tiver lista (títulos, pedidos),
+    # declare `context_from` e gateie a escrita no veredito — nunca na presença do approval.
     type: approval
     config:
       decision_set: "sftp.aprovar_operacao"
@@ -123,9 +133,16 @@ nodes:
     # Gate dos writes na DECISÃO humana. Caminho MEDIDO no run 4907afee:
     # aprovar.decision.decision (o `decision` de fora é o dict do item). Sem prefixo steps.
     # e sem nível `result` — approval não usa `result`. Não resolve → '' ≠ 'approved' → falso.
+    #
+    # `on_true` DECLARADO DE PROPÓSITO, embora omiti-lo funcionasse igual hoje: o ramo
+    # verdadeiro é o que AUTORIZA a escrita, e ele não deve depender da ordem dos nós no
+    # arquivo. Sem a aresta, inserir um nó entre este e `criar` — ou reordenar ao copiar
+    # este exemplo — tira as escritas de dentro do gate SEM erro de validação e sem run
+    # falhando. É o mesmo modo de falha silencioso da §1, na topologia em vez da expressão.
     type: condition
     config:
       expr: "aprovar.decision.decision == 'approved'"
+      on_true: criar
       on_false: listar
 
   - id: criar
@@ -172,5 +189,5 @@ nodes:
       output_format: "markdown"
 
 metadata:
-  author: "fswtbc05@gmail.com"
+  author: "dev-kit (exemplo)"
   tags: [teste, sftp, integracao, deterministico]

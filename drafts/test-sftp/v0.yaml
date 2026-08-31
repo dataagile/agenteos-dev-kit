@@ -21,9 +21,8 @@
 #      comparação dá falso e os writes NUNCA rodam (fail-closed, nunca write
 #      em pedido rejeitado).
 #
-# BLOQUEIO OPERACIONAL: a única conexão SFTP do ambiente é
-# "SFTP Protheus TBC — DEV (somente leitura)" — put/move/delete falham nela.
-# Pedir ao admin uma conexão SFTP gravável antes de testar/publicar.
+# BLOQUEIO OPERACIONAL: conexão somente-leitura faz put/move/delete falharem
+# (`error_class: cap`). Confirme `allowed_ops` antes de testar/publicar.
 # Todo path é RELATIVO ao base_dir da conexão (jail, D-07) — sem '..'.
 
 id: "agt_test_sftp_v0"
@@ -155,5 +154,5 @@ nodes:
       output_format: "markdown"
 
 metadata:
-  author: "fswtbc05@gmail.com"
+  author: "dev-kit (exemplo)"
   tags: [teste, sftp, integracao]

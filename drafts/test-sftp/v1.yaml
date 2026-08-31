@@ -21,9 +21,8 @@
 #      comparação dá falso e os writes NUNCA rodam (fail-closed, nunca write
 #      em pedido rejeitado).
 #
-# Conexão: "SFTP Protheus TBC — DEV" (b744c7bc…) passou a Leitura e Escrita na
-# UI em 25/08/2026 — o NOME ainda diz "somente leitura" (spec_connectors não
-# expõe permissões). O tenant seleciona a conexão na ativação (x-ref).
+# Conexão: as operações permitidas são definidas na UI e o NOME da conexão pode não
+# refletir o que ela aceita. O tenant seleciona a conexão na ativação (x-ref).
 # Nó `condition` vem com runtime_ready:false no spec_node_types, mas
 # not_ready_types lista só `team` e fin-pagamentos publicada usa condition —
 # alarme falso documentado (ver header do agente-smartview v4).
@@ -158,5 +157,5 @@ nodes:
       output_format: "markdown"
 
 metadata:
-  author: "fswtbc05@gmail.com"
+  author: "dev-kit (exemplo)"
   tags: [teste, sftp, integracao]
