@@ -1,0 +1,161 @@
+# test_sftp 1.0.0 — primeiro publish (25/08/2026), nasce como v1 no catálogo. Primeira spec do ambiente a usar o nó `sftp_op`
+# (não há precedente publicado; desenho aferido contra spec_node_types /
+# spec_context / spec_connectors / spec_models em 25/08/2026).
+#
+# Grafo: chat → interpretar (agent, JSON {op,path,dest_path,content}) →
+#        aprovar (approval, SEMPRE — RN-07) → aprovacao_concedida (condition:
+#        rejeitado pula direto para listar) → criar | mover | deletar
+#        (sftp_op gateados por `when` na op interpretada) → listar → resposta.
+#
+# NÃO VERIFICADO (só se prova em run após publish; blast radius nulo porque
+# `when` ilegível PULA o nó — fail-closed):
+#   1. shape do result do nó `agent` com structured_output_schema — assumido
+#      `interpretar.result.<campo>` (nível `result` obrigatório, spec_context).
+#   2. `when` em `config.when` mesmo com os demais campos do sftp_op no topo
+#      do nó — é onde TODAS as specs publicadas põem o when (tool, transform,
+#      loop, channel_send, approval); sftp_op não tem precedente.
+#   3. approval sem `when` (fail-open documentado); timeout aborta. Rejeição
+#      provavelmente RETOMA o run (teste-hitl renderiza `decision` depois do
+#      approval) — por isso o condition abaixo gateia os writes na decisão.
+#   4. literal 'approved' em `aprovar.decision` — se o valor real for outro, a
+#      comparação dá falso e os writes NUNCA rodam (fail-closed, nunca write
+#      em pedido rejeitado).
+#
+# Conexão: as operações permitidas são definidas na UI e o NOME da conexão pode não
+# refletir o que ela aceita. O tenant seleciona a conexão na ativação (x-ref).
+# Nó `condition` vem com runtime_ready:false no spec_node_types, mas
+# not_ready_types lista só `team` e fin-pagamentos publicada usa condition —
+# alarme falso documentado (ver header do agente-smartview v4).
+# Todo path é RELATIVO ao base_dir da conexão (jail, D-07) — sem '..'.
+
+id: "agt_test_sftp_v1"
+slug: "test-sftp"          # schema não aceita '_' no slug; o name mantém test_sftp
+name: "test_sftp"
+version: "1.0.0"
+change_class: "minor"
+category: "integracao"
+requires_erp: false
+description: >
+  Agente de teste do conector SFTP: recebe no chat um pedido em linguagem
+  natural (criar, mover ou apagar um arquivo), interpreta a operação, pede
+  aprovação humana e executa a operação dentro de uma pasta configurada no
+  SFTP. Ao final lista a pasta e devolve um resumo no chat.
+
+config_schema:
+  type: object
+  required: [connection_sftp_id, model_ref]
+  properties:
+    connection_sftp_id:
+      type: string
+      x-ref: connection
+      title: "Conexão SFTP"
+      description: Conexão SFTP (host, base_dir e credencial) usada pelo agente. Precisa permitir escrita.
+    pasta:
+      type: string
+      default: "entrada"
+      title: "Pasta de trabalho"
+      description: Subpasta, relativa ao base_dir da conexão, onde o agente cria/move/apaga arquivos. Sem barra inicial e sem '..'.
+    model_ref:
+      type: string
+      title: "Modelo LLM"
+      description: Alias do modelo (registry do tenant) que interpreta o pedido do chat em uma operação SFTP.
+
+io:
+  reads:
+    - entity: File
+      label: Listagem da pasta de trabalho no SFTP
+  writes:
+    - entity: File
+      label: Arquivo criado, movido ou apagado na pasta de trabalho do SFTP
+
+trigger:
+  type: chat
+
+nodes:
+  - id: interpretar
+    key: interpretar
+    type: agent
+    model_ref: "{{config.model_ref}}"
+    system_prompt: >
+      Você converte um pedido do usuário em UMA operação de arquivo SFTP.
+      Responda SOMENTE com JSON no formato {"op","path","dest_path","content"}.
+      op: "put" (criar arquivo com conteúdo), "move" (mover/renomear) ou
+      "delete" (apagar). path: nome do arquivo relativo à pasta de trabalho,
+      sem barra inicial e sem "..". dest_path: só para move (destino relativo
+      à pasta). content: só para put (texto do arquivo; vazio se não informado).
+      Se o pedido não for uma dessas três operações, use op "none".
+    user_prompt_template: "{{run.input.mensagem}}"
+    structured_output_schema:
+      type: object
+      required: [op, path, content]
+      properties:
+        op: {type: string, enum: [put, move, delete, none]}
+        path: {type: string}
+        dest_path: {type: string}
+        content: {type: string}
+
+  - id: aprovar
+    key: aprovar
+    type: approval
+    config:
+      decision_set: "sftp.aprovar_operacao"
+      timeout_hours: 24
+      on_timeout: abort
+      context_from: "interpretar"
+
+  - id: aprovacao_concedida
+    key: aprovacao_concedida
+    # Gate dos writes na DECISÃO humana. Caminho nu (sem prefixo steps.) e sem
+    # nível result: approval expõe status/decision direto no passo
+    # (precedente: template do teste-hitl-aprovacao). Não resolve → '' → falso.
+    type: condition
+    config:
+      expr: "aprovar.decision == 'approved'"
+      on_false: listar
+
+  - id: criar
+    key: criar
+    type: sftp_op
+    config:
+      when: "interpretar.result.op == 'put'"
+    connection: "{{config.connection_sftp_id}}"
+    op: put
+    path: "{{config.pasta}}/{{interpretar.result.path}}"
+    content: "{{interpretar.result.content}}"
+
+  - id: mover
+    key: mover
+    type: sftp_op
+    config:
+      when: "interpretar.result.op == 'move'"
+    connection: "{{config.connection_sftp_id}}"
+    op: move
+    path: "{{config.pasta}}/{{interpretar.result.path}}"
+    dest_path: "{{config.pasta}}/{{interpretar.result.dest_path}}"
+
+  - id: deletar
+    key: deletar
+    type: sftp_op
+    config:
+      when: "interpretar.result.op == 'delete'"
+    connection: "{{config.connection_sftp_id}}"
+    op: delete
+    path: "{{config.pasta}}/{{interpretar.result.path}}"
+
+  - id: listar
+    key: listar
+    type: sftp_op
+    connection: "{{config.connection_sftp_id}}"
+    op: list
+    path: "{{config.pasta}}"
+
+  - id: resposta
+    key: resposta
+    type: render_template
+    config:
+      template: "resposta.md.j2"
+      output_format: "markdown"
+
+metadata:
+  author: "dev-kit (exemplo)"
+  tags: [teste, sftp, integracao]

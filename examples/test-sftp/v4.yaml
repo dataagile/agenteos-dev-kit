@@ -1,0 +1,193 @@
+# test_sftp 4.0.0 — grafo 100% DETERMINÍSTICO. Draft aberto por spec_revise a partir da
+# v1 publicada (published é imutável). Duas mudanças, uma causa cada:
+#
+# POR QUE 3 E NÃO 2: o publish da v2 falhou pela metade em 26/08 — o servidor GRAVOU
+# published/test-sftp/v2.yaml e só DEPOIS o catálogo rejeitou ("nada foi semeado"),
+# sem rollback. A v2 ficou publicada, fora do catálogo, com id errado e imutável — e
+# não existe unpublish (DAI-637). A v2 é lixo inerte; esta é a versão boa.
+#
+# 1. SAIU o nó `agent` (interpretar). Motivo direto: os 3 runs da v1 (26/08) morreram
+#    NELE — `couldn't get a connection after 30.00 sec` / `Model registry load timed out`
+#    (acoplamento de event loop no agent-runtime: o pool do ExecutorFactory nasce no loop
+#    do bootstrap do worker e o Hatchet roda o workflow em OUTRO loop; `_resolve_llm_params`
+#    → `fetch_tenant_llm_key` → `database.connection()` trava). Sem nó `agent` esse caminho
+#    não é tocado e a spec roda mesmo com o bug em pé. Mesmo movimento do agente-smartview
+#    na 2.4.9 (tirou `interpretar_pedido` quando o chat passou a entregar o pedido pronto).
+#    Consequência: `model_ref` sai do config_schema — vira property órfã sem o nó.
+#
+# 2. A operação vem de `config`, NUNCA de `run.input`. Motivo: `sftp_op` é tratado como
+#    WRITE SINTÉTICO (`_synthetic_write_cfg`, hatchet_app.py:104-115, cita sftp_op nominal-
+#    mente) e `_untrusted_write_input_refs` roda ANTES da interpolação: qualquer ref a
+#    `run.input` alcançando um sftp_op mata o run com `untrusted_input_in_write`. O portão
+#    é `input_trust_level`, fail-closed, e o `build_run_input()` do chat não o define.
+#    Ou seja: path vindo do chat BARRA o write. Por isso o path é declarado pelo autor.
+#
+# NÃO declara `metadata.chat_system_prompt` de propósito. Ele é o que faria o chat emitir
+# `[[EXECUTAR]]{...}` e disparar run (agents.py:2177 — ausência disso na v1 é o que fez o
+# concierge mandar clicar "Executar", e NÃO um gap de plataforma como eu havia concluído).
+# Mas o marcador reabre exatamente o guard do item 2. Disparo desta versão: botão Executar.
+#
+# change_class minor: nenhuma property vira `required` (as novas têm default e a default de
+# `operacao` é "none" = não escreve nada), e remover property não-usada é relaxamento — mesmo
+# precedente de fin-pagamentos-pix v1, fin-pagamentos v2 e agente-smartview 4.0.0. Sem R8.
+#
+# MEDIDO no run 4907afee (26/08, v3): o nó approval devolve
+#   {type, items, status: "approved", decision: {item_id, decision: "approved", decided_by,
+#    edited_values}, aprovados}
+# ou seja o veredito está em `aprovar.decision.decision`, NÃO em `aprovar.decision` (esse é
+# o DICT inteiro — comparar dict com string dá false). A v3 usava o caminho curto e por isso
+# a condition deu `result: false` e pulou os três writes (`reason: condition_jump`) — o
+# fail-closed funcionou como projetado: aprovado, mas nada foi escrito por engano.
+# 4.0.0 corrige o caminho. `config.when` no `sftp_op` SEGUE NÃO PROVADO: os nós foram
+# pulados pelo condition_jump antes de o `when` ser avaliado.
+#
+# Antes de desenhar a escrita, leia o `config` da conexão no `spec_connectors`:
+# `allowed_ops` diz se ela aceita escrita, e `base_dir` é o jail. Se o `base_dir` for a raiz
+# do usuário, `pasta` passa a ser a ÚNICA proteção contra alcançar tudo que ele enxerga —
+# escolha-a como se fosse um controle de segurança, porque é. Ver ARMADILHAS.md §6.
+
+id: "agt_test_sftp_v1"   # ESTÁVEL por slug — o catálogo casa o produto pelo id,
+                         # não pela versão (o mesmo faz agente-smartview: id
+                         # agt_agente_smartview_v2 na versão 4.0.0). Trocar o id
+                         # num publish dá "Slug já em uso por outro AgentSpec".
+slug: "test-sftp"
+name: "test_sftp"
+version: "4.0.0"
+change_class: "minor"
+category: "integracao"
+requires_erp: false
+description: >
+  Agente de teste do conector SFTP: executa UMA operação de arquivo (criar, mover ou
+  apagar) declarada na configuração, dentro de uma pasta de trabalho, sempre com
+  aprovação humana antes de escrever. Ao final lista a pasta e devolve um resumo.
+
+config_schema:
+  type: object
+  required: [connection_sftp_id]
+  properties:
+    connection_sftp_id:
+      type: string
+      x-ref: connection
+      title: "Conexão SFTP"
+      description: Conexão SFTP (host, base_dir e credencial) usada pelo agente. Precisa permitir escrita.
+    pasta:
+      type: string
+      default: "entrada"
+      title: "Pasta de trabalho"
+      description: Subpasta, relativa ao base_dir da conexão, onde o agente cria/move/apaga arquivos. Sem barra inicial e sem '..'.
+    operacao:
+      type: string
+      enum: [none, put, move, delete]
+      default: "none"
+      title: "Operação"
+      description: "Operação executada na próxima execução. 'none' (padrão) não escreve nada — apenas lista a pasta."
+    arquivo:
+      type: string
+      default: "teste.txt"
+      title: "Arquivo"
+      description: Nome do arquivo alvo, relativo à pasta de trabalho.
+    conteudo:
+      type: string
+      default: "olá"
+      title: "Conteúdo (apenas para criar)"
+      description: Texto gravado no arquivo quando a operação é 'put'.
+    destino:
+      type: string
+      default: "processado/teste.txt"
+      title: "Destino (apenas para mover)"
+      description: Caminho de destino, relativo à pasta de trabalho, quando a operação é 'move'.
+
+io:
+  reads:
+    - entity: File
+      label: Listagem da pasta de trabalho no SFTP
+  writes:
+    - entity: File
+      label: Arquivo criado, movido ou apagado na pasta de trabalho do SFTP
+
+trigger:
+  type: chat
+
+nodes:
+  - id: aprovar
+    key: aprovar
+    # Sem `when`: o when de approval é a EXCEÇÃO fail-OPEN (when ilegível PULA a aprovação
+    # humana em silêncio). Aprovação incondicional é a única forma segura aqui.
+    #
+    # E sem `context_from`, DE PROPÓSITO — apesar da §2 do ARMADILHAS.md avisar que approval
+    # sem ele nasce com `action` vazio. É troca consciente: `context_from` é o que ATIVA os
+    # dois caminhos que pulam o humano (📏 medido: `when` fora da gramática →
+    # `alcada_below_threshold`; passo anterior que falha → `empty_context`). Sem ele o bloco
+    # de alçada nem roda e a aprovação SEMPRE acontece — que é o que este agente precisa,
+    # porque a operação vem de `config` e não de uma lista de itens a aprovar.
+    # O preço é o card sem headline da §2. Se a sua spec tiver lista (títulos, pedidos),
+    # declare `context_from` e gateie a escrita no veredito — nunca na presença do approval.
+    type: approval
+    config:
+      decision_set: "sftp.aprovar_operacao"
+      timeout_hours: 24
+      on_timeout: abort
+
+  - id: aprovacao_concedida
+    key: aprovacao_concedida
+    # Gate dos writes na DECISÃO humana. Caminho MEDIDO no run 4907afee:
+    # aprovar.decision.decision (o `decision` de fora é o dict do item). Sem prefixo steps.
+    # e sem nível `result` — approval não usa `result`. Não resolve → '' ≠ 'approved' → falso.
+    #
+    # `on_true` DECLARADO DE PROPÓSITO, embora omiti-lo funcionasse igual hoje: o ramo
+    # verdadeiro é o que AUTORIZA a escrita, e ele não deve depender da ordem dos nós no
+    # arquivo. Sem a aresta, inserir um nó entre este e `criar` — ou reordenar ao copiar
+    # este exemplo — tira as escritas de dentro do gate SEM erro de validação e sem run
+    # falhando. É o mesmo modo de falha silencioso da §1, na topologia em vez da expressão.
+    type: condition
+    config:
+      expr: "aprovar.decision.decision == 'approved'"
+      on_true: criar
+      on_false: listar
+
+  - id: criar
+    key: criar
+    type: sftp_op
+    config:
+      when: "config.operacao == 'put'"
+    connection: "{{config.connection_sftp_id}}"
+    op: put
+    path: "{{config.pasta}}/{{config.arquivo}}"
+    content: "{{config.conteudo}}"
+
+  - id: mover
+    key: mover
+    type: sftp_op
+    config:
+      when: "config.operacao == 'move'"
+    connection: "{{config.connection_sftp_id}}"
+    op: move
+    path: "{{config.pasta}}/{{config.arquivo}}"
+    dest_path: "{{config.pasta}}/{{config.destino}}"
+
+  - id: deletar
+    key: deletar
+    type: sftp_op
+    config:
+      when: "config.operacao == 'delete'"
+    connection: "{{config.connection_sftp_id}}"
+    op: delete
+    path: "{{config.pasta}}/{{config.arquivo}}"
+
+  - id: listar
+    key: listar
+    type: sftp_op
+    connection: "{{config.connection_sftp_id}}"
+    op: list
+    path: "{{config.pasta}}"
+
+  - id: resposta
+    key: resposta
+    type: render_template
+    config:
+      template: "resposta.md.j2"
+      output_format: "markdown"
+
+metadata:
+  author: "dev-kit (exemplo)"
+  tags: [teste, sftp, integracao, deterministico]
