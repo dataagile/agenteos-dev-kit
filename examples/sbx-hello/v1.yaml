@@ -1,5 +1,5 @@
 # Agente mínimo que passou pelo ciclo completo (write→validate→publish)
-# contra o sandbox da TBC em 13/08/2026. Use como ponto de partida.
+# contra um ambiente real em 13/08/2026. Use como ponto de partida.
 id: sbx-hello
 slug: sbx-hello
 name: Hello Sandbox

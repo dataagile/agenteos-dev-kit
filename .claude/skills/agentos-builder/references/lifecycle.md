@@ -43,7 +43,7 @@ This skill has **no database access** and cannot check for active contracts itse
 
 ## 6. Slug rename — banned everywhere, including disguised as Clone+Remove
 
-A slug rename is never performed by this skill, in any form, under any framing. Lesson from feature 007 (PR #149): a slug rename requires a YAML change **and** a DB migration together, executed as one coordinated delivery — this skill operates on YAML only and cannot do half of that safely. Refuse and point to `/w1`. This is the one canonical statement of the rule; `edit.md`, `clone.md`, and `remove.md` reference it rather than re-deriving it.
+A slug rename is never performed by this skill, in any form, under any framing. Lesson from feature 007: a slug rename requires a YAML change **and** a DB migration together, executed as one coordinated delivery — this skill operates on YAML only and cannot do half of that safely. Refuse and point to `/w1`. This is the one canonical statement of the rule; `edit.md`, `clone.md`, and `remove.md` reference it rather than re-deriving it.
 
 **The disguised composition**: "clone the spec to a new slug, then remove the old one" is functionally a rename split into two operations, neither of which is individually a rename. Watch for this composition — either as an explicit clone-then-remove sequence in one session, or as rename-flavored language ("rename," "replace," "migrate the slug," "move X to Y") even when the user technically invokes Clone or Remove separately.
 

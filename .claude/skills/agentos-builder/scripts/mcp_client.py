@@ -7,7 +7,7 @@ server's JSON-RPC endpoint (protocolo MCP nativo, servido em `{MCP_URL}/mcp`
 pelo nginx do ambiente): `POST {MCP_URL}/mcp {"jsonrpc": "2.0", "method":
 "tools/call", "params": {"name": ..., "arguments": ...}}` + `Authorization:
 Bearer <key>`. O servidor é stateless (cada POST é autônomo — validado ao vivo
-no sandbox-tbc, 13/08/2026); nomes de tool usam underscore (`spec_write`),
+medido no ambiente de validação, 13/08/2026); nomes de tool usam underscore (`spec_write`),
 o "." é mapeado aqui.
 
 Auth: reads `MCP_URL` + `MCP_KEY` from env, validated on every call (the
