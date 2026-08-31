@@ -39,6 +39,11 @@ e `!= true` são formas VÁLIDAS no `when` de um nó normal, com precedente em
 spec publicada — copiar de outro nó é o caminho mais provável para o erro. Erro de escrita e "dispense o
 humano" são indistinguíveis. Detalhe e tabela na §4.
 
+📏 E há um segundo caminho, que não exige erro do autor: passo anterior que
+falha esvazia o `context_from` e o approval vem `skipped` por `empty_context` —
+run segue como aprovado. **A defesa que cobre os dois é gatear a escrita no
+veredito** (`<nó>.decision.decision == 'approved'`), nunca na presença do nó.
+
 Ao descobrir uma armadilha nova, **acrescente lá** — o kit é o que impede o
 próximo autor de repetir o mesmo tropeço.
 

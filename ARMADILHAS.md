@@ -49,6 +49,12 @@ desenhado fail-*open*, teria escrito sem aprovação.
 > **Uma exceção existe e não é sua para consertar:** o `when` de um nó
 > `approval` não é fail-closed — ver §4. Por isso a regra lá é não usar `when`
 > em approval.
+>
+> E há um segundo motivo, mais forte, para gatear no VEREDITO e não na presença
+> do nó: 📏 um approval pode vir `skipped` **sem decisão humana nenhuma** — por
+> `when` fora da gramática ou por contexto vazio (passo anterior falhou). Nos
+> dois casos o run segue como aprovado, e `aprovar.decision.decision` é a única
+> coisa que não resolve. Ver §4.
 
 **Por que o erro é silencioso:** numa `condition`, um caminho que **não
 resolve** é tratado como `None` (🔍 `hatchet_app.py`, docstring de
@@ -143,6 +149,10 @@ catálogo. Se o catálogo recusar, a mensagem diz:
 Isso é verdade sobre o catálogo e **mentira sobre o disco**: o arquivo já está
 no volume, publicado, imutável — e não existe unpublish (DAI-637). O número
 daquela versão está queimado para sempre; você segue para a próxima.
+
+> 💡 **A saída para não pagar este preço enquanto experimenta: `spec_test_run`**
+> roda o draft sem publicar nada (§9). Publique só quando a dúvida já estiver
+> resolvida.
 
 **Antes de `spec_publish`, confira o que o catálogo valida:**
 
@@ -279,10 +289,58 @@ acontece**. Só um falsy literal devolveria `{"status": "skipped", "reason":
   `config_schema`; não olha `when` nem `approval`. Uma spec com `when` inválido
   **publica limpa**.
 
-> Esta seção **contradiz de propósito** a regra de fail-closed da §1: aqui o
-> mecanismo não protege sozinho, e a proteção é não usar o recurso. Achado do
-> PR monitor; tier 🔍 + execução isolada do avaliador — nenhum run foi feito.
-> Quem provar num run, atualize para 📏.
+#### 📏 Medido — dois runs, com braço de controle
+
+| braço | `config.when` | run_id | resultado |
+|---|---|---|---|
+| controle | `config.alcada_hitl == null` (forma reconhecida) | `5d8ec509-43bb-44ea-bd30-0953766e9f95` | `awaiting_approval` — **card nasceu** |
+| teste | `config.total > 1000` (forma inválida) | `235c25e7-a961-432a-a0ed-3d0ed73876f2` | `aprovar` **skipped**, `reason: alcada_below_threshold`, run **completed** |
+
+Mesmo draft, mesma config, só a linha do `when` mudou. Feito com `spec_test_run`
+num draft descartável e grafo só de leitura — sem publicar nada, sem nó de
+escrita, custo zero de catálogo (ver §9).
+
+---
+
+### 🔴 O outro jeito de pular o humano — e este não exige que você erre nada
+
+📏 Medido no mesmo ciclo (run `26b5c8b6-6477-4f9d-b599-e5b459c8aa3c`): o nó de
+listagem **falhou** — no run medido, porque a config não resolveu e o
+`connection_id` chegou cru ao executor (ver §9) —, o `transform` a jusante
+devolveu `[]`, e o `approval` veio `skipped` com `reason: empty_context` — run
+**completed**.
+
+**Um passo anterior falhando esvazia o `context_from`, e a aprovação humana é
+pulada em silêncio.** O guard olha só `len(items_raw) == 0` e **não pergunta por
+que** o passo anterior falhou — então vale igual para ERP ou SFTP fora do ar,
+ainda que não tenha sido essa a causa no run acima. O caso do `when` exige um
+typo do autor; este dispara sem ninguém errar nada.
+
+O mecanismo comum aos dois está em `_APPROVED_STATUSES`, que inclui
+`"skipped"` — o halt-check depois do approval deixa passar, por desenho (uma
+aprovação legitimamente dispensada não deve virar run failed).
+
+> ⚠️ Some isto ao aviso da §2: declarar `context_from` é o que ativa **os dois**
+> caminhos. Sem `context_from`, o bloco nem roda e a aprovação sempre acontece.
+
+### ✅ A defesa que cobre os dois
+
+**Gateie a escrita no VEREDITO, nunca na simples presença do nó de approval:**
+
+```yaml
+expr: "aprovar.decision.decision == 'approved'"
+```
+
+É o mesmo caminho da §1, e agora com o segundo motivo para existir: sem decisão
+humana, `decision.decision` **não resolve**, vale `None`, compara falso e a
+condition cai no ramo negativo. Nos dois cenários acima — `when` fora da
+gramática e contexto vazio — o run segue como se estivesse aprovado, e **só o
+gate no veredito segura a escrita**.
+
+> Achado do PR monitor (o caminho do `when`) e da sessão de autoria (o
+> `empty_context`), medido por ela. Esta seção **contradiz de propósito** a
+> regra de fail-closed da §1: aqui o mecanismo não protege sozinho — a proteção
+> é não usar `when` em approval **e** gatear no veredito.
 
 ---
 
@@ -370,6 +428,51 @@ Olhe **antes** de escrever a spec:
 - 📏 `idempotency_key` de escrita é injetada pelo runtime — o autor **não**
   declara em `sftp_op`. (Em `http_request`, declara.) Visto num run real:
   `<run_id>_criar_0`.
+
+---
+
+## 9. `spec_test_run`: teste o draft SEM queimar uma versão
+
+📏 A §3 diz que publicar errado queima o número da versão para sempre. A saída é
+**não publicar para testar**: `spec_test_run` executa um **draft**, sem promover
+nada e sem tocar o catálogo. Foi assim que a §4 saiu de 🔍 para 📏 — dois runs
+com braço de controle, num draft descartável, custo zero.
+
+**Use isto sempre que a dúvida for "o que este grafo faz de verdade".** É a
+única forma de medir sem pagar o preço da §3.
+
+Duas coisas que só se descobrem usando (📏):
+
+- **Faz merge da config da instância draft** (desde 28/08). O que engana é o
+  caso em que **não existe instância draft para mergear** — aí sobra só a
+  camada de defaults do `config_schema`, e property sem `default` chega ao
+  executor como **template cru** (`{{config.x}}` literal). Foi o que fez um
+  `sftp_op` de teste responder 500: o `connection_id` chegou literal.
+
+  **O aviso está no retorno do próprio `spec_write`**, e é fácil de ignorar:
+
+  ```json
+  {"state": "draft", "instance": "instancia_nao_draft_existente"}
+  ```
+
+  Acontece quando o slug já tem instância **não**-draft.
+
+  ⚠️ **A correção NÃO é pôr `default` no `config_schema`.** Isso cria uma
+  property com default que não deveria existir em spec publicada — conexão vem
+  da ativação, é o padrão de todas as publicadas. O caminho certo é **preencher
+  a config do rascunho na tela de configuração**. `default` só se justifica em
+  draft descartável de experimento.
+- 📏 **Property `required` marcada `x-company-scoped`, sem instância draft, nem
+  chega a rodar nó nenhum:** o run morre em `COMPANY_CONFIG_INCOMPLETE`
+  (*"preencha na tela de Parâmetros da empresa"*). É fail-closed deliberado —
+  melhor que estourar no primeiro nó —, mas tem uma consequência incômoda que
+  liga esta seção à §3: **se o `test_run` nunca fica verde, o gate de publish
+  não deixa publicar.** Preencher a config da empresa deixa de ser conveniência
+  e vira pré-requisito. (Achado em 30/08; a cadeia completa ainda está sendo
+  levantada com o time da plataforma.)
+- **Grafo só de leitura é o que torna o teste barato.** Sem nó de escrita, não
+  há efeito colateral em ERP, SFTP ou ledger — dá para repetir à vontade e
+  variar uma linha por vez, que é o que transforma observação em medição.
 
 ---
 
