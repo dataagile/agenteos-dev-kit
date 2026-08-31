@@ -57,7 +57,11 @@ A skill conduz o ciclo completo, sempre via MCP:
 
 1. `spec_node_types` / `spec_context` / `spec_connectors` / `spec_tools` /
    `spec_models` — descobrir o que existe no ambiente (nunca de memória:
-   `connector_id` vem do `spec_connectors`, `tool_name` do `spec_tools`);
+   `connector_id` vem do `spec_connectors`; `tool_name` vem da lista
+   `platform_tools` de `spec_tools` — os itens da lista `tools` são de
+   MCP-servers do tenant e chegam com `callable: false`, não servem para um
+   nó `tool`; a semântica de condition/when/salto/erro-em-loop vem do bloco
+   `semantics` de `spec_node_types` — leia antes de escrever condition/loop);
 2. `spec_write` — gravar o rascunho (`drafts/<slug>/v<N>.yaml` no servidor;
    os `.j2` viajam junto no parâmetro `templates`, como `{nome: conteúdo}`);
 3. `spec_validate` — validar (`{ok: true}` libera; erros vêm com `field_path`);

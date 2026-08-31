@@ -179,10 +179,23 @@ def connectors() -> list[dict[str, Any]]:
     return _call("spec.connectors", {})["connectors"]  # type: ignore[no-any-return]
 
 
-def tools() -> list[dict[str, Any]]:
-    """Tools de MCP-servers do tenant — a fonte para `tool_name` num nó `tool`.
-    Escopo: spec.read."""
-    return _call("spec.tools", {})["tools"]  # type: ignore[no-any-return]
+def tools() -> dict[str, Any]:
+    """Tools disponíveis, ENVELOPE INTEIRO — `{platform_tools, tools, partial}`.
+
+    Devolve o envelope, não uma lista: as duas listas têm significados opostos e
+    quem autora precisa das duas para não escolher a errada.
+
+    - `platform_tools` — **a fonte do `tool_name`** num nó `tool`. São as tools
+      que o runtime resolve (`callable: true`).
+    - `tools` — tools de MCP-servers do tenant. Chegam com `callable: false` e o
+      motivo; **NÃO servem para `tool_name`**. Medido em 31/08/2026 no sandbox:
+      esta lista veio vazia enquanto a única tool utilizável estava na outra.
+
+    Antes esta função fazia `["tools"]` e devolvia só a lista inútil — o autor
+    seguia a regra, chamava aqui e não tinha como enxergar o que existe.
+
+    Discovery, não memória: nunca preencha `tool_name` de cabeça. Escopo: spec.read."""
+    return _call("spec.tools", {})  # type: ignore[no-any-return]
 
 
 def revise(slug: str) -> dict[str, str]:
