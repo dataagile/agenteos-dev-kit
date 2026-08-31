@@ -443,33 +443,52 @@ com braço de controle, num draft descartável, custo zero.
 
 Duas coisas que só se descobrem usando (📏):
 
-- **Faz merge da config da instância draft** (desde 28/08). O que engana é o
-  caso em que **não existe instância draft para mergear** — aí sobra só a
-  camada de defaults do `config_schema`, e property sem `default` chega ao
+- **Faz merge da config da instância do slug** (desde 28/08; **corrigido em
+  31/08 — DAI-997**). Até 30/08 o merge só enxergava instância com
+  `status='draft'`: numa **revisão** de agente publicado essa linha não existe
+  (o `spec_write` é no-op quando já há instância não-draft), então sobrava só a
+  camada de defaults do `config_schema`, e property sem `default` chegava ao
   executor como **template cru** (`{{config.x}}` literal). Foi o que fez um
   `sftp_op` de teste responder 500: o `connection_id` chegou literal.
 
-  **O aviso está no retorno do próprio `spec_write`**, e é fácil de ignorar:
+  Hoje o merge **cai para a instância ativa do mesmo slug** — o rascunho de uma
+  revisão usa a config que aquele agente já tem, sem você fazer nada. O retorno
+  do `spec_write` continua avisando qual foi o desfecho, e não é mais problema:
 
   ```json
   {"state": "draft", "instance": "instancia_nao_draft_existente"}
   ```
 
-  Acontece quando o slug já tem instância **não**-draft.
+  **Sobra um caso:** slug **sem instância nenhuma** (agente novo que nunca foi
+  materializado). Aí sim só há os defaults do schema.
 
   ⚠️ **A correção NÃO é pôr `default` no `config_schema`.** Isso cria uma
   property com default que não deveria existir em spec publicada — conexão vem
   da ativação, é o padrão de todas as publicadas. O caminho certo é **preencher
-  a config do rascunho na tela de configuração**. `default` só se justifica em
-  draft descartável de experimento.
-- 📏 **Property `required` marcada `x-company-scoped`, sem instância draft, nem
-  chega a rodar nó nenhum:** o run morre em `COMPANY_CONFIG_INCOMPLETE`
-  (*"preencha na tela de Parâmetros da empresa"*). É fail-closed deliberado —
-  melhor que estourar no primeiro nó —, mas tem uma consequência incômoda que
-  liga esta seção à §3: **se o `test_run` nunca fica verde, o gate de publish
-  não deixa publicar.** Preencher a config da empresa deixa de ser conveniência
-  e vira pré-requisito. (Achado em 30/08; a cadeia completa ainda está sendo
-  levantada com o time da plataforma.)
+  a config na tela de configuração**. `default` só se justifica em draft
+  descartável de experimento.
+- 📏 **Property `required` marcada `x-company-scoped` sem override da empresa:**
+  o run morre em `COMPANY_CONFIG_INCOMPLETE` (*"preencha na tela de Parâmetros
+  da empresa"*) antes de rodar nó nenhum. É fail-closed deliberado — o campo
+  marcado não herda do escopo do tenant, de propósito, para não vazar dado de
+  outra empresa.
+
+  Depois do fix de 31/08 isto quase sempre significa **empresa errada, não
+  config faltando**. `spec_test_run` **sem `erp_company_id` cai na empresa
+  default do tenant**, que num sandbox costuma ser uma empresa de fachada, sem
+  parâmetro nenhum preenchido. Foi exatamente o que aconteceu com a
+  `fin-pagamentos` em 31/08: sem empresa, `failed`; com
+  `erp_company_id` de uma empresa configurada, o **mesmo draft** rodou
+  `completed`.
+
+  👉 **Passe `erp_company_id` no `spec_test_run`** de qualquer agente com campo
+  `x-company-scoped`. É o que faz o run ficar verde e o gate de publish (§3)
+  liberar sem `skip_sandbox_gate`.
+
+  **Resíduo conhecido:** revisão que **introduz uma chave `x-company-scoped`
+  nova** continua sem onde ser preenchida — a tela de Parâmetros renderiza o
+  schema da versão **publicada**, não o do rascunho. Nesse caso o `test_run`
+  fica vermelho por um motivo real; reporte (DAI) em vez de contornar.
 - **Grafo só de leitura é o que torna o teste barato.** Sem nó de escrita, não
   há efeito colateral em ERP, SFTP ou ledger — dá para repetir à vontade e
   variar uma linha por vez, que é o que transforma observação em medição.
