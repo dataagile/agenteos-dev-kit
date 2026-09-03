@@ -36,7 +36,7 @@ Require the user to type the slug back (not just "yes" or "confirm") before dele
 
 Before deleting, check whether the Remove target is the **source** of a same-session Clone (this session cloned `<this-slug>` → some new slug, and now the user wants to remove `<this-slug>` — the original, not the clone) — that composition is a slug rename performed as two steps. Apply the same rule as `clone.md` §4. This tripwire is about removing the *source*; removing the *clone* itself (the new slug that was just created) is ordinary draft cleanup — discarding a clone you decided you didn't want is not a rename of anything and needs no special handling here.
 
-- If the spec being removed was itself cloned *from* a published spec under a different slug in this session (i.e. this draft is really standing in for "renamed publish target"), flag it and confirm with the user whether they intend a genuine new/replacement agent (fine) or are trying to rename a published slug through the back door (refuse, point to `/w1`, cite the 007/PR #149 lesson).
+- If the spec being removed was itself cloned *from* a published spec under a different slug in this session (i.e. this draft is really standing in for "renamed publish target"), flag it and confirm with the user whether they intend a genuine new/replacement agent (fine) or are trying to rename a published slug through the back door (refuse, point to `/w1`, cite the 007/a entrega da feature 007 lesson).
 - For a same-session drafts-only clone+remove with no published spec involved anywhere in the chain, this is allowed — just say plainly what happened ("this is now a rename of a draft, done as clone + remove") so the user isn't surprised later.
 
 ### 6. Delete

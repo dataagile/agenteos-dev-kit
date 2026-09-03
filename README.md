@@ -4,7 +4,7 @@ Kit de partida para **desenvolver agentes AgenteOS** num ambiente de sandbox.
 Você não precisa (e não recebe) o código da plataforma nem os agentes internos:
 **toda a autoria acontece via MCP**, contra o servidor do seu ambiente.
 
-Fluxo validado ao vivo contra o sandbox da TBC em 13/08/2026.
+Fluxo validado ao vivo contra um ambiente real em 13/08/2026.
 
 ## O que você precisa
 
@@ -25,23 +25,25 @@ spec.list spec.read spec.node_types spec.validate spec.write spec.publish
 As demais tools não têm escopo próprio — cavalgam nestes: `spec_context`,
 `spec_models`, `spec_connectors` e `spec_tools` em `spec.read`; `spec_revise`
 em `spec.write` (é o `required_scope` declarado no registry do servidor; uma
-chamada real com a chave de 6 scopes acima autorizou no sandbox-tbc em
-14/08/2026). A lista acima já autoriza a superfície inteira.
+chamada real com a chave de 6 scopes acima autorizou no ambiente de
+validação em 14/08/2026). A lista acima já autoriza a superfície inteira.
 
 ## Conectando o Claude Code
 
-O endpoint é o **`/mcp`** do ambiente (JSON-RPC sobre TLS):
+O endpoint é o **`/mcp`** do SEU ambiente (JSON-RPC sobre TLS). A URL e a chave
+são fornecidas pelo admin da plataforma — não há endpoint padrão, e apontar para
+o ambiente errado é a primeira coisa que dá 401:
 
 ```bash
-claude mcp add --transport http agenteos-sandbox \
-  https://sandbox-tbc.dataagile.com.br/mcp \
+claude mcp add --transport http agenteos \
+  https://<SEU-AMBIENTE>/mcp \
   --header "Authorization: Bearer <SUA_CHAVE>"
 ```
 
 Para os scripts da skill (`.claude/skills/agentos-builder/scripts/mcp_client.py`):
 
 ```bash
-export MCP_URL=https://sandbox-tbc.dataagile.com.br   # sem /mcp — o client acrescenta
+export MCP_URL=https://<SEU-AMBIENTE>   # sem /mcp — o client acrescenta
 export MCP_KEY=<SUA_CHAVE>
 ```
 

@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "scripts"))
 import mcp_client as m  # noqa: E402
 
-# código do catálogo vira .code, mensagem limpa (caso visto ao vivo no sandbox-tbc)
+# código do catálogo vira .code, mensagem limpa (caso visto ao vivo num ambiente real)
 e = m._parse_tool_error("not_found: Nenhuma versão publicada de sbx-hello para revisar")
 assert e.code == "not_found", e.code
 assert str(e) == "Nenhuma versão publicada de sbx-hello para revisar", str(e)

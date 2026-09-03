@@ -57,8 +57,7 @@ desenhado fail-*open*, teria escrito sem aprovação.
 > coisa que não resolve. Ver §4.
 
 **Por que o erro é silencioso:** numa `condition`, um caminho que **não
-resolve** é tratado como `None` (🔍 `hatchet_app.py`, docstring de
-`_eval_condition`) — não levanta,
+resolve** é tratado como `None` (🔍 verificado no runtime da plataforma) — não levanta,
 não avisa, apenas compara falso e o fluxo segue pelo ramo negativo. Um erro de
 digitação no caminho tem exatamente a mesma aparência de "o humano rejeitou".
 Ao depurar, confira primeiro se o caminho existe no output do passo anterior.
@@ -86,7 +85,7 @@ os outros agentes do tenant**. A única saída é decidir o item por API
 Repro: `/inbox` normal → roda agente cujo approval gera item sem `action` →
 `/inbox` quebra → decide por API → `/inbox` volta.
 
-O front foi blindado (PR #586 da plataforma: item malformado vira card feio, não
+O front foi blindado pela plataforma (item malformado vira card feio, não
 página fora do ar). Mas **o item continua sem headline** — quem conserta o card
 não conserta a sua spec.
 
@@ -171,9 +170,9 @@ daquela versão está queimado para sempre; você segue para a próxima.
 Junte as duas coisas acima e o resultado é perverso (🔍 código):
 
 1. `change_class: "major"` num slug com contrato ativo **não pinado** faz o
-   catálogo recusar o publish (guard R8, em `agent_specs/seed.py::upsert_spec`).
+   catálogo recusar o publish (guard R8 do catálogo).
 2. Essa recusa cai no **mesmo** `report.rejeitados` de qualquer outra — e o
-   arquivo **já foi gravado** antes: em `mcp_server/tools/spec_publish.py`, a
+   arquivo **já foi gravado** antes: no `spec_publish` do MCP Server, a
    chamada a `specs_service.publish_spec()` (promove o arquivo) vem **antes** da
    chamada a `seed_spec()` (valida o catálogo).
 
@@ -190,7 +189,7 @@ Consequência para quem lê o histórico: `change_class` de spec publicada **nã
 confiável** como registro do tamanho da mudança. Olhe o diff, não o campo.
 
 > **Nota para quem for consertar isto na plataforma:** o caminho do contrato
-> hub→spoke (`platform_contract.py::_ingest_material`) já faz na ordem certa —
+> hub→spoke já faz na ordem certa —
 > valida o schema, roda o lint D-02, chama o `seed_spec` e **só então** escreve
 > os templates em disco. É o molde; o `spec_publish` do MCP é que está invertido.
 > Verificado em 27/08/2026: `publish_spec` tem **um único** call site antes de
@@ -221,8 +220,8 @@ comportamentos distintos. Confunda-os e você tira a conclusão errada.
 
 #### `config.when` (dentro do `config`) — 🔴 o perigoso
 
-Avaliado pelo gate de alçada (`hatchet_app.py`, bloco `if node_type ==
-"approval"`), via `_evaluate_condition_expr`. Esse avaliador reconhece
+Avaliado pelo gate de alçada do runtime, por um avaliador de expressão
+separado do `when` comum. Esse avaliador reconhece
 **exatamente três formas**:
 
 ```
@@ -273,7 +272,7 @@ nada — basta copiar de um nó que viu funcionando, e no approval aquilo vira
 
 #### `node.when` (topo do nó) — o menos grave
 
-Avaliado em `executors.py::_execute_approval` (passo 1). O executor espera um
+Avaliado pelo executor do approval (passo 1). O executor espera um
 **booleano já avaliado**; recebendo outra coisa, loga warning e cai em
 truthiness. Logo, uma **string não-vazia avalia verdadeiro e a aprovação
 acontece**. Só um falsy literal devolveria `{"status": "skipped", "reason":
@@ -316,7 +315,8 @@ que** o passo anterior falhou — então vale igual para ERP ou SFTP fora do ar,
 ainda que não tenha sido essa a causa no run acima. O caso do `when` exige um
 typo do autor; este dispara sem ninguém errar nada.
 
-O mecanismo comum aos dois está em `_APPROVED_STATUSES`, que inclui
+O mecanismo comum aos dois é a lista de status que o runtime trata como
+aprovado, que inclui
 `"skipped"` — o halt-check depois do approval deixa passar, por desenho (uma
 aprovação legitimamente dispensada não deve virar run failed).
 
@@ -409,7 +409,7 @@ Olhe **antes** de escrever a spec:
 
 - **Publicar não ativa.** Publicar põe no catálogo; rodar exige **contrato ativo**
   e ativação da instância. Em sandbox isso pode depender de liberação manual da
-  TBC (veja com o admin do ambiente).
+  plataforma (veja com o admin do ambiente).
 - **Versão nova não migra sozinha.** Com o contrato em `latest`, a instância
   continua na versão pinada; a UI avisa "reative pelo Marketplace", mas o card
   não tem botão de reativar — vá direto em `/products/<slug>/activate`.

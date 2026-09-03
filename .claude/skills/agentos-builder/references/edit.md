@@ -25,7 +25,7 @@ Ask which field(s) or which node(s) the user wants to change. Two paths:
 
 ## 4. Slug rename — refuse
 
-If the requested edit is (or amounts to) changing `slug`, refuse immediately per the SKILL.md boundary — this is RN-07: a slug rename requires a YAML change **and** a DB migration together (lesson from feature 007 / PR #149), which this skill cannot do half of safely. Point to `/w1`. Do not proceed with any other part of the edit in the same turn if the user bundled a slug rename with other changes — ask them to drop the rename and resubmit the rest.
+If the requested edit is (or amounts to) changing `slug`, refuse immediately per the SKILL.md boundary — this is RN-07: a slug rename requires a YAML change **and** a DB migration together (lesson from feature 007 / a entrega da feature 007), which this skill cannot do half of safely. Point to `/w1`. Do not proceed with any other part of the edit in the same turn if the user bundled a slug rename with other changes — ask them to drop the rename and resubmit the rest.
 
 ## 5. Published-spec versioning (RN-04)
 

@@ -29,7 +29,7 @@ A slug rename cannot be done directly (see SKILL.md boundary, RN-07) — but "cl
 
 If either signal is present:
 
-- **Source is published** → refuse the composition. A published slug rename requires YAML + DB migration together (feature 007 / PR #149 lesson) — this two-step Clone+Remove would silently produce that outcome without the migration half. Point to `/w1`. Do not proceed with the Remove half; the Clone half alone (a genuinely new spec that happens to resemble the source) is fine if the user confirms they want a distinct new agent, not a rename.
+- **Source is published** → refuse the composition. A published slug rename requires YAML + DB migration together (feature 007 / a entrega da feature 007 lesson) — this two-step Clone+Remove would silently produce that outcome without the migration half. Point to `/w1`. Do not proceed with the Remove half; the Clone half alone (a genuinely new spec that happens to resemble the source) is fine if the user confirms they want a distinct new agent, not a rename.
 - **Source is a draft** → allowed (drafts have no DB/catalog entanglement to strand), but say plainly: "this reads like a rename of a draft — proceeding as clone + remove, not a slug rename" so the user knows what actually happened to the git history (two files, not one renamed).
 
 ## 5. Write sequence

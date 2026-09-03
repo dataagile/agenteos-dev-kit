@@ -27,7 +27,7 @@ Every operation calls `scripts/mcp_client.py`, which reads `MCP_URL` and `MCP_KE
 
 Explicit non-goals — always refuse and redirect to `/w1`:
 - Creating or editing a node executor (`executors.py` / `interpreter.py`) or any agent-runtime code.
-- Renaming a published slug. Lesson from feature 007 (PR #149): a slug rename requires a YAML change **and** a DB migration together, done as one coordinated delivery — this skill cannot do half of that safely. Refuse and point to `/w1`.
+- Renaming a published slug. Lesson from feature 007: a slug rename requires a YAML change **and** a DB migration together, done as one coordinated delivery — this skill cannot do half of that safely. Refuse and point to `/w1`.
 - Editing anything under `spec/`, `.reversa/`, `_reversa_sdd/`, or `_reversa_forward/` — spec material is append-only and out of this skill's remit entirely.
 
 ## Shared rules (apply to every operation)
