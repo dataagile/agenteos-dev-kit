@@ -495,6 +495,174 @@ Duas coisas que só se descobrem usando (📏):
 
 ---
 
+## 10. Dado que parece real e não é: o MOCK SILENCIOSO do `erp_query`
+
+📏 Um `erp_query` cujo `query_template` **não existe** no data plane não falha.
+Ele devolve **fixture inventada** com `status: "ok"` e um campo discreto:
+
+```json
+{"result": [ {...3 registros plausíveis...} ],
+ "status": "ok",
+ "_mock_reason": "data_plane_422"}
+```
+
+O nó fica **verde** no trace. A condition a jusante conta 3 itens e segue. O
+`match_exact` casa. O run termina `completed`. **Nada disso aconteceu de verdade.**
+
+Custou horas: eu tinha um pipeline "funcionando" com 3 lançamentos casados, e os
+3 vinham de fixture — a query nunca existiu no ambiente.
+
+> 👉 **Antes de acreditar em run verde, procure `_mock_reason` no output de todo
+> nó de leitura.** Se estiver lá, o dado é inventado, independentemente do
+> `status: ok`.
+
+Valores vistos: `data_plane_422` (template não registrado) e `data_plane_500`
+(capability sem credencial, ex.: API do banco não habilitada).
+
+**Por que isso é pior que um erro:** um 422 na cara faria você registrar a query.
+O mock faz você seguir em frente e só descobrir quando alguém perguntar por que a
+conciliação casou lançamentos que não existem no extrato.
+
+---
+
+## 11. Shapes que a documentação erra — confira no trace, não no catálogo
+
+📏 Três divergências entre o que está escrito e o que o runtime faz. Todas
+descobertas do jeito caro: a spec valida `{ok: true}`, o nó falha em execução.
+
+### `.result`, nunca `.records`
+
+Um nó `tool` com `primitive: read` devolve:
+
+```json
+{"result": [ ... ], "status": "ok"}
+```
+
+Referenciar `.records` (que aparece em documentação interna) faz o transform a
+jusante reclamar que **não resolve para lista**.
+
+### `match_exact` devolve PARES ANINHADOS, não registros
+
+```json
+{"result": [ {"left": {...}, "right": {...}}, ... ]}
+```
+
+`left` é o registro do lado esquerdo, `right` o do direito. Um `loop` sobre esse
+resultado precisa de `{{item.left.<campo>}}` / `{{item.right.<campo>}}` —
+`{{item.<campo>}}` não resolve.
+
+> 💚 **Aqui o runtime protege:** com refs inválidas, o nó de escrita recusa com
+> `unresolved_item_refs` e a mensagem *"nenhuma escrita foi enviada"*. É
+> fail-closed de verdade — mas só descobri porque li o erro, não porque a
+> validação pegou.
+
+### `http_request` devolve `body` como STRING
+
+```json
+{"result": {"body": "{\"data\": [...]}", "status": 200, "headers": {...}}}
+```
+
+O `body` é **texto**, não objeto. E **não há como parsear em YAML**:
+
+| tentativa | resultado |
+|---|---|
+| `.result.body.data` no transform | não resolve para lista |
+| filtro `fromjson` / `from_json` no Jinja | **não existe** — o nó falha antes de executar |
+| `tojson` | existe (serializa), não ajuda |
+| qualquer transform strategy | nenhuma parseia string |
+
+Ou seja: hoje o `http_request` serve para **disparar** uma chamada, não para
+**alimentar** um pipeline com o que ela devolve. Se precisa do corpo, a leitura
+tem que vir por `tool`/`primitive: read`.
+
+---
+
+## 12. Forma reconhecida: a aprovação disparou nos dois sentidos da expressão
+
+📏 Em 01/09/2026, um `config.when` com forma **reconhecida** pela gramática
+resultou em `awaiting_approval` mesmo com a expressão avaliando falso.
+
+Como foi testado (para quem for reproduzir):
+
+1. `when: config.alcada_hitl != null` — forma reconhecida pela gramática;
+2. `alcada_hitl` **sem override** na empresa — confirmado no `config_resolved`
+   do trace, o campo não aparece em `override_keys`;
+3. `default: 0` **removido** do `config_schema`, para o valor efetivo ser nulo
+   de verdade (com o default, `0 != null` é verdadeiro e a aprovação é legítima).
+
+Resultado: run parou em `awaiting_approval`.
+
+**Isto NÃO contradiz a §4.** Ela trata de expressão **fora** da gramática, que
+cai num `False` de fallback lido como "dispensa a aprovação". Aqui a forma é
+reconhecida — outro caminho de código, nunca medido antes.
+
+O que chama atenção é o cruzamento com o braço de controle da §4 (`5d8ec509`),
+que usou `config.alcada_hitl == null` — a **negação** desta — sobre um campo
+também nulo, e **também** parou em `awaiting_approval`:
+
+| origem | expressão | `alcada_hitl` | resultado |
+|---|---|---|---|
+| §4 (controle) | `config.alcada_hitl == null` | nulo | `awaiting_approval` |
+| §12 (01/09) | `config.alcada_hitl != null` | nulo | `awaiting_approval` |
+
+Duas expressões opostas, mesmo desfecho. Uma delas tem de ser falsa — então, no
+caminho da forma reconhecida, o gate aparentemente **não decide pelo valor da
+expressão**.
+
+🔍 **Falta medir** (não feito): mesma spec, mesmo dia, três braços — `== null`,
+`!= null` e uma forma inválida (`config.total > 1000`). Se os dois primeiros
+dispararem e o terceiro pular, fecha o quadro: o gate reage à **parseabilidade**,
+não ao valor.
+
+> 🔴 **Não use `when` em nó `approval`.** Fora da gramática ele pula o humano
+> (§4); dentro dela, o veredito da expressão parece não ser respeitado (§12).
+> Nos dois cenários a defesa é a mesma: gatear a escrita no **veredito**
+> (`aprovar.decision.decision == 'approved'`).
+
+---
+
+## 13. Aprovação de test run de draft não é decidível (contador ≠ lista)
+
+📏 Um `spec_test_run` que atinge um nó `approval` fica em `awaiting_approval` e
+**não há como decidi-lo**. Três lugares discordam sobre o mesmo estado:
+
+| onde | mostra |
+|---|---|
+| aba em `/inbox` | **"Pendentes N"** |
+| lista abaixo | "Caixa de entrada vazia" |
+| card do agente em `/agents` | "Aprov. 0" |
+
+Os dois endpoints usam **o mesmo filtro** — `/api/v1/approval-items/count` e
+`/api/v1/approval-items`, ambos com o mesmo `erp_company_id` e ambos 200. A
+divergência está entre as duas queries.
+
+Efeito colateral: **cada tentativa deixa lixo permanente na fila** — itens que
+ninguém vê nem decide, e o contador cresce.
+
+Consequência para o autor: **agente com HITL não fecha um run verde em sandbox**.
+Como o gate de publish exige run verde, agentes com aprovação humana ficam sem
+caminho — a não ser que o admin libere `skip_sandbox_gate`.
+
+> Contornos que **não** funcionam: `config.when` (§12) e remover o nó do `next`
+> — o runtime executa os nós por **ordem no documento**, não só pelo grafo, então
+> um nó fora do caminho ainda roda.
+
+---
+
+## 14. Discovery não lista tudo — nome de entidade CDM pode não aparecer
+
+🔍 O `entity` de um `tool`/`primitive: read` é **string livre** no schema, e o
+read do data-plane **não tem allowlist** de entidade (o gate é só de escrita).
+
+Consequência prática: uma entidade nova (ex.: uma capability de leitura recém
+entregue) **funciona sem estar em nenhuma tool de discovery** — o autor precisa
+descobrir o nome por outro caminho (ticket, changelog, quem entregou).
+
+Se `spec_connectors`/`spec_tools` não listam o que você precisa, isso **não**
+significa que não existe. Pergunte antes de concluir que é gap.
+
+---
+
 ## Quando algo não for culpa da sua spec
 
 Estes são defeitos de plataforma conhecidos em 26/08/2026. Se bater neles, não
@@ -502,7 +670,7 @@ gaste tempo reescrevendo a spec:
 
 | Sintoma | O que é |
 |---|---|
-| Nó `agent` falha com `couldn't get a connection after 30.00 sec` ou `Model registry load timed out` | Bug de event loop no agent-runtime: o pool do worker não serve o workflow do Hatchet. **Grafo sem nó `agent` não é afetado** — foi assim que o `test-sftp` rodou ponta a ponta. |
+| Nó `agent` falha com `couldn't get a connection after 30.00 sec` ou `Model registry load timed out` | Bug de event loop no agent-runtime: o pool do worker não serve o workflow do Hatchet. **Grafo sem nó `agent` não é afetado** — foi assim que o `test-sftp` rodou ponta a ponta. 📏 Ainda presente em 01/09/2026, com repro mínima: um draft de **um único** nó `agent` (`user_prompt_template: "diga ok"`) falha igual. O registry em si está saudável — `spec_models` responde em 0,19s com todos os aliases `available: true`; é o caminho do agent-runtime até ele que estoura. |
 | `/runs/<id>` responde "Not Found" | Rota inexistente no front; abra o trace clicando a linha em `/runs`. |
 | Settings → Modelos → "Modelos por subagente" diz "Nenhuma etapa configurada" mesmo com nó `agent` | Bug de UI. |
 
