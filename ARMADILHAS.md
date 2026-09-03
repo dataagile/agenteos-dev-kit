@@ -577,11 +577,10 @@ tem que vir por `tool`/`primitive: read`.
 
 ---
 
-## 12. Correção à §4: `config.when` do approval pode ser ignorado por completo
+## 12. Forma reconhecida: a aprovação disparou nos dois sentidos da expressão
 
-📏 A §4 documenta que um `config.when` fora da gramática **pula o humano**. Medi
-o comportamento **oposto** num ambiente de 01/09/2026: com a expressão avaliando
-falso, **a aprovação disparou mesmo assim**.
+📏 Em 01/09/2026, um `config.when` com forma **reconhecida** pela gramática
+resultou em `awaiting_approval` mesmo com a expressão avaliando falso.
 
 Como foi testado (para quem for reproduzir):
 
@@ -593,13 +592,32 @@ Como foi testado (para quem for reproduzir):
 
 Resultado: run parou em `awaiting_approval`.
 
-**As duas leituras não se contradizem necessariamente** — podem ser versões
-diferentes da plataforma, ou o gate pode ter mudado entre 26/08 e 01/09. Mas a
-consequência prática é a mesma nos dois casos, e reforça a recomendação da §4:
+**Isto NÃO contradiz a §4.** Ela trata de expressão **fora** da gramática, que
+cai num `False` de fallback lido como "dispensa a aprovação". Aqui a forma é
+reconhecida — outro caminho de código, nunca medido antes.
 
-> 🔴 **Não use `when` em nó `approval`.** Ou ele pula o humano quando não devia
-> (§4), ou não pula quando você precisa (§12). Nos dois cenários, a defesa é
-> gatear a escrita no **veredito** (`aprovar.decision.decision == 'approved'`).
+O que chama atenção é o cruzamento com o braço de controle da §4 (`5d8ec509`),
+que usou `config.alcada_hitl == null` — a **negação** desta — sobre um campo
+também nulo, e **também** parou em `awaiting_approval`:
+
+| origem | expressão | `alcada_hitl` | resultado |
+|---|---|---|---|
+| §4 (controle) | `config.alcada_hitl == null` | nulo | `awaiting_approval` |
+| §12 (01/09) | `config.alcada_hitl != null` | nulo | `awaiting_approval` |
+
+Duas expressões opostas, mesmo desfecho. Uma delas tem de ser falsa — então, no
+caminho da forma reconhecida, o gate aparentemente **não decide pelo valor da
+expressão**.
+
+🔍 **Falta medir** (não feito): mesma spec, mesmo dia, três braços — `== null`,
+`!= null` e uma forma inválida (`config.total > 1000`). Se os dois primeiros
+dispararem e o terceiro pular, fecha o quadro: o gate reage à **parseabilidade**,
+não ao valor.
+
+> 🔴 **Não use `when` em nó `approval`.** Fora da gramática ele pula o humano
+> (§4); dentro dela, o veredito da expressão parece não ser respeitado (§12).
+> Nos dois cenários a defesa é a mesma: gatear a escrita no **veredito**
+> (`aprovar.decision.decision == 'approved'`).
 
 ---
 
