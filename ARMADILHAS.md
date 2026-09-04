@@ -679,6 +679,12 @@ conector sabe. Então normalize antes do `approval`:
 - se só existe texto, converta num `transform` a montante (`replace(".", "")`,
   `replace(",", ".")`, `float`) e aponte `amount_path` para o campo convertido.
 
+Se o valor vier como **texto numérico**, só o formato canônico resolve:
+`-?\d+(\.\d{1,2})?` (ex.: `"1335.16"`, `"-100"`). `"1234.567"`, `"1e3"`, `"+10"`,
+`"800.000"` são irresolúveis de propósito (`"800.000"` seria lido como 800,0 —
+mil vezes menor — e pularia a alçada). Isso vale também no pós-decisão: um lote
+aprovado com item assim é **retido**, não pago.
+
 Sinal de que caiu nisto: `/inbox` com "não pôde ser calculado" ou aprovação
 pedida para lote pequeno, e `action.amount_unresolved: true` no item.
 
