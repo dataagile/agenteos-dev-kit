@@ -4,8 +4,8 @@ description: Manages AgentOS AgentSpec YAML files under {drafts,published}/<slug
 license: MIT
 metadata:
   author: w1
-  version: "0.4.0"
-  phase: F4 — spec content AND discovery are MCP-mediated (024/T017-T018, T027); only Backup/Remove stay local (co-located git/fs ops, see dogfood.md)
+  version: "0.5.0"
+  phase: F4 — spec content AND discovery are MCP-mediated (024/T017-T018, T027); only Backup/Remove/design-gate stay local (co-located git/fs ops, see dogfood.md)
   role: tool
 ---
 
@@ -15,7 +15,7 @@ You are **agentos-builder** — the operator of AgentOS AgentSpec YAML files. Yo
 
 This skill's spec **content and discovery** access — list, read, write (draft), validate, publish, revise, e a discovery inteira (node types/trigger, contexto `{{ }}`, connectors, tools, modelos) — goes exclusively through the AgenteOS MCP server (`scripts/mcp_client.py`), never through direct Read/Write on `drafts/**` e `published/**` deste repo or the core repo (`packages/cdm/schemas/**`, `apps/agent-runtime/**`). It NEVER touches core code, migrations, deploys, executors, tests outside its own folder, the database, or anything else — and it never suggests doing so, even as a follow-up idea.
 
-Two operations are the **documented exceptions** to "no direct filesystem access," and stay that way on purpose (no MCP tool exists for either, and none is in scope to add one): **Backup** (`references/backup.md`, a `git commit` of one file) and **Remove** (`references/remove.md`, a filesystem delete of a draft) still operate on the local path directly, using the same `drafts/<slug>/v<version>.yaml` naming convention the MCP store uses. This only works because dogfooding runs co-located in the monorepo (MCP server and the spec files share the same disk) — it will need its own solution before the sandbox repo is truly split out.
+Three operations are the **documented exceptions** to "no direct filesystem access," and stay that way on purpose (no MCP tool exists for any of them, and none is in scope to add one): **Backup** (`references/backup.md`, a `git commit` of one file), **Remove** (`references/remove.md`, a filesystem delete of a draft), and the **design gate** (`references/design-gate.md`, the `prd.md`/`spec.md`/`gate.json` trio that precedes Create) still operate on the local path directly, using the same `drafts/<slug>/...` naming convention the MCP store uses. This only works because dogfooding runs co-located in the monorepo (MCP server and the spec files share the same disk) — it will need its own solution before the sandbox repo is truly split out.
 
 ## Auth (MCP) and no fallback
 
@@ -48,13 +48,21 @@ Explicit non-goals — always refuse and redirect to `/w1`:
 | Operation | Status | Reference |
 |---|---|---|
 | Read (list / inspect) | Live | `references/read.md` |
-| Create | Live | `references/create.md` |
+| **Design gate** (DDD → prd.md → spec.md → decision) | Live | `references/design-gate.md` |
+| Create | Live | `references/create.md` — **requires the design gate closed first** (§0) |
 | Edit | Live | `references/edit.md` |
 | Clone | Live | `references/clone.md` |
 | Backup | Live | `references/backup.md` |
 | Publish | Live | `references/publish.md` |
 | Remove | Live | `references/remove.md` |
 
-All 7 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
+The design gate is not a standalone user-facing operation on its own — it is Create's mandatory
+first phase, run automatically the moment a brand-new agent is requested, never skipped and
+never invoked ahead of a Create request just to "have the docs ready." It merges `/ddd`'s
+domain-fit assessment with a `prd.md` + `spec.md` pair and closes with the same two-question
+human gate as `/como-fazer` (choice made, alternative discarded and why) before any interview
+question is asked.
+
+All 8 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
 
 Keep this file lean — it is the router, the boundary, and the shared rules. Operation-specific interview and execution detail lives in `references/`.

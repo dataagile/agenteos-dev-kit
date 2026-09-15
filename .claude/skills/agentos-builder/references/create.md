@@ -2,6 +2,22 @@
 
 Guided interview that builds a brand-new AgentSpec YAML from scratch and writes it to `a raiz deste repo: drafts/<slug>/v0.1.yaml`. Precise questions only — every question names the schema field it fills. One round at a time; don't front-load the whole interview in a wall of text.
 
+## §0 — Design gate (mandatory, runs first)
+
+Before Identity (§a) or any other interview question, check `drafts/<slug>/gate.json`
+(`references/design-gate.md`). If it doesn't exist, or exists with `status` other than
+`"closed"`, **stop the interview before it starts** and run `references/design-gate.md`
+instead — it merges `/ddd`'s domain-fit check with a `prd.md` + `spec.md` pair and closes on
+the same two-question human decision `/como-fazer` uses. Only resume this file once that gate
+reports `closed`. This applies even if the user asks to "just start" — a request to skip
+straight to node questions is a request to skip the gate, and this skill doesn't do that
+silently; say why and point at the gate file.
+
+Once the gate is closed, `spec.md` already carries the slug, trigger choice, node sequence
+sketch, io, and config_schema shape the user signed off on — treat it as the starting answer
+for each step below, confirming rather than re-asking from zero, and flag anything that no
+longer matches live discovery (§ node_types/context/models calls) since the gate closed.
+
 Before asking anything, call `mcp_client.node_types()` fresh — `{node_types: [{type, runtime_ready, required, optional, ux_hint, variants: [...]}], trigger: {...}, spec_level: {...}, transform_strategies: [...], semantics: {...}}`. Never reuse a list from an earlier turn or from memory, and never read `packages/cdm/schemas/agent_spec_v1_builder_map.json` or `apps/agent-runtime/src/agent_runtime/executors.py` directly (T027 — this tool is the only source of truth for *which node types exist*, and it can change between sessions). The `semantics` block (keys `condition`, `when`, `jump`, `loop_body_errors`, plus `version` and `partial`) carries the flow semantics the environment actually enforces — read it before writing any `condition`/`loop`/`when` node, per SKILL.md's discovery-not-memory rule. If the artifact behind it is missing or incomplete only that block degrades (`{partial: true, warning: ...}`); the node-type catalog is still served.
 
 **Node `config` shape comes from `variants` (feature 063).** Each entry's `variants` lists every form the validator accepts for that type, derived from `agent_spec_v1.json` itself — including the `config` sub-schema with its required fields and enums. Use the variant marked `current: true`; the other one is the alternative form (e.g. `tool` accepts either top-level `tool_name`, dispatched by the Tool Registry, or `config.primitive` — the form every shipped spec uses). `identifier.one_of` says the node id field may be `key` **or** `id`. The entry's `required`/`optional` describe only the builder-map form and omit `config` — do not build a node from them.
@@ -12,7 +28,7 @@ Reading an existing spec to copy conventions is now optional (and impossible wit
 
 **For any `model_ref` / `intent_model_ref`, call `mcp_client.models()`** and pick an alias with `available: true`. Never invent an alias, and never write a literal model or provider name.
 
-## Interview flow
+## Interview flow (post-gate)
 
 ### a. Identity
 
