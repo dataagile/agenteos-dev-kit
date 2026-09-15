@@ -665,6 +665,11 @@ significa que não existe. Pergunte antes de concluir que é gap.
 
 ## 15. O valor do item tem que ser numérico — texto vira "valor desconhecido", nunca R$ 0
 
+🔍 **Lido na correção do motor (DAI-1028: `batch_cap.py`, regex canônico e
+`amount_unresolved` no item), não exercitado por run daqui.** Rodou e viu
+diferente? Corrija aqui. O sinal de diagnóstico é `action.amount_unresolved: true`
+no output do nó `approval` no trace do run.
+
 O campo apontado por `amount_path` no `approval` precisa chegar como número
 (`1335.16`). Se o conector devolver texto (`"900.000,00"` em pt-BR, `"1.335,16"`,
 vazio, `null`), a plataforma **não adivinha**: o item conta como *valor não
