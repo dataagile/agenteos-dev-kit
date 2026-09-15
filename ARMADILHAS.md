@@ -663,6 +663,38 @@ significa que não existe. Pergunte antes de concluir que é gap.
 
 ---
 
+## 15. O valor do item tem que ser numérico — texto vira "valor desconhecido", nunca R$ 0
+
+🔍 **Lido na correção do motor (DAI-1028: `batch_cap.py`, regex canônico e
+`amount_unresolved` no item), não exercitado por run daqui.** Rodou e viu
+diferente? Corrija aqui. O sinal de diagnóstico é `action.amount_unresolved: true`
+no output do nó `approval` no trace do run.
+
+O campo apontado por `amount_path` no `approval` precisa chegar como número
+(`1335.16`). Se o conector devolver texto (`"900.000,00"` em pt-BR, `"1.335,16"`,
+vazio, `null`), a plataforma **não adivinha**: o item conta como *valor não
+resolvido* — o card mostra "teto do lote não pôde ser calculado", a alçada
+**exige aprovação humana** mesmo abaixo do limite, e com `batch_cap` declarado
+o Aprovar fica bloqueado. Nunca soma 0 em silêncio (DAI-1028).
+
+Por que não converter no motor: `1.234` é mil ou um-vírgula-duzentos? Só o
+conector sabe. Então normalize antes do `approval`:
+
+- prefira um campo já numérico do CDM/ERP em `amount_path` (ex.: `fields.saldo`);
+- se só existe texto, converta num `transform` a montante (`replace(".", "")`,
+  `replace(",", ".")`, `float`) e aponte `amount_path` para o campo convertido.
+
+Se o valor vier como **texto numérico**, só o formato canônico resolve:
+`-?\d+(\.\d{1,2})?` (ex.: `"1335.16"`, `"-100"`). `"1234.567"`, `"1e3"`, `"+10"`,
+`"800.000"` são irresolúveis de propósito (`"800.000"` seria lido como 800,0 —
+mil vezes menor — e pularia a alçada). Isso vale também no pós-decisão: um lote
+aprovado com item assim é **retido**, não pago.
+
+Sinal de que caiu nisto: `/inbox` com "não pôde ser calculado" ou aprovação
+pedida para lote pequeno, e `action.amount_unresolved: true` no item.
+
+---
+
 ## Quando algo não for culpa da sua spec
 
 Estes são defeitos de plataforma conhecidos em 26/08/2026. Se bater neles, não
