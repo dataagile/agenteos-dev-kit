@@ -88,6 +88,11 @@ com aprovação humana obrigatória antes de escrever, gate da escrita na decis�
 arquivo explica cada decisão de desenho e o que foi medido em runtime — inclusive por que ele
 NÃO tem nó `agent`. Os tropeços do caminho estão em [`ARMADILHAS.md`](ARMADILHAS.md).
 
+Para conectar a APIs externas (Google via app da plataforma, Fluig oauth1a, cadastro
+por API, o que o botão "Testar" mente), leia [`docs/conexoes.md`](docs/conexoes.md).
+As consultas de leitura mínimas que devolvem 200 estão em
+[`examples/http-leitura/v1.yaml`](examples/http-leitura/v1.yaml).
+
 ## Limitações conhecidas
 
 > 📌 **Leia [`ARMADILHAS.md`](ARMADILHAS.md) antes de publicar o primeiro agente.**
