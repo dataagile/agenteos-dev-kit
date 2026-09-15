@@ -40,6 +40,7 @@ Explicit non-goals — always refuse and redirect to `/w1`:
 
    **Semântica de fluxo vem do ambiente também (094):** a resposta de `node_types()` traz o bloco `semantics` — gramática REAL de `condition` (top-level ≠ corpo de loop), formas do `when`, regras de salto `on_true`/`on_false` e comportamento de erro em corpo de loop. **Ler o bloco ANTES de escrever qualquer nó `condition`/`loop`/`when`** — expressão fora da gramática não dá erro: vale `False` em silêncio, e em nó `approval` com alçada um `when` ilegível PULA a aprovação humana (fail-open — o próprio bloco avisa). Gateie todo write no resultado da aprovação.
 4. **Publicou, entrou no catálogo.** `spec_publish` semeia o catálogo do ambiente na hora e o servidor é o gate final de validação — não existe (nem sugira) passo manual de seed.
+5. **Fale pra quem não é dev.** Quem conduz essa skill no dia a dia normalmente é analista de negócio, não developer — nunca termo de schema/campo YAML com essa pessoa. `references/design-gate.md` §0 tem a tabela de tradução (termo técnico → como falar); toda operação que conversa com o usuário reaproveita essa tabela em vez de reinventar a frase.
 
 **Shared rules detail.** The rules above are the summary. Lifecycle state, versioning/`change_class` semantics, the R8 guard, the git-backup doctrine, the slug-rename ban (including the disguised Clone+Remove composition), and the canonical DAI-526 drift explanation are all documented once, in full, in `references/lifecycle.md` — every operation file below points there instead of restating them.
 

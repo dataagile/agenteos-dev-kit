@@ -9,19 +9,40 @@ This is the **third** documented exception to the MCP-only boundary (SKILL.md), 
 Backup and Remove — no MCP tool exists for PRD/spec/gate content, so this step writes local
 files with Read/Write/Edit, git-tracked like everything else under `drafts/`.
 
+## 0. Falando com quem decide
+
+Quem conduz essa conversa **normalmente não é dev** — é analista de negócio. Nunca use termo de
+schema/YAML com essa pessoa. Uma frase curta, sem jargão, nunca parágrafo. Tabela — memorize,
+não repita ela pro usuário:
+
+| Termo técnico | Como falar |
+|---|---|
+| trigger | o que "liga" o agente — todo dia num horário, quando algo acontece, ou só quando alguém manda |
+| node / nó | um passo da receita que o agente segue, em ordem |
+| io (reads/writes) | o que ele vai buscar / o que ele entrega no fim |
+| config_schema | os ajustes que dá pra mudar depois, sem chamar o dev de novo |
+| approval node | um ponto onde ele para e pede seu ok antes de continuar |
+| DDD Modo 1 | checagem rápida — esse assunto é complicado o bastante pra merecer um mapeamento antes, tipo perguntar se a reforma precisa de projeto de engenheiro ou só de pedreiro |
+| spec.md | a tradução técnica do que você decidiu, pra quem monta o agente — você confirma se bate, não precisa ler linha a linha |
+
+`prd.md` e as perguntas do gate (§4) já usam essa linguagem. `spec.md` (§3) é o único artefato
+técnico — nunca peça pra essa pessoa ler ele direto, resuma.
+
 ## 1. DDD Modo 1 — fit assessment (mandatory call, optional depth)
 
 Invoke `Skill(ddd)` Modo 1 against what's known about the agent so far (the user's request,
-any domain vocabulary mentioned, an early io sketch). The call itself is not optional — always
-run the fit assessment before writing `prd.md` — but its **verdict** decides how much more DDD
-work happens:
+any domain vocabulary mentioned, an early io sketch). Frame the check to the user per the
+glossary above (§0) — never say "DDD" or "fit assessment" out loud. The call itself is not
+optional — always run the fit assessment before writing `prd.md` — but its **verdict** decides
+how much more DDD work happens:
 
 - **Pular** — most agent specs land here (automation/IT-shaped, not client-domain-shaped). Go
   straight to §2.
 - **Discovery enxuto / completo** — pause here, run `Skill(ddd)` Modo 2 per its own phased
-  process (`references/processo-descoberta.md` in that skill). Its output — one Markdown doc
-  per aggregate, 15-section structure — is saved to `drafts/<slug>/domain/<aggregate>.md`. Do
-  not fold it into `prd.md`; link to it instead.
+  process (`references/processo-descoberta.md` in that skill) — that process already talks
+  business language on its own, no extra translation needed. Its output — one Markdown doc per
+  aggregate — is saved to `drafts/<slug>/domain/<aggregate>.md`. Do not fold it into `prd.md`;
+  link to it instead.
 
 Record the verdict and which criteria matched — it goes into `gate.json` §4.
 
@@ -49,6 +70,10 @@ Before writing it, run the same discovery calls the Create interview itself uses
 types, trigger types, and model aliases that actually exist right now. Catching an infeasible
 shape here is cheap; catching it after the gate is closed is not.
 
+Abre com um **resumo de 3-4 linhas em português simples** (o que o agente faz, passo a passo, sem
+termo técnico) — é a parte que a pessoa não-dev de fato lê. O resto do arquivo é técnico, existe
+pro Create consumir depois, não pra ser lido linha a linha por quem está decidindo.
+
 Sections:
 
 - **slug, category, requires_erp** — proposed values.
@@ -66,7 +91,9 @@ Write to `drafts/<slug>/spec.md`.
 
 ## 4. Gate — human decision (same vision as `/como-fazer`)
 
-Two questions, one frase cada — mirrors `protheus:como-fazer` / `fluig:como-fazer` exactly:
+Apresente pelo resumo do `spec.md` (§3) e pelo `prd.md` — nunca jogue o `spec.md` técnico
+inteiro na tela pra essa pessoa decidir em cima. Two questions, one frase cada — mirrors
+`protheus:como-fazer` / `fluig:como-fazer` exactly:
 
 1. **Qual caminho você escolheu?**
 2. **Qual alternativa você descartou, e por quê?**
