@@ -280,6 +280,12 @@ acontece**. Só um falsy literal devolveria `{"status": "skipped", "reason":
 
 #### Estado hoje
 
+- 🔍 **O catálogo diz que isto mudou (DAI-918).** O bloco `semantics.when`
+  do `spec_node_types` (lido em 15/09/2026) afirma que `when` ilegível no
+  approval passou a ser **fail-closed**: a aprovação é EXIGIDA, com warning
+  "approval NOT skipped". A tabela acima foi 📏 medida ANTES dessa mudança e
+  ainda não foi re-medida. Até alguém repetir os dois runs, a regra continua:
+  não use `when` em approval e gateie no veredito.
 - 🔍 **Não há regressão viva.** As três specs publicadas que usam `when` em
   approval (`fin-pagamentos` v3, `-pix` v1, `-cnab` v1) usam todas
   `config.alcada_hitl != null` — forma reconhecida. É **sorte histórica**, não
@@ -462,11 +468,20 @@ Duas coisas que só se descobrem usando (📏):
   **Sobra um caso:** slug **sem instância nenhuma** (agente novo que nunca foi
   materializado). Aí sim só há os defaults do schema.
 
-  ⚠️ **A correção NÃO é pôr `default` no `config_schema`.** Isso cria uma
-  property com default que não deveria existir em spec publicada — conexão vem
-  da ativação, é o padrão de todas as publicadas. O caminho certo é **preencher
-  a config na tela de configuração**. `default` só se justifica em draft
-  descartável de experimento.
+  ⚠️ **Em spec PUBLICADA, `default` com id de conexão é anti-padrão.** Conexão
+  vem da ativação — é o padrão de todas as publicadas. Mas, **autorando só pelo
+  MCP, o `default` é hoje a única saída** (📏 15/09/2026, Arquiteto TOTVS
+  draft v4): `spec_test_run` não recebe `config` (confirmado no schema da tool
+  em 15/09; Agente_OS#777), não existe tool para preencher a config da
+  instância draft, e o `"instance": "instancia_atualizada"` do `spec_write`
+  não diz qual config a instância tem. O caminho pela **tela de configuração
+  do rascunho** exige acesso ao sandbox-os (produto → instância → Configuração).
+
+  Regra prática: `default:` com ids reais **só no draft de teste**, com um
+  comentário `# REMOVER antes de publicar` em cada um, e removê-los na versão
+  que vai para `spec_publish`. Fechar o ciclo só pelo MCP (parâmetro `config`
+  no `spec_test_run` ou tool `spec_instance_config`) é gap da plataforma
+  (Agente_OS#777).
 - 📏 **Property `required` marcada `x-company-scoped` sem override da empresa:**
   o run morre em `COMPANY_CONFIG_INCOMPLETE` (*"preencha na tela de Parâmetros
   da empresa"*) antes de rodar nó nenhum. É fail-closed deliberado — o campo
@@ -692,6 +707,138 @@ aprovado com item assim é **retido**, não pago.
 
 Sinal de que caiu nisto: `/inbox` com "não pôde ser calculado" ou aprovação
 pedida para lote pequeno, e `action.amount_unresolved: true` no item.
+---
+
+## 16. Nó `agent`: tudo dentro de `config` — o topo do nó NÃO é interpolado
+
+📏 Medido em 15/09/2026 (Arquiteto TOTVS draft v4, run `aae4dd13`). Quatro nós
+`agent` com `prompt`, `system_message` e `model_ref` no **topo** do nó, como o
+catálogo sugere. Os modelos receberam os marcadores **literais**
+(`{{run.input.mensagem}}`, `{{persona_negocio.content}}`) e responderam "não
+informado"; o output registrou `"model_ref": "{{config.model_ref}}"`.
+
+Causa (🔍 runtime): o laço interpola `node_cfg` (o `config`) e depois só
+interpola campos de topo dos nós request-shaped (`_TOP_LEVEL_WRITE_NODES`).
+`agent` não está na lista. O executor do agent lê `config.prompt` primeiro e
+cai no topo só como fallback — cru.
+
+O mesmo `prompt` movido para dentro de `config:` resolveu (run `3cddd12f`).
+
+**Armadilha dupla:** o JSON-Schema **exige** `model_ref` no topo do nó
+(`'model_ref' is a required property`). A forma que funciona é redundante:
+
+```yaml
+- id: persona_negocio
+  key: persona_negocio
+  type: agent
+  model_ref: "{{config.model_ref}}"     # exigido pelo schema — NÃO interpolado
+  config:
+    model_ref: "{{config.model_ref}}"   # o que o executor usa
+    system_message: "Você é ..."
+    prompt: "Pedido: {{run.input.mensagem}}"
+```
+
+Regra: **em nó `agent`, todo campo que carrega `{{...}}` vai dentro de
+`config`.** Deixe no topo só o que o schema exige, sabendo que ali é literal.
+Incluir `agent` na interpolação de topo (ou o catálogo parar de anunciar os
+campos) é gap da plataforma — issue irmã no Agente_OS.
+
+---
+
+## 17. `{{...}}` na SAÍDA de um LLM derruba o nó de escrita seguinte
+
+📏 Mesmo run `aae4dd13`. As personas ecoaram o texto
+`{{persona_negocio.content}}` dentro do JSON de resposta (consequência da §16).
+O nó `tool` seguinte (primitive write) recebeu esse content no payload e a
+guarda de refs não resolvidas leu o texto como referência pendente:
+
+```
+Referências não resolvidas no pagamento (persona_negocio.content, ...).
+Revise a configuração do agente.
+error_code: unresolved_write_refs
+```
+
+Run inteiro abortado. O mecanismo é independente da causa-raiz: **a guarda
+varre o VALOR já interpolado**, então qualquer conteúdo de modelo ou de usuário
+com chaves duplas dentro de um payload de write é falha de run — e a mensagem
+aponta para "configuração do agente", longe da causa.
+
+Ao ver `unresolved_write_refs` com refs que você **não** escreveu na spec,
+olhe o output do passo anterior: provavelmente é texto com `{{}}` dentro.
+Mitigação em autoria: instrua o modelo a nunca emitir chaves duplas, e não
+passe prosa de LLM direto para write sem um `transform` no meio. A guarda
+varrer só o que veio da spec é gap da plataforma — issue irmã no Agente_OS.
+
+---
+
+## 18. `http_request` que falha NÃO aborta o run — e o erro é a forma da consulta
+
+📏 15/09/2026 (runs `aae4dd13` e `3cddd12f`). Duas conexões `http_generic`
+autenticaram de primeira (Drive oauth2 via app da plataforma; Fluig oauth1a).
+As requisições falharam pela **forma da consulta**; o erro chega como
+`502 CONNECTOR_ERROR` com o corpo do destino dentro — legível, mas só depois.
+
+| Destino | O que estava na spec | Erro | O que devolve 200 |
+|---|---|---|---|
+| Google Drive `GET /drive/v3/files` | `q: "<texto livre>"` | 400 `Invalid Value` em `q` | `q: "'<folderId>' in parents and trashed = false"`, `fields: files(id,name,modifiedTime,webViewLink)`, `pageSize` |
+| Fluig `GET /api/public/ecm/dataset/search` | `searchTerm: "<texto>"` | 500 `java.lang.NullPointerException` | `datasetId=document&searchField=documentDescription&searchValue=<termo>` |
+
+Spec de exemplo com os dois nós: [`examples/http-leitura/v1.yaml`](examples/http-leitura/v1.yaml).
+Roteiro para criar as conexões: [`docs/conexoes.md`](docs/conexoes.md).
+
+**Duas semânticas de falha que o kit não dizia:**
+
+- Falha de `http_request` **não aborta o run**: o nó seguinte roda com
+  `{{x.result}}` vazio. Se o próximo passo é um `agent`, ele responde sobre
+  nada e você só descobre lendo o trace.
+- Falha de nó `agent` **aborta** o run.
+
+Defesa: um `condition` logo após o `http_request` lendo o `status` do step
+(`buscar.status == 'failed'`, gramática da condition — §4) antes de qualquer
+nó que consuma o resultado.
+
+---
+
+## 19. Saída de nó `agent` é STRING — onde parsear
+
+📏 15/09/2026 (Arquiteto TOTVS). Três limites que juntos impedem ligar campo a
+campo o que o modelo produziu:
+
+- `structured_output_schema` do nó `agent` **não é lido pelo runtime**; a saída
+  é `<id>.content`, string.
+- `render_template` não tem filtro para parsear JSON (`from_json` não existe,
+  sem filtro custom) e nenhuma estratégia de `transform` faz isso — o mesmo
+  limite que a §11 mede para o `body` do `http_request`.
+- Nenhum tipo de nó produz `.docx`/`.xlsx`. `render_template` emite texto
+  (🔍 o catálogo lista `output_format: pdf`; não medido).
+
+### O padrão que fechou: parse no serviço
+
+Uma operation no sandbox-service (`entregar_arquitetura`,
+agentOS-agente_smartview#37 + Agente_OS#805) recebe as strings cruas dos nós
+`agent` no payload de um `tool` write, extrai o **último** objeto JSON válido
+de cada uma (`raw_decode` posicional — tolera few-shot e chave solta na prosa),
+renderiza os Jinja no serviço e devolve os binários em base64. A spec caiu de
+800 para ~500 linhas.
+
+```yaml
+- id: entregar
+  key: entregar
+  type: tool
+  tool_name: smartview_sandbox.entregar_arquitetura   # confirme em spec_tools → platform_tools
+  params:
+    persona_negocio: "{{persona_negocio.content}}"   # string crua; o serviço parseia
+    persona_tecnica: "{{persona_tecnica.content}}"
+```
+
+**Custo escondido:** operation nova exige **dois PRs** — o endpoint no serviço
+e a entrada no `_OPS` do connector `smartview_sandbox` no Agente_OS. Sem a
+segunda, o connector recusa antes de qualquer HTTP com "Operação desconhecida".
+Isso é trabalho no core da plataforma, **fora do escopo deste kit** (regra de
+ouro): peça ao time da plataforma citando os dois PRs acima como molde.
+
+Lembre a §17: a string crua vai para um write, então o modelo não pode emitir
+`{{}}`.
 
 ---
 

@@ -1,0 +1,73 @@
+# Leituras mínimas que devolvem 200 contra Google Drive e Fluig, via http_generic.
+# 📏 As consultas foram medidas em 15/09/2026 (runs aae4dd13 e 3cddd12f do
+# Arquiteto TOTVS): as formas "óbvias" (q com texto livre; searchTerm) dão 400 e
+# 500 respectivamente — ver ARMADILHAS.md §18. Como criar as conexões: docs/conexoes.md.
+#
+# Lembre: falha de http_request NÃO aborta o run (o nó seguinte roda com result
+# vazio) e o body volta como STRING (§11). Este grafo só dispara e devolve o cru.
+# Passou no spec_validate em 15/09/2026 (trigger chat; "manual" não existe no schema). NÃO foi executada com estas
+# conexões — troque os ids de conexão pelos do seu spec_connectors.
+id: "agt_http_leitura_v1"
+slug: "http-leitura"
+name: "http_leitura"
+version: "1.0.0"
+change_class: "minor"
+category: "integracao"
+requires_erp: false
+description: >
+  Exemplo de leitura via http_request: lista uma pasta do Google Drive e busca
+  documentos no Fluig por descrição. Sem escrita, sem nó agent.
+
+config_schema:
+  type: object
+  required: [connection_drive_id, connection_fluig_id, drive_folder_id]
+  properties:
+    connection_drive_id:
+      type: string
+      x-ref: connection
+      title: "Conexão Google Drive"
+      description: Conexão http_generic oauth2 autorizada com Google (docs/conexoes.md).
+    connection_fluig_id:
+      type: string
+      x-ref: connection
+      title: "Conexão Fluig"
+      description: Conexão http_generic oauth1a apontando para o Fluig.
+    drive_folder_id:
+      type: string
+      title: "Pasta do Drive"
+      description: ID da pasta (o trecho final da URL do Drive) cujos arquivos serão listados.
+    termo_fluig:
+      type: string
+      default: "manual"
+      title: "Termo de busca no Fluig"
+      description: Texto procurado na descrição dos documentos (documentDescription).
+
+trigger:
+  type: chat
+
+nodes:
+  - id: listar_drive
+    key: listar_drive
+    type: http_request
+    connection: "{{config.connection_drive_id}}"
+    method: GET
+    path: /drive/v3/files
+    params:
+      q: "'{{config.drive_folder_id}}' in parents and trashed = false"
+      fields: "files(id,name,modifiedTime,webViewLink)"
+      pageSize: 50
+    output: arquivos_drive
+    next: [buscar_fluig]
+
+  - id: buscar_fluig
+    key: buscar_fluig
+    type: http_request
+    connection: "{{config.connection_fluig_id}}"
+    method: GET
+    path: /api/public/ecm/dataset/search
+    params:
+      datasetId: document
+      searchField: documentDescription
+      searchValue: "{{config.termo_fluig}}"
+    output: documentos_fluig
+    next: []
