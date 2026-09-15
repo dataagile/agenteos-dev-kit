@@ -65,5 +65,5 @@ O `test` por API tem a mesma limitação do botão "Testar" abaixo.
 | Botão "Testar" da conexão `oauth2` devolve **401** | Funciona mesmo assim. O gateway do Testar **não faz refresh** do token; a chamada real roda no data-plane, que faz. Prove com um `spec_test_run` de leitura. |
 | `403` numa chamada Google depois de consentir | API não habilitada no projeto Google Cloud (item 2 acima). |
 | `state_invalid` ao voltar do consentimento | Início e consentimento em contextos diferentes (curl + navegador, ou navegador deslogado). Refaça tudo no navegador logado. |
-| `502 CONNECTOR_ERROR` com corpo do destino dentro | Autenticou; a **consulta** está errada (`ARMADILHAS.md` §17). |
+| `502 CONNECTOR_ERROR` com corpo do destino dentro | Autenticou; a **consulta** está errada (`ARMADILHAS.md` §18). |
 | Conta pessoal não consegue autorizar | App interno exige conta da organização (item 1). |

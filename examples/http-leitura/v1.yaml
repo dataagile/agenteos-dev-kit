@@ -1,11 +1,11 @@
 # Leituras mínimas que devolvem 200 contra Google Drive e Fluig, via http_generic.
 # 📏 As consultas foram medidas em 15/09/2026 (runs aae4dd13 e 3cddd12f do
 # Arquiteto TOTVS): as formas "óbvias" (q com texto livre; searchTerm) dão 400 e
-# 500 respectivamente — ver ARMADILHAS.md §17. Como criar as conexões: docs/conexoes.md.
+# 500 respectivamente — ver ARMADILHAS.md §18. Como criar as conexões: docs/conexoes.md.
 #
 # Lembre: falha de http_request NÃO aborta o run (o nó seguinte roda com result
 # vazio) e o body volta como STRING (§11). Este grafo só dispara e devolve o cru.
-# ⚠️ NÃO passou por spec_validate (MCP respondeu 502 em 15/09/2026) nem foi executada com estas
+# Passou no spec_validate em 15/09/2026 (trigger chat; "manual" não existe no schema). NÃO foi executada com estas
 # conexões — troque os ids de conexão pelos do seu spec_connectors.
 id: "agt_http_leitura_v1"
 slug: "http-leitura"
@@ -43,7 +43,7 @@ config_schema:
       description: Texto procurado na descrição dos documentos (documentDescription).
 
 trigger:
-  type: manual
+  type: chat
 
 nodes:
   - id: listar_drive

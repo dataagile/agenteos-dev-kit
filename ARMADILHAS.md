@@ -709,7 +709,7 @@ Sinal de que caiu nisto: `/inbox` com "não pôde ser calculado" ou aprovação
 pedida para lote pequeno, e `action.amount_unresolved: true` no item.
 ---
 
-## 15. Nó `agent`: tudo dentro de `config` — o topo do nó NÃO é interpolado
+## 16. Nó `agent`: tudo dentro de `config` — o topo do nó NÃO é interpolado
 
 📏 Medido em 15/09/2026 (Arquiteto TOTVS draft v4, run `aae4dd13`). Quatro nós
 `agent` com `prompt`, `system_message` e `model_ref` no **topo** do nó, como o
@@ -745,10 +745,10 @@ campos) é gap da plataforma — issue irmã no Agente_OS.
 
 ---
 
-## 16. `{{...}}` na SAÍDA de um LLM derruba o nó de escrita seguinte
+## 17. `{{...}}` na SAÍDA de um LLM derruba o nó de escrita seguinte
 
 📏 Mesmo run `aae4dd13`. As personas ecoaram o texto
-`{{persona_negocio.content}}` dentro do JSON de resposta (consequência da §15).
+`{{persona_negocio.content}}` dentro do JSON de resposta (consequência da §16).
 O nó `tool` seguinte (primitive write) recebeu esse content no payload e a
 guarda de refs não resolvidas leu o texto como referência pendente:
 
@@ -771,7 +771,7 @@ varrer só o que veio da spec é gap da plataforma — issue irmã no Agente_OS.
 
 ---
 
-## 17. `http_request` que falha NÃO aborta o run — e o erro é a forma da consulta
+## 18. `http_request` que falha NÃO aborta o run — e o erro é a forma da consulta
 
 📏 15/09/2026 (runs `aae4dd13` e `3cddd12f`). Duas conexões `http_generic`
 autenticaram de primeira (Drive oauth2 via app da plataforma; Fluig oauth1a).
@@ -799,7 +799,7 @@ nó que consuma o resultado.
 
 ---
 
-## 18. Saída de nó `agent` é STRING — onde parsear
+## 19. Saída de nó `agent` é STRING — onde parsear
 
 📏 15/09/2026 (Arquiteto TOTVS). Três limites que juntos impedem ligar campo a
 campo o que o modelo produziu:
@@ -837,7 +837,7 @@ segunda, o connector recusa antes de qualquer HTTP com "Operação desconhecida"
 Isso é trabalho no core da plataforma, **fora do escopo deste kit** (regra de
 ouro): peça ao time da plataforma citando os dois PRs acima como molde.
 
-Lembre a §16: a string crua vai para um write, então o modelo não pode emitir
+Lembre a §17: a string crua vai para um write, então o modelo não pode emitir
 `{{}}`.
 
 ---
