@@ -1,8 +1,8 @@
 # Create
 
 > **Fase 0 — descoberta primeiro.** Antes da primeira pergunta desta entrevista,
-> conduza `references/descoberta.md`: quatro rodadas curtas em linguagem de
-> negócio que produzem a **ficha de domínio**. A entrevista abaixo pergunta
+> conduza `references/descoberta.md`: três rodadas curtas em linguagem de
+> negócio, mais a decisão de fechamento, que produzem a **ficha de domínio**. A entrevista abaixo pergunta
 > CAMPO DE SCHEMA; a ficha é o que torna cada resposta óbvia — inclusive as três
 > que mais custam retrabalho (tem escrita? quem autoriza? o disparo vem de
 > humano?). Pule a fase 0 só nos casos listados no fim daquele arquivo.
@@ -25,7 +25,7 @@ Reading an existing spec to copy conventions is now optional (and impossible wit
 
 Com a ficha de domínio em mãos, **proponha** `name`, `slug` e `description` a
 partir dela e peça confirmação, em vez de perguntar do zero — os termos vêm do
-glossário da rodada 2 (fase 0), não do seu vocabulário.
+glossário da rodada 1 (fase 0), não do seu vocabulário.
 
 Ask, one line each, citing the field:
 - **name** (`name` — human-readable display name)
@@ -48,7 +48,7 @@ Iterate parameter by parameter: for each tenant-configurable value ask name, typ
 
 Ask for `reads` and `writes` as CDM entity+label pairs (what the agent reads from/writes to, in domain terms). As linhas **Lê:** e **Escreve:** da ficha já
 respondem isso — confirme, não repergunte. `writes` não-vazio é o gatilho da
-regra da rodada 3: precisa de `approval` e de escrita gateada no veredito.
+regra da rodada 2: precisa de `approval` e de escrita gateada no veredito.
 
 ### e. Nodes, one at a time
 

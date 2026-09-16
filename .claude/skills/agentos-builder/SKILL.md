@@ -57,9 +57,11 @@ Explicit non-goals — always refuse and redirect to `/w1`:
 | Remove | Live | `references/remove.md` |
 
 **Create começa pela descoberta.** Quando o pedido for "criar um agente que
-faz X", rode `references/descoberta.md` ANTES do `create.md`: quatro rodadas em
-linguagem de negócio que fecham propósito, glossário, invariante e fronteira, e
-produzem a ficha de domínio que vira o cabeçalho do YAML. Perguntar campo de
+faz X", rode `references/descoberta.md` ANTES do `create.md`: três rodadas em
+linguagem de negócio (propósito, invariante, fronteira) e uma decisão — caminho
+escolhido e alternativa descartada — que produzem a ficha de domínio que vira o
+cabeçalho do YAML. Quem conduz normalmente não é dev: a tabela de tradução
+(termo técnico → como falar) está no topo daquele arquivo. Perguntar campo de
 schema antes de saber o que nunca pode acontecer é como o grafo sai errado sem
 ninguém perceber.
 
