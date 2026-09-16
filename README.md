@@ -57,6 +57,14 @@ Abra o Claude Code **neste repositório** e use a skill:
 
 A skill conduz o ciclo completo, sempre via MCP:
 
+0. **Descoberta** — antes de qualquer campo, quatro rodadas curtas em linguagem
+   de negócio (o que a pessoa faz hoje na mão, os termos que ela usa, o que
+   nunca pode acontecer, quem autoriza). Produzem a **ficha de domínio**, que
+   vira o cabeçalho do YAML e decide o formato do grafo: escrita exige aprovação
+   humana com a escrita gateada no veredito, disparo por chat não pode alcançar
+   escrita, saída de LLM não é objeto. Destilado de Domain-Driven Design para o
+   tamanho de um agente; detalhe em
+   [`descoberta.md`](.claude/skills/agentos-builder/references/descoberta.md);
 1. `spec_node_types` / `spec_context` / `spec_connectors` / `spec_tools` /
    `spec_models` — descobrir o que existe no ambiente (nunca de memória:
    `connector_id` vem do `spec_connectors`; `tool_name` vem da lista

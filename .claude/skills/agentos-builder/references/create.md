@@ -1,5 +1,12 @@
 # Create
 
+> **Fase 0 — descoberta primeiro.** Antes da primeira pergunta desta entrevista,
+> conduza `references/descoberta.md`: quatro rodadas curtas em linguagem de
+> negócio que produzem a **ficha de domínio**. A entrevista abaixo pergunta
+> CAMPO DE SCHEMA; a ficha é o que torna cada resposta óbvia — inclusive as três
+> que mais custam retrabalho (tem escrita? quem autoriza? o disparo vem de
+> humano?). Pule a fase 0 só nos casos listados no fim daquele arquivo.
+
 Guided interview that builds a brand-new AgentSpec YAML from scratch and writes it to `a raiz deste repo: drafts/<slug>/v0.1.yaml`. Precise questions only — every question names the schema field it fills. One round at a time; don't front-load the whole interview in a wall of text.
 
 Before asking anything, call `mcp_client.node_types()` fresh — `{node_types: [{type, runtime_ready, required, optional, ux_hint, variants: [...]}], trigger: {...}, spec_level: {...}, transform_strategies: [...], semantics: {...}}`. Never reuse a list from an earlier turn or from memory, and never read `packages/cdm/schemas/agent_spec_v1_builder_map.json` or `apps/agent-runtime/src/agent_runtime/executors.py` directly (T027 — this tool is the only source of truth for *which node types exist*, and it can change between sessions). The `semantics` block (keys `condition`, `when`, `jump`, `loop_body_errors`, plus `version` and `partial`) carries the flow semantics the environment actually enforces — read it before writing any `condition`/`loop`/`when` node, per SKILL.md's discovery-not-memory rule. If the artifact behind it is missing or incomplete only that block degrades (`{partial: true, warning: ...}`); the node-type catalog is still served.
@@ -15,6 +22,10 @@ Reading an existing spec to copy conventions is now optional (and impossible wit
 ## Interview flow
 
 ### a. Identity
+
+Com a ficha de domínio em mãos, **proponha** `name`, `slug` e `description` a
+partir dela e peça confirmação, em vez de perguntar do zero — os termos vêm do
+glossário da rodada 2 (fase 0), não do seu vocabulário.
 
 Ask, one line each, citing the field:
 - **name** (`name` — human-readable display name)
@@ -35,7 +46,9 @@ Iterate parameter by parameter: for each tenant-configurable value ask name, typ
 
 ### d. io
 
-Ask for `reads` and `writes` as CDM entity+label pairs (what the agent reads from/writes to, in domain terms).
+Ask for `reads` and `writes` as CDM entity+label pairs (what the agent reads from/writes to, in domain terms). As linhas **Lê:** e **Escreve:** da ficha já
+respondem isso — confirme, não repergunte. `writes` não-vazio é o gatilho da
+regra da rodada 3: precisa de `approval` e de escrita gateada no veredito.
 
 ### e. Nodes, one at a time
 
@@ -51,7 +64,10 @@ For each node:
 
 - Destination: `a raiz deste repo: drafts/<slug>/v0.1.yaml`.
 - `version: "0.1.0"`, `change_class: "minor"`.
-- Prepend a header comment block following the precedent in `drafts/fin-collections/v0.5.yaml`: a status line (draft, doesn't load on current runtime if any node isn't `runtime_ready`), which nodes (if any) are draft-only and why, and a pointer to a design doc if the user has one.
+- **Cabeçalho = a ficha de domínio** da fase 0, colada como bloco de comentário
+  no topo do arquivo. Ela viaja com a spec pelo MCP e é o que o próximo autor lê
+  antes de mexer no grafo. Depois dela, seguindo o precedente em
+  `drafts/fin-collections/v0.5.yaml`: a status line (draft, doesn't load on current runtime if any node isn't `runtime_ready`), which nodes (if any) are draft-only and why, and a pointer to a design doc if the user has one.
 
 ## Write sequence
 

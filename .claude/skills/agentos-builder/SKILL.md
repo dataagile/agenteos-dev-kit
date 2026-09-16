@@ -4,7 +4,7 @@ description: Manages AgentOS AgentSpec YAML files under {drafts,published}/<slug
 license: MIT
 metadata:
   author: w1
-  version: "0.4.0"
+  version: "0.5.0"
   phase: F4 — spec content AND discovery are MCP-mediated (024/T017-T018, T027); only Backup/Remove stay local (co-located git/fs ops, see dogfood.md)
   role: tool
 ---
@@ -48,12 +48,20 @@ Explicit non-goals — always refuse and redirect to `/w1`:
 | Operation | Status | Reference |
 |---|---|---|
 | Read (list / inspect) | Live | `references/read.md` |
+| Descoberta (fase 0 do Create) | Live | `references/descoberta.md` |
 | Create | Live | `references/create.md` |
 | Edit | Live | `references/edit.md` |
 | Clone | Live | `references/clone.md` |
 | Backup | Live | `references/backup.md` |
 | Publish | Live | `references/publish.md` |
 | Remove | Live | `references/remove.md` |
+
+**Create começa pela descoberta.** Quando o pedido for "criar um agente que
+faz X", rode `references/descoberta.md` ANTES do `create.md`: quatro rodadas em
+linguagem de negócio que fecham propósito, glossário, invariante e fronteira, e
+produzem a ficha de domínio que vira o cabeçalho do YAML. Perguntar campo de
+schema antes de saber o que nunca pode acontecer é como o grafo sai errado sem
+ninguém perceber.
 
 All 7 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
 
