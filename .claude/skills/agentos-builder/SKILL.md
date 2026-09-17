@@ -65,6 +65,6 @@ cabeçalho do YAML. Quem conduz normalmente não é dev: a tabela de tradução
 schema antes de saber o que nunca pode acontecer é como o grafo sai errado sem
 ninguém perceber.
 
-All 7 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
+All 8 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
 
 Keep this file lean — it is the router, the boundary, and the shared rules. Operation-specific interview and execution detail lives in `references/`.

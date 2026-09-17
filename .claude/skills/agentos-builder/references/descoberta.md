@@ -67,9 +67,10 @@ A rodada que paga a fase inteira. Três perguntas, nessa ordem:
   limite? Quem é essa pessoa?
 - **O que o agente ESCREVE** em algum sistema, e o que ele só lê?
 
-Cada resposta aqui fecha uma armadilha conhecida — leve-as para o desenho:
+Cada resposta aqui fecha uma armadilha conhecida — leve-as para o desenho. Os
+`§` são seções do [`ARMADILHAS.md`](../../../../ARMADILHAS.md), na raiz do repo:
 
-| Descoberta | Consequência no desenho | Armadilha |
+| Descoberta | Consequência no desenho | `ARMADILHAS.md` § |
 |---|---|---|
 | Existe escrita | `approval` + escrita gateada em `<nó>.decision.decision == 'approved'` | §1, §4 |
 | Existe alçada ("só acima de X") | `when` do approval só com a gramática de condition — forma ilegível **dispensa o humano** | §4 |

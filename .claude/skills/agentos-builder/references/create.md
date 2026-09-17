@@ -1,7 +1,7 @@
 # Create
 
 > **Fase 0 — descoberta primeiro.** Antes da primeira pergunta desta entrevista,
-> conduza `references/descoberta.md`: três rodadas curtas em linguagem de
+> conduza `descoberta.md`: três rodadas curtas em linguagem de
 > negócio, mais a decisão de fechamento, que produzem a **ficha de domínio**. A entrevista abaixo pergunta
 > CAMPO DE SCHEMA; a ficha é o que torna cada resposta óbvia — inclusive as três
 > que mais custam retrabalho (tem escrita? quem autoriza? o disparo vem de
@@ -53,7 +53,7 @@ regra da rodada 2: precisa de `approval` e de escrita gateada no veredito.
 ### e. Nodes, one at a time
 
 For each node:
-1. Offer the current set of node types from the `node_types()` call above, annotated with `runtime_ready`. Node types where `runtime_ready` is `false` are still valid to place in the YAML — some (e.g. the structural/interpreter-level ones like trigger and condition) are routed by the interpreter rather than dispatched as executors, so `runtime_ready: false` does not always mean "broken," just "not an executor dispatch target." Others may be genuinely unimplemented (executor falls through or raises). Say plainly which is which when the user picks a non-runtime_ready type, and warn that the resulting spec is draft-only for that node — mirror the precedent header in `drafts/fin-collections/v0.5.yaml`.
+1. Offer the current set of node types from the `node_types()` call above, annotated with `runtime_ready`. Node types where `runtime_ready` is `false` are still valid to place in the YAML — some (e.g. the structural/interpreter-level ones like trigger and condition) are routed by the interpreter rather than dispatched as executors, so `runtime_ready: false` does not always mean "broken," just "not an executor dispatch target." Others may be genuinely unimplemented (executor falls through or raises). Say plainly which is which when the user picks a non-runtime_ready type, and warn that the resulting spec is draft-only for that node — mirror the precedent header in `drafts/test-sftp/v4.yaml`.
 2. Ask ONE question for the node's identifier (snake_case) and write the same value into **both** `id` and `key` on the node, plus `type`. Layer 1 (pydantic `NodeSpec`, the blocking layer) requires `id`; the runtime prefers `key` (`node.get("key") or node.get("id")` in `hatchet_app.py`). Dual-writing both fields with the same value keeps the node valid on the blocking layer and executable at runtime — until DAI-526 unifies the field, every node needs both.
 3. Ask for the required/optional fields for that type per the builder map — required fields are not optional to skip; optional ones can be deferred with their default noted.
 4. **Condition nodes specifically**: before the user writes an expression, read `semantics.condition` from the same `node_types()` response and state the grammar it serves, so they don't waste a round on something that will fail validation. Never recite a grammar from memory or from an earlier session — it comes from the environment. Quote the scope that matches the node being written: `condition.top_level` and `condition.loop_body` do **not** accept the same set of forms. `when` is a separate grammar again (`semantics.when`) — a form that works in one is not guaranteed in the other, so never carry a form across. Arbitrary Jinja2 (filters, math, function calls) is forbidden and fails at validation time. Following house style (see above), write the expression to `config.expr`, and ask which node to go to on true and which on false, writing those to `config.on_true` / `config.on_false` (omit `on_true` if the node simply falls through to `next` on the true path, matching the `fin-pagamentos` precedent).
@@ -67,7 +67,7 @@ For each node:
 - **Cabeçalho = a ficha de domínio** da fase 0, colada como bloco de comentário
   no topo do arquivo. Ela viaja com a spec pelo MCP e é o que o próximo autor lê
   antes de mexer no grafo. Depois dela, seguindo o precedente em
-  `drafts/fin-collections/v0.5.yaml`: a status line (draft, doesn't load on current runtime if any node isn't `runtime_ready`), which nodes (if any) are draft-only and why, and a pointer to a design doc if the user has one.
+  `drafts/test-sftp/v4.yaml`: a status line (draft, doesn't load on current runtime if any node isn't `runtime_ready`), which nodes (if any) are draft-only and why, and a pointer to a design doc if the user has one.
 
 ## Write sequence
 
