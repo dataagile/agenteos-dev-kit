@@ -280,12 +280,27 @@ acontece**. Só um falsy literal devolveria `{"status": "skipped", "reason":
 
 #### Estado hoje
 
-- 🔍 **O catálogo diz que isto mudou (DAI-918).** O bloco `semantics.when`
-  do `spec_node_types` (lido em 15/09/2026) afirma que `when` ilegível no
-  approval passou a ser **fail-closed**: a aprovação é EXIGIDA, com warning
-  "approval NOT skipped". A tabela acima foi 📏 medida ANTES dessa mudança e
-  ainda não foi re-medida. Até alguém repetir os dois runs, a regra continua:
-  não use `when` em approval e gateie no veredito.
+- 📏 **Re-medido em 15/09/2026 após DAI-918 (agenteos-dev-kit#18): a tabela
+  acima é HISTÓRICA.** Mesmo draft (`test-sftp` v5), mesma config, três braços
+  mudando só a linha do `when`:
+
+  | `config.when` | forma | run_id | resultado |
+  |---|---|---|---|
+  | `config.total > 1000` | inválida | `6b958c89-1559-4b45-a63b-cf667ac162ea` | **`awaiting_approval`** — card nasceu |
+  | `config.alcada_hitl == null` | reconhecida, verdadeira | `07f313f3-1ebc-4462-b9b2-c158d474aff9` | `awaiting_approval` |
+  | `config.alcada_hitl != null` | reconhecida, falsa | `96d0bb4b-3f98-4ef5-982f-7386f183a80a` | `aprovar` **skipped**, `reason: alcada_below_threshold`, run completed |
+
+  Duas coisas mudaram em relação à medição de 30/08: expressão **ilegível
+  agora EXIGE o humano** (fail-closed, como o bloco `semantics.when` do
+  catálogo anuncia), e expressão reconhecida **decide pelo valor** (`!= null`
+  sobre campo nulo pulou; `== null` pediu). O primeiro caminho da §4 está
+  fechado na versão do sandbox de 15/09.
+
+  **O que NÃO mudou:** um `when` reconhecido e falso dispensa o humano — é o
+  desenho, não bug. E o caminho `empty_context` (abaixo) continua em pé. Logo
+  a regra prática fica: `when` em approval só com forma da gramática de
+  condition (o catálogo diz isso agora), e **a escrita sempre gateada no
+  veredito**.
 - 🔍 **Não há regressão viva.** As três specs publicadas que usam `when` em
   approval (`fin-pagamentos` v3, `-pix` v1, `-cnab` v1) usam todas
   `config.alcada_hitl != null` — forma reconhecida. É **sorte histórica**, não
@@ -624,15 +639,17 @@ Duas expressões opostas, mesmo desfecho. Uma delas tem de ser falsa — então,
 caminho da forma reconhecida, o gate aparentemente **não decide pelo valor da
 expressão**.
 
-🔍 **Falta medir** (não feito): mesma spec, mesmo dia, três braços — `== null`,
-`!= null` e uma forma inválida (`config.total > 1000`). Se os dois primeiros
-dispararem e o terceiro pular, fecha o quadro: o gate reage à **parseabilidade**,
-não ao valor.
+📏 **Medido em 15/09/2026** (os três braços, ver a tabela de re-medição na
+§4): `== null` pediu aprovação, `!= null` **pulou** (`alcada_below_threshold`),
+inválida pediu. Ou seja, na versão atual o gate decide pelo **valor**, não pela
+parseabilidade — o resultado de 01/09 acima não se repetiu. Como o run de 01/09
+não foi re-executado no mesmo ambiente, fica registrado como histórico.
 
-> 🔴 **Não use `when` em nó `approval`.** Fora da gramática ele pula o humano
-> (§4); dentro dela, o veredito da expressão parece não ser respeitado (§12).
-> Nos dois cenários a defesa é a mesma: gatear a escrita no **veredito**
-> (`aprovar.decision.decision == 'approved'`).
+> 🔴 **`when` em `approval` só com a gramática de condition, e a escrita
+> sempre gateada no veredito** (`aprovar.decision.decision == 'approved'`).
+> Desde DAI-918 a expressão ilegível exige o humano (📏 15/09), mas uma
+> expressão reconhecida e falsa dispensa por desenho, e o `empty_context` da
+> §4 segue pulando sem decisão humana.
 
 ---
 

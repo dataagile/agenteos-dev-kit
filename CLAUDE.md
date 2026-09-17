@@ -31,13 +31,13 @@ As três que mais custam tempo:
    ainda queima o número da versão, e não há unpublish. O `id` da spec é ESTÁVEL
    entre versões — mudá-lo é a causa mais comum da recusa.
 
-E uma que não custa tempo, custa segurança: **não use `when` em nó `approval`**.
-O `config.when` do approval só reconhece três formas de expressão; qualquer
-outra (`>`, `>=`, truthiness pura, `!= true`, um typo) avalia `False` — e ali
-`False` significa **pular a aprovação humana**, sem erro. Pior: truthiness pura
-e `!= true` são formas VÁLIDAS no `when` de um nó normal, com precedente em
-spec publicada — copiar de outro nó é o caminho mais provável para o erro. Erro de escrita e "dispense o
-humano" são indistinguíveis. Detalhe e tabela na §4.
+E uma que não custa tempo, custa segurança: **`when` em nó `approval` só com a
+gramática de condition** (`len()`, `== 'str'`, `== null` e negações). Até
+DAI-918 qualquer outra forma (`>`, truthiness pura, `!= true`, um typo) avaliava
+`False` e **pulava a aprovação humana** sem erro; 📏 re-medido em 15/09/2026, a
+forma ilegível agora EXIGE o humano. Mas uma forma reconhecida e falsa dispensa
+por desenho, e copiar `!= true` de um nó normal continua sendo o erro mais
+provável. Detalhe e as duas tabelas na §4.
 
 📏 E há um segundo caminho, que não exige erro do autor: passo anterior que
 falha esvazia o `context_from` e o approval vem `skipped` por `empty_context` —
