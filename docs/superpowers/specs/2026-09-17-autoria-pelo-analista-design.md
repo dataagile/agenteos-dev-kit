@@ -167,10 +167,29 @@ Saída em duas camadas:
 | Plataforma | Time do Agente_OS | Tool fora do catálogo, transformação que exige operation no serviço |
 | Kit | Time do kit | Pergunta que o kit não soube fazer, armadilha nova |
 
-Canal: issue no repositório do kit com etiqueta `gap`, aberta com `gh` quando
-disponível e autenticado. Sem `gh`, o kit entrega o texto pronto para o analista
-repassar. O rascunho fica gravado com o passo pendente marcado no cabeçalho,
-para retomar quando o gap fechar.
+Canal, em ordem de preferência:
+
+1. **Tool de feedback no MCP** (`spec_feedback`, a criar no Agente_OS): o mesmo
+   mecanismo do megafone da tela do AgenteOS ("Reportar erro", "Sugestão de
+   melhoria", "Feedback geral"), exposto ao autor. O kit chama a tool com o
+   pedido nas duas camadas e a classe sugerida; o item cai na esteira de
+   manutenção do time interno sem passar por ninguém. É o que fecha o ciclo para
+   um analista sem `gh` nem git. Enquanto a tool não existir, é gap da
+   plataforma, e o kit usa o passo 2.
+2. **Issue no repositório do kit** com etiqueta `gap`, aberta com `gh` quando
+   disponível e autenticado.
+3. **Texto pronto** para o analista repassar, quando nem 1 nem 2 estão
+   disponíveis.
+
+O rascunho fica gravado com o passo pendente marcado no cabeçalho, para retomar
+quando o gap fechar.
+
+Referência do tamanho que um relato de gap pode ter: o PRD de 18/09/2026 do
+José Miguel (TBC) lista dezesseis requisitos, cada um com run de evidência,
+levantados autorando um agente real pelo kit. Vários coincidem com issues já
+abertas aqui (#13 = RF-09; §18 = RF-05), e o RF-13 contradiz a §11 do
+ARMADILHAS. É esse tipo de relato que o canal existe para receber cedo, item a
+item, em vez de um documento no fim.
 
 O time interno tria a issue: se for de plataforma ou de ambiente, reencaminha.
 O kit não tenta adivinhar o destino final; a classe é sugestão.
