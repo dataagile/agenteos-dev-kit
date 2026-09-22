@@ -39,6 +39,8 @@
 | `.claude/skills/agentos-builder/SKILL.md` | `/reportar` no router; regra | 4 |
 | `README.md` | fecha a nota de escopo; gap vira chamado | 4 |
 | `ARMADILHAS.md` | §20: GLPI responde HTML 200 em manutenção | 4 |
+| `CLAUDE.md` | Regra de ouro com a pergunta antes do chamado (duplica o README) | 4 |
+| `.claude/commands/reportar.md` | comando `/reportar` → gap.md §0 gatilho 3 | 4 |
 | `docs/guia/glpi-chamado.html` | fragmento `<section id="c15">` para o guia | 5 |
 
 ---

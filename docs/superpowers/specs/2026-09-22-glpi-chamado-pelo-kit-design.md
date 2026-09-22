@@ -28,7 +28,7 @@ o `gap.md` já define — mais um comando explícito.
 ## 2. Plataforma — contrato da tool `spec_feedback` (repo Agente_OS)
 
 Mesma tool, mesmo nome (`spec.feedback` → `spec_feedback`), mesmo escopo
-`spec.read` (📏 lido em `tools/spec_feedback.py`: `required_scope="spec.read"`;
+`spec.read` (🔍 lido em `tools/spec_feedback.py`: `required_scope="spec.read"`;
 logo a chave de 6 scopes do README já a cobre — fecha a nota "a confirmar").
 
 **Entrada** (tudo string; teto 4000 chars por valor, como hoje):
