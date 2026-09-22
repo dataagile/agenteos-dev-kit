@@ -81,7 +81,7 @@ O analista nunca vê esta tabela. Ela é o contrato entre a ficha e o YAML.
    rascunho atual com `mcp_client.read_spec(slug, "0.1")` para preservar o
    cabeçalho.
 2. Validate: `mcp_client.validate(content)`.
-3. **Pydantic errors present** (blocking) → show them, fix the offending answers with the user, do not proceed to write. Loop back to the relevant interview step, update the draft content, re-validate.
+3. **Pydantic errors present** (blocking) → do not write. Treat it as a derivation failure: find which line of the ficha and which rule of the table above produced the offending field, re-derive, re-validate. If the ficha itself cannot resolve it (a rule the table does not cover, or a resource the environment lacks), follow `references/gap.md`. Never ask the human for a schema value.
 4. **Pydantic clean** → `mcp_client.write_draft(slug, "0.1", content, templates)` — sempre com os `.j2` no mesmo write (§8). This both re-validates server-side and performs the write; `McpClientError(code="parse_error")` means the YAML itself is malformed (show the message) and `code="immutable_published"` should never happen here (0.1 is a fresh slug) — if it does, stop and say the slug collided with something already published.
 5. Report the `validate` result's `errors` (JSON-Schema structural — trigger shape, node `oneOf`, condition grammar), if any — non-blocking but real; suggest fixes. There is no `known_drift` bucket in the MCP validator (see `lifecycle.md` §7) — every non-blocking error is reported flat, not sub-classified as "expected drift" vs "novel."
 
