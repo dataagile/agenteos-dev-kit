@@ -27,8 +27,8 @@ As demais tools não têm escopo próprio — cavalgam nestes: `spec_context`,
 em `spec.write` (é o `required_scope` declarado no registry do servidor; uma
 chamada real com a chave de 6 scopes acima autorizou no ambiente de
 validação em 14/08/2026). A lista acima já autoriza a superfície inteira.
-`spec_feedback` (usada pelo `gap.md`) — cobertura pelos 6 scopes acima **a
-confirmar no sandbox**.
+`spec_feedback` (usada pelo `gap.md`) exige só `spec.read` (🔍 `required_scope`
+no registry, 22/09/2026) — a lista acima já a cobre.
 
 ## Conectando o Claude Code
 
@@ -80,8 +80,9 @@ A skill conduz o ciclo completo, sempre via MCP:
    `default`. **A publicação já entra no catálogo do ambiente na hora**.
 
 Faltou recurso no ambiente em qualquer ponto: o kit para, explica em uma frase,
-reporta pela tool `spec_feedback` (a mesma do megafone da tela) e deixa o
-rascunho retomável
+reporta pela tool `spec_feedback` (que abre o chamado no GLPI pela plataforma,
+com o seu nome como reportante, sempre depois de você aprovar o rascunho) e
+deixa o rascunho retomável
 ([`gap.md`](.claude/skills/agentos-builder/references/gap.md)).
 
 O fluxo do analista (descoberta → derivação → proposta → prova, passos 0-3
@@ -134,5 +135,6 @@ As consultas de leitura mínimas que devolvem 200 estão em
 **Zero código do core.** Se para autorar você sentir falta de algo da
 plataforma, isso é um gap — reporte, nunca contorne. O caminho é
 [`gap.md`](.claude/skills/agentos-builder/references/gap.md): parar, gravar
-`# Pendente:` no rascunho, reportar pela tool `spec_feedback` (fallback: issue
-`gap` neste repositório), retomar quando fechar.
+`# Pendente:` no rascunho, montar o rascunho do chamado já redigido, **perguntar**,
+e só depois do seu "sim" abrir o chamado no GLPI pela tool `spec_feedback`
+(fallback: issue `gap` neste repositório); retomar quando fechar.

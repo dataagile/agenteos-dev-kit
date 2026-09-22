@@ -4,7 +4,7 @@ description: Manages AgentOS AgentSpec YAML files under {drafts,published}/<slug
 license: MIT
 metadata:
   author: w1
-  version: "0.6.0"
+  version: "0.7.0"
   phase: F4 — spec content AND discovery are MCP-mediated (024/T017-T018, T027); only Backup/Remove stay local (co-located git/fs ops, see dogfood.md)
   role: tool
 ---
@@ -52,6 +52,7 @@ Explicit non-goals — always refuse and redirect to `/w1`:
 | Create (derivação — interna, sem perguntas) | Live | `references/create.md` |
 | Proposta (roteiro + test run traduzido) | Live | `references/proposta.md` |
 | Gap (parar, reportar, retomar) | Live | `references/gap.md` |
+| Reportar (`/reportar` — chamado no GLPI sob demanda) | Live | `references/gap.md` §0 gatilho 3 |
 | Edit | Live | `references/edit.md` |
 | Clone | Live | `references/clone.md` |
 | Backup | Live | `references/backup.md` |
@@ -64,9 +65,10 @@ Pedido "criar um agente que faz X" segue esta ordem, sem pular:
 primeira linha) → `create.md` (deriva o YAML da ficha; não pergunta) →
 `proposta.md` (roteiro em negócio, decisão, test run traduzido) → `publish.md`
 (só após run verde, com o guard de conexão). Faltou recurso no ambiente em
-qualquer ponto: `gap.md` — parar, reportar por `spec_feedback`, deixar o
-rascunho retomável. Nunca contornar.
+qualquer ponto: `gap.md` — parar, montar o rascunho redigido, perguntar, e só
+então abrir o chamado no GLPI por `spec_feedback`; deixar o rascunho
+retomável. Nunca contornar, nunca abrir sem "sim".
 
-All 10 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
+All 11 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
 
 Keep this file lean — it is the router, the boundary, and the shared rules. Operation-specific procedure and execution detail lives in `references/`.

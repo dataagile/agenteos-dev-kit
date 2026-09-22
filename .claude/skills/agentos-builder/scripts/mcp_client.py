@@ -223,17 +223,20 @@ _FEEDBACK_CATEGORIES = ("erro", "melhoria", "feedback")
 
 
 def feedback(category: str, message: str, context: dict[str, str] | None = None) -> dict[str, Any]:
-    """Reporta gap de autoria pela tool `spec_feedback` (mesmo megafone da tela;
-    vai ao Sentry com source=mcp). `message` vai CRUA — nunca inclua `default:`
-    de conexão, payload, conteúdo de run, CPF, PIX ou segredo (references/gap.md).
-    Primeira linha da message leva a classe: [ambiente] | [plataforma] | [kit]."""
+    """Abre chamado no GLPI pela tool `spec_feedback` (a plataforma abre; o kit não
+    tem credencial). `context.reporter_name`/`reporter_email` são obrigatórios —
+    é o "Reportado por" do chamado. `message` vai CRUA — passe por
+    `gap_redact.redact()` antes (references/gap.md §4). Primeira linha da message
+    leva a classe: [ambiente] | [plataforma] | [kit].
+    Devolve o dict da tool: {status, ticket_id, url, deduplicated}."""
     if category not in _FEEDBACK_CATEGORIES:
         raise ValueError(f"category deve ser um de {_FEEDBACK_CATEGORIES}, veio {category!r}")
     if not message.strip():
-        raise ValueError("message vazia — o servidor recusa (minLength 1) e cairia no fallback de issue à toa")
+        raise ValueError("message vazia — o servidor recusa (minLength 1) e cairia no fallback à toa")
     if len(message) > 4000:
         raise ValueError(f"message tem {len(message)} chars; máximo 4000")
-    params: dict[str, Any] = {"category": category, "message": message}
-    if context:
-        params["context"] = context
-    return _call("spec.feedback", params)
+    ctx = {k: str(v) for k, v in (context or {}).items()}
+    for k in ("reporter_name", "reporter_email"):
+        if not str(ctx.get(k, "")).strip():
+            raise ValueError(f"context.{k} é obrigatório — o chamado precisa de 'Reportado por' (references/gap.md §5)")
+    return _call("spec.feedback", {"category": category, "message": message, "context": ctx})

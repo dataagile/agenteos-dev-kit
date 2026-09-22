@@ -894,6 +894,24 @@ Lembre a §17: a string crua vai para um write, então o modelo não pode emitir
 
 ---
 
+## 20. O GLPI responde HTML com 200 quando o NPM está em manutenção
+
+🔍 Lido no cliente da plataforma (hoje `apps/api-gateway/src/api_gateway/glpi.py`,
+teste `apps/api-gateway/tests/unit/test_glpi_client.py:217`; sobe para `cdm.glpi`
+com o spec 2026-09-22; teste
+`test_html_maintenance_page_with_200_is_glpi_error_not_crash`): o proxy na
+frente do GLPI devolve uma página HTML **com status 200** durante manutenção.
+Quem parseia JSON sem olhar o `content-type` quebra com `ValueError`, não com
+"indisponível".
+
+Para quem autora pelo kit isso chega como `McpClientError` com
+`code="upstream_unavailable"` no `feedback()` — não é bug da sua spec nem da
+chave: o canal está fora. O `gap.md` §5 manda cair no fallback (issue ou
+texto) e registrar `# Gap reportado:` do mesmo jeito. Tente o chamado de novo
+mais tarde só se o usuário pedir; a plataforma deduplica pelo `external_id`.
+
+---
+
 ## Quando algo não for culpa da sua spec
 
 Estes são defeitos de plataforma conhecidos em 26/08/2026. Se bater neles, não

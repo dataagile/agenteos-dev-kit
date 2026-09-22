@@ -11,8 +11,9 @@ Repositório de **autoria de agentes** via MCP. Só specs de trabalho do dev
   reporte o erro.
 - **Zero import/código do core da plataforma.** Falta algo para autorar =
   gap — reportar, não contornar. O caminho é `references/gap.md`: parar,
-  gravar `# Pendente:` no rascunho, reportar pela tool `spec_feedback`
-  (fallback: issue `gap` neste repo), retomar quando fechar.
+  gravar `# Pendente:` no rascunho, montar o rascunho do chamado já redigido,
+  **perguntar**, e só depois do "sim" abrir o chamado no GLPI pela tool
+  `spec_feedback` (fallback: issue `gap` neste repo); retomar quando fechar.
 - Publicado é imutável por versão: mudança = `spec_revise` (abre a próxima
   versão em draft a partir da published) + ciclo write→validate→publish.
 - Um agente = `<slug>/vN.yaml` + `templates/` ao lado (unidade autocontida).
