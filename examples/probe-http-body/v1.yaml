@@ -1,9 +1,12 @@
 # PROBE DE REFERÊNCIA — não publicar. Mede o shape de `result` do http_request
-# com resposta JSON (ARMADILHAS §11, re-medida em 22/09/2026, dev-kit#23).
-# Runs no sandbox-os: d8275132 (shape) e 361f9577 (template navegando o body).
-# Resultado: result = {body: OBJETO, body_raw: STRING, status, headers, truncated}.
-# `default` na conexão só porque spec_test_run não recebe config (§9) — troque
-# pelo id do seu spec_connectors e REMOVA antes de qualquer publish.
+# (ARMADILHAS §11, re-medida em 22/09/2026, dev-kit#23). Runs no sandbox-os:
+#   d8275132  JSON  -> result = {body: OBJETO, body_raw: STRING, status, headers, truncated}
+#   361f9577  template navega steps.about.result.body.user.displayName
+#   fba99df2  NÃO-JSON (302 sem content-type) -> body = STRING, body_raw NÃO existe,
+#             e o mesmo template rende vazio SEM erro (ChainableUndefined)
+# O template resumo.md.j2 distingue os caminhos com `is string` / `is defined`.
+# `default` nas conexões só porque spec_test_run não recebe config (§9) — troque
+# pelos ids do seu spec_connectors e REMOVA antes de qualquer publish.
 id: "agt_probe_http_body_v1"
 slug: "probe-http-body"
 name: "probe_http_body"
@@ -12,18 +15,24 @@ change_class: "minor"
 category: "integracao"
 requires_erp: false
 description: >
-  Probe descartável: shape de result do http_request com resposta JSON.
+  Probe descartável: shape de result do http_request com resposta JSON e não-JSON.
 
 config_schema:
   type: object
-  required: [connection_id]
+  required: [connection_id, connection_html_id]
   properties:
     connection_id:
       type: string
       x-ref: connection
-      default: "<id da conexão http_generic no seu spec_connectors>"   # REMOVER antes de publicar
-      title: "Conexão Google"
-      description: Conexão http_generic oauth2 do Google (Drive + Agenda).
+      default: "<id de uma conexão http_generic que devolva JSON>"   # REMOVER antes de publicar
+      title: "Conexão JSON"
+      description: Conexão http_generic cujo endpoint abaixo devolve application/json (ex. Google Drive).
+    connection_html_id:
+      type: string
+      x-ref: connection
+      default: "<id de uma conexão http_generic que devolva HTML/302>"   # REMOVER antes de publicar
+      title: "Conexão não-JSON"
+      description: Conexão http_generic cujo caminho raiz devolve HTML ou redireciona (ex. Fluig /portal/).
 
 trigger:
   type: chat
@@ -38,6 +47,16 @@ nodes:
     params:
       fields: "user,storageQuota"
     output: about_drive
+    next: [html]
+
+  - id: html
+    key: html
+    type: http_request
+    connection: "{{config.connection_html_id}}"
+    method: GET
+    path: /portal/
+    ok_statuses: [200, 301, 302, 401, 403, 404]
+    output: pagina_html
     next: [resumo]
 
   - id: resumo
