@@ -1,0 +1,1 @@
+Abrir um chamado no GLPI sobre uma trava na autoria. Siga `references/gap.md` §0 gatilho 3 e §3–§5 da skill agentos-builder: classifique, monte o rascunho nas duas camadas, passe pelo `gap_redact`, mostre o rascunho inteiro e só chame `mcp_client.feedback()` depois do "sim". Contexto do usuário: $ARGUMENTS

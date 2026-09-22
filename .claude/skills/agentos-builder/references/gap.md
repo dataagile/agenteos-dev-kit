@@ -12,11 +12,13 @@ na tela; o chamado só é aberto se o usuário responder que sim.
    não tem. É o caso deste arquivo inteiro.
 2. **MCP falhando duas vezes no mesmo passo.** `spec_write`, `spec_validate`,
    `spec_test_run` ou `spec_publish` levanta `McpClientError` com `code` em
-   `internal`, `upstream_unavailable`, HTTP 5xx, ou sem `code` — **duas vezes
-   seguidas no mesmo passo**. Não conta: `validation_failed`, `not_found`,
-   `unauthorized` (são da spec ou da chave, não da plataforma). Classe
-   `[plataforma]`. Se o próprio MCP está fora, o chamado não sobe por ele:
-   diga isso na frase e vá direto ao canal 2 ou 3 do §5.
+   `internal`, `upstream_unavailable`, HTTP 5xx, ou sem `code` **quando o servidor respondeu**
+   — **duas vezes seguidas no mesmo passo**. Não conta:
+   `validation_failed`, `not_found`, `unauthorized` (são da spec ou da chave,
+   não da plataforma). Chave/URL não configurada ("não configurado") e host
+   inacessível ("inacessível") **nunca** contam — são do ambiente de quem
+   autora. Classe `[plataforma]`. Se o próprio MCP está fora, o chamado não
+   sobe por ele: diga isso na frase e vá direto ao canal 2 ou 3 do §5.
 3. **O usuário pede.** "travou", "bug", "abre um chamado", ou `/reportar`.
    Sem heurística; pergunte a classe se não estiver óbvia.
 
@@ -77,6 +79,7 @@ A `message` vai **crua** ao chamado do GLPI. Passe o pedido técnico por
 - conteúdo de run (corpo de resposta, dado de cliente)
 - CPF, chave PIX, segredo
 - números de 11 dígitos nus somem (a redação os trata como CPF) — cite pedido, chamado ou nota **com prefixo ou pontuação** (ex.: "pedido nº 2026-0922-001"), nunca como 11 dígitos contíguos
+- o `run_id` vai no `context`, não na `message` (a redação apaga UUID do corpo)
 
 Se precisar citar o conector, cite o **nome** (`"SFTP Protheus TBC — DEV"`),
 nunca o id. Se precisar citar erro, cite o **código** (`CONNECTOR_ERROR`),
@@ -111,6 +114,9 @@ chamado. Nas próximas vezes só confirme ("continua sendo Ana?").
    usuário: `Chamado #N aberto: <url>`, ou, se `deduplicated`, `Já existe o
    #N para isto: <url>` (a plataforma acrescentou um followup com o novo
    relato). Cabeçalho do rascunho: `# Gap reportado: glpi #N — <data>`.
+   Se o retorno vier **sem `ticket_id`** (plataforma ainda no contrato
+   antigo), o relato foi entregue mesmo assim: diga "gap reportado" e grave
+   `# Gap reportado: feedback — <data>`.
 2. Se `feedback()` levantar `McpClientError` — **qualquer** código, inclusive
    `upstream_unavailable` (o GLPI não respondeu) e `unauthorized` — não há
    nada a perder tentando o fallback: `gh issue create --label gap --title
