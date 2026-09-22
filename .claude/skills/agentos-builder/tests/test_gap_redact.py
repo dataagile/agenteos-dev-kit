@@ -50,4 +50,23 @@ assert redact(out) == out
 assert "<removido>" in redact("pedido número 20260922001 ficou pendente")
 assert "2026-0922-001" in redact("pedido nº 2026-0922-001 ficou pendente")
 
+# C1: JSON, access_token/client_secret/api_key e Basic também somem
+for raw, secret in (
+    ('{"token": "abc123", "password": "p4ss"}', "abc123"),
+    ("access_token: ghp_abcdefghijklmnop", "ghp_abcdefghijklmnop"),
+    ("client_secret=shhh-123", "shhh-123"),
+    ("Authorization: Basic YWRtaW46c2VuaGE=", "YWRtaW46c2VuaGE="),
+    ("X-Api-Key: sk-123", "sk-123"),
+):
+    out_c1 = redact(raw)
+    assert secret not in out_c1, f"vazou: {secret}\n{out_c1}"
+    assert "<removido>" in out_c1, out_c1
+
+# allowed_ops=read_write não é confundido com secret/token/password
+assert "allowed_ops=read_write" in redact("allowed_ops=read_write")
+
+# idempotente no caso JSON
+out_json = redact('{"token": "abc123", "password": "p4ss"}')
+assert redact(out_json) == out_json
+
 print("test_gap_redact: ok")

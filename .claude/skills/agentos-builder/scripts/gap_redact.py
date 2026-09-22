@@ -2,7 +2,9 @@
 
 O texto vai cru ao chamado do GLPI. Isto remove o que NUNCA pode ir: UUID
 (inclui id de conexão e chave PIX aleatória), valor de `default:`, CPF,
-valores de token/secret/password/Bearer, e-mail e telefone (chaves PIX).
+valores de token/secret/password/senha/api_key/Bearer/Basic (inclusive em
+JSON, qualquer chave cujo nome contenha token/secret/password/senha), e-mail
+e telefone (chaves PIX).
 Ceiling: nome de host não é removido — cite conexão pelo NOME, não pelo
 endereço (gap.md §4).
 Ceiling 2: qualquer número de 11 dígitos contíguos é tratado como CPF e removido — cite pedido/chamado/nota com prefixo ou pontuação (ex.: "pedido nº 2026-0922-001"), nunca como 11 dígitos nus.
@@ -19,8 +21,8 @@ _RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"^(\s*default:\s*)(?:\"[^\"]*\"|'[^']*'|[^#\n]*?)(\s*(?:#.*)?)$", re.M), rf"\1{_R}\2"),
     (re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b"), _R),
     (re.compile(r"(?<!\d)\d{11}(?!\d)"), _R),
-    (re.compile(r"(?i)\b(bearer)\s+\S+"), rf"\1 {_R}"),
-    (re.compile(r"(?i)\b(token|secret|password|senha|user_token|app-token)(\s*[:=]\s*)\S+"), rf"\1\2{_R}"),
+    (re.compile(r"(?i)\b(bearer|basic)\s+\S+"), rf"\1 {_R}"),
+    (re.compile(r"(?i)(\b[\w-]*(?:token|secret|password|senha|api[-_]?key)[\w-]*\"?\s*[:=]\s*\"?)[^\"\s,;}\]]+"), rf"\1{_R}"),
     (re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"), _R),
     (re.compile(r"\+55\s?\d{2}\s?\d{4,5}-?\d{4}\b"), _R),
 ]
