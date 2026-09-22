@@ -7,7 +7,9 @@ Uma linha por nó, em linguagem de negócio, usando os termos da ficha (linha
 ## 1. Montar o roteiro
 
 Leia o rascunho (`mcp_client.read_spec(slug, "0.1")`) e traduza nó a nó, na
-ordem do grafo, com a tabela de `descoberta.md` ("Falando com quem decide"):
+ordem do grafo, com a tabela abaixo. O vocabulário dentro de cada linha vem do
+glossário "Falando com quem decide" de `descoberta.md` e da linha "Termos" da
+ficha:
 
 | Nó | Como falar |
 |---|---|
