@@ -56,4 +56,47 @@ assert connection_defaults(DUAS) == ["a", "b"], connection_defaults(DUAS)
 
 assert connection_defaults("nodes: []\n") == []
 
+# Bloco `properties:` aninhado (schema de objeto dentro de outro) não pode
+# mascarar um sibling top-level — os dois devem ser reportados (review final,
+# Important 1: o parser antigo perdia o sibling depois do bloco aninhado).
+NESTED = """
+config_schema:
+  properties:
+    grupo:
+      type: object
+      properties:
+        conn:
+          type: string
+          x-ref: connection
+          default: "abc"
+    outra:
+      type: string
+      x-ref: connection
+      default: "zzz"
+"""
+assert connection_defaults(NESTED) == ["conn", "outra"], connection_defaults(NESTED)
+
+# Indentação de 4 espaços — o parser não pode depender de um passo fixo de 2.
+QUATRO_ESPACOS = """
+config_schema:
+    properties:
+        conexao:
+            type: string
+            x-ref: connection
+            default: "abc"
+"""
+assert connection_defaults(QUATRO_ESPACOS) == ["conexao"], connection_defaults(QUATRO_ESPACOS)
+
+# Ceiling conhecido, não garantia: forma flow numa linha só. `x-ref:`/`default:`
+# aqui são pedaços da linha `conn: {...}`, nunca linhas próprias, então o guard
+# não os vê — passa em silêncio. O kit nunca escreve flow style; documentado no
+# docstring de publish_guard.py.
+FLOW = """
+config_schema:
+  properties:
+    conn: {x-ref: connection, default: "x"}
+nodes: []
+"""
+assert connection_defaults(FLOW) == [], connection_defaults(FLOW)
+
 print("test_publish_guard: ok")

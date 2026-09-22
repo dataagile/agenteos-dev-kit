@@ -3,70 +3,70 @@
 só existe em draft de teste porque spec_test_run não recebe config (ARMADILHAS §9).
 
 Uso: python3 scripts/publish_guard.py <arquivo.yaml>  → exit 1 e lista se houver.
-Sem PyYAML de propósito: parse por indentação, suficiente para o YAML que o kit escreve.
+Sem PyYAML de propósito: parse por indentação, suficiente para o YAML que o kit
+escreve. Casa qualquer bloco `properties:` — não só o de `config_schema` — então
+um schema de nó com `x-ref: connection` + `default` também é recusado; direção
+segura.
+
+Ceiling conhecido, não garantia: forma flow (`conn: {x-ref: connection, default:
+x}`) não é reconhecida — `x-ref:`/`default:` só contam como linha própria, e o
+kit nunca escreve flow style. Ver `tests/test_publish_guard.py` para o caso.
 """
+import pathlib
 import re
 import sys
 
+_PROP_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):\s*$")
+_XREF_RE = re.compile(r"^x-ref:\s*connection\b")
+_DEFAULT_RE = re.compile(r"^default:")
+
 
 def connection_defaults(content: str) -> list[str]:
-    """Nomes das properties do config_schema que têm x-ref: connection E default."""
-    found: list[str] = []
-    prop: str | None = None
-    prop_indent = -1
-    has_xref = has_default = False
-    in_properties = False
-    properties_indent = -1
+    """Nomes das properties que têm `x-ref: connection` E `default` em algum
+    lugar do próprio bloco (linhas com indent maior que o da property, até a
+    primeira linha de volta ao nível dela ou menos)."""
+    lines: list[tuple[int, str]] = []
+    for raw in content.splitlines():
+        stripped = raw.split("#", 1)[0].rstrip()
+        if not stripped.strip():
+            continue
+        indent = len(stripped) - len(stripped.lstrip())
+        lines.append((indent, stripped.strip()))
 
-    def close() -> None:
-        if prop and has_xref and has_default:
+    found: list[str] = []
+    for i, (indent, key) in enumerate(lines):
+        if not _XREF_RE.match(key):
+            continue
+
+        # Nome da property: a linha anterior mais próxima com indent menor.
+        prop = prop_indent = prop_idx = None
+        for j in range(i - 1, -1, -1):
+            pindent, pkey = lines[j]
+            if pindent < indent:
+                m = _PROP_RE.match(pkey)
+                if m:
+                    prop, prop_indent, prop_idx = m.group(1), pindent, j
+                break
+        if prop is None or prop in found:
+            continue
+
+        # Bloco da property inteiro (não só a partir da linha do x-ref):
+        # default pode vir antes ou depois do x-ref dentro dele.
+        has_default = False
+        for pindent, pkey in lines[prop_idx + 1 :]:
+            if pindent <= prop_indent:
+                break
+            if _DEFAULT_RE.match(pkey):
+                has_default = True
+                break
+        if has_default:
             found.append(prop)
 
-    for raw in content.splitlines():
-        line = raw.split("#", 1)[0].rstrip()
-        if not line.strip():
-            continue
-        indent = len(line) - len(line.lstrip())
-        key = line.strip()
-
-        # Check if we're entering/leaving properties section
-        if key.startswith("properties:"):
-            in_properties = True
-            properties_indent = indent
-            prop = None
-            has_xref = has_default = False
-            continue
-
-        # If we were in properties but moved to a sibling/parent key, exit properties
-        if in_properties and indent <= properties_indent and not key.startswith("properties:"):
-            close()
-            in_properties = False
-            prop = None
-            has_xref = has_default = False
-
-        # Parse property names (only if in properties section)
-        if in_properties and indent == properties_indent + 2:
-            m = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*):\s*$", key)
-            if m:
-                close()
-                prop = m.group(1)
-                prop_indent = indent
-                has_xref = has_default = False
-                continue
-
-        # Track x-ref and default within a property
-        if in_properties and prop is not None and indent > prop_indent:
-            if re.match(r"^x-ref:\s*connection\b", key):
-                has_xref = True
-            elif re.match(r"^default:", key):
-                has_default = True
-
-    close()
     return found
 
 
 if __name__ == "__main__":
-    text = open(sys.argv[1], encoding="utf-8").read()
+    text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
     bad = connection_defaults(text)
     if bad:
         print("publish recusado — x-ref: connection com default:", ", ".join(bad))
