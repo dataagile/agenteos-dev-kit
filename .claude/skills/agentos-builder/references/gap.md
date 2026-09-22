@@ -76,6 +76,7 @@ A `message` vai **crua** ao chamado do GLPI. Passe o pedido técnico por
 - payload de conexão, host, usuário, token
 - conteúdo de run (corpo de resposta, dado de cliente)
 - CPF, chave PIX, segredo
+- números de 11 dígitos nus somem (a redação os trata como CPF) — cite pedido, chamado ou nota **com prefixo ou pontuação** (ex.: "pedido nº 2026-0922-001"), nunca como 11 dígitos contíguos
 
 Se precisar citar o conector, cite o **nome** (`"SFTP Protheus TBC — DEV"`),
 nunca o id. Se precisar citar erro, cite o **código** (`CONNECTOR_ERROR`),
