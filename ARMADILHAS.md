@@ -586,24 +586,59 @@ resultado precisa de `{{item.left.<campo>}}` / `{{item.right.<campo>}}` —
 > fail-closed de verdade — mas só descobri porque li o erro, não porque a
 > validação pegou.
 
-### `http_request` devolve `body` como STRING
+### `http_request`: o shape de `result` muda com a resposta — quatro caminhos, e o erro é silencioso
 
-```json
-{"result": {"body": "{\"data\": [...]}", "status": 200, "headers": {...}}}
+📏 **Re-medido em 22/09/2026** (agenteos-dev-kit#23, provocado pelo RF-13 do
+PRD TBC de 18/09), probe `probe-http-body` v1, runs `d8275132`, `361f9577` e
+`fba99df2`. 🔍 Os quatro caminhos abaixo foram verificados no guard
+`_maybe_parse_json_body` do executor pelo PR monitor (review do #26); dois deles
+medidos por run.
+
+| Resposta | `body` | `body_raw` | medido |
+|---|---|---|---|
+| JSON (`content-type` com `json`, corpo inteiro, parse ok) | **objeto**, navegável | string original | 📏 `d8275132` |
+| não-JSON, `truncated: true` ou JSON inválido | **string** (o texto cru) | **não existe** | 📏 `fba99df2` (302 sem content-type) |
+| binária (`body_base64`) | **não existe** | não existe; há `storage_key`, `content_type`, `size`, `filename` | 🔍 código |
+
+Caminho feliz: `render_template` com
+`{{ steps.about.result.body.user.displayName }}` rendeu o valor (`361f9577`),
+sem filtro nenhum.
+
+**A armadilha está fora do caminho feliz, e não dá erro.** No run `fba99df2` o
+mesmo template, sobre uma resposta não-JSON, rendeu:
+
+```
+body_e_string=True
+raw_definido=False
+navegar_string=NAO_RESOLVEU
 ```
 
-O `body` é **texto**, não objeto. E **não há como parsear em YAML**:
+O Jinja do `render_template` usa `ChainableUndefined`: navegar `body.user.x`
+sobre uma **string** não levanta nada, rende vazio, e o nó marca `ok`. Um
+template que assume JSON e recebe HTML de login, um 302, ou um corpo truncado
+sai com todos os campos em branco e o run termina verde.
 
-| tentativa | resultado |
-|---|---|
-| `.result.body.data` no transform | não resolve para lista |
-| filtro `fromjson` / `from_json` no Jinja | **não existe** — o nó falha antes de executar |
-| `tojson` | existe (serializa), não ajuda |
-| qualquer transform strategy | nenhuma parseia string |
+**Defesa:** antes de navegar, teste o tipo, ou gateie num `condition` pelo
+`status` (§18):
 
-Ou seja: hoje o `http_request` serve para **disparar** uma chamada, não para
-**alimentar** um pipeline com o que ela devolve. Se precisa do corpo, a leitura
-tem que vir por `tool`/`primitive: read`.
+```jinja
+{% if steps.about.result.body is string %}resposta não era JSON{% else %}{{ steps.about.result.body.user.displayName }}{% endif %}
+```
+
+O probe, com os três nós e o template que distingue os caminhos, está em
+[`examples/probe-http-body/v1.yaml`](examples/probe-http-body/v1.yaml).
+
+**Por que a versão anterior desta seção dizia o contrário:** 🔍 a plataforma
+mudou em 01/09/2026, commit `16b1d0de` do Agente_OS ("http_request parseia
+result.body quando o destino declara JSON", DAI-1006, #647), às 12:06 BRT. A
+medição antiga foi no mesmo dia, quase certamente antes do merge. Não era erro
+de medição; era outra versão.
+
+O que continua valendo: filtro `fromjson`/`from_json` no Jinja **não existe**
+(nenhum filtro custom registrado), então resposta não-JSON não tem como ser
+parseada no grafo (§19). 🔍 Índice de lista (`body.0.campo` / `body[0].campo`)
+**não foi medido aqui**; o PRD TBC (RF-03, run `e1bdb39f`) diz que resolve
+`None` em silêncio — se a API devolve lista, confira no trace antes de desenhar.
 
 ---
 

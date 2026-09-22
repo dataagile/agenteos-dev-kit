@@ -1,0 +1,14 @@
+## JSON (about)
+usuario={{ steps.about.result.body.user.displayName | default('NAO_RESOLVEU') }}
+status={{ steps.about.result.status | default('NAO_RESOLVEU') }}
+body_e_string={{ steps.about.result.body is string }}
+raw_e_string={{ steps.about.result.body_raw is string }}
+raw_definido={{ steps.about.result.body_raw is defined }}
+
+## NAO-JSON (html)
+status={{ steps.html.result.status | default('NAO_RESOLVEU') }}
+content_type={{ steps.html.result.headers['content-type'] | default('NAO_RESOLVEU') }}
+body_e_string={{ steps.html.result.body is string }}
+raw_definido={{ steps.html.result.body_raw is defined }}
+navegar_string={{ steps.html.result.body.user.displayName | default('NAO_RESOLVEU') }}
+truncated={{ steps.html.result.truncated | default('NAO_RESOLVEU') }}
