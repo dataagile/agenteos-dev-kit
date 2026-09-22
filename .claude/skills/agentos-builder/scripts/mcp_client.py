@@ -217,3 +217,21 @@ def publish(slug: str, version: str) -> dict[str, Any]:
     """Levanta `McpClientError(code="validation_failed", details={"errors": [...]})`
     se o draft não passa em `validate` primeiro — o servidor MCP recusa a promoção."""
     return _call("spec.publish", {"slug": slug, "version": version})
+
+
+_FEEDBACK_CATEGORIES = ("erro", "melhoria", "feedback")
+
+
+def feedback(category: str, message: str, context: dict[str, str] | None = None) -> dict[str, Any]:
+    """Reporta gap de autoria pela tool `spec_feedback` (mesmo megafone da tela;
+    vai ao Sentry com source=mcp). `message` vai CRUA — nunca inclua `default:`
+    de conexão, payload, conteúdo de run, CPF, PIX ou segredo (references/gap.md).
+    Primeira linha da message leva a classe: [ambiente] | [plataforma] | [kit]."""
+    if category not in _FEEDBACK_CATEGORIES:
+        raise ValueError(f"category deve ser um de {_FEEDBACK_CATEGORIES}, veio {category!r}")
+    if len(message) > 4000:
+        raise ValueError(f"message tem {len(message)} chars; máximo 4000")
+    params: dict[str, Any] = {"category": category, "message": message}
+    if context:
+        params["context"] = context
+    return _call("spec.feedback", params)
