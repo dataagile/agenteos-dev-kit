@@ -49,8 +49,12 @@ o usuário:
 
 | Resposta | Rota | Ficha |
 |---|---|---|
-| Não escreve **e** não tem regra por caso | **curta**: uma rodada só (a Rodada 1) | Trabalho, Começa quando, Lê, Termina bem, Descartado |
+| Não escreve **e** não tem regra por caso | **curta**: Rodada 1 + Decisão (as duas perguntas de fecho rodam sempre) | Trabalho, Começa quando, Lê, Termina bem, Descartado |
 | Qualquer outra | **completa**: Rodadas 1, 2 e 3 | todas as linhas |
+
+Na rota curta, a linha **Lê** é preenchida a partir da execução real descrita
+na Rodada 1 (o que a pessoa consulta e onde), sem pergunta extra; **Descartado**
+vem da Decisão.
 
 A triagem existe porque descoberta em agente simples vira overhead, e a maior
 parte dos agentes do AgenteOS é automação, não domínio de cliente. **A triagem
