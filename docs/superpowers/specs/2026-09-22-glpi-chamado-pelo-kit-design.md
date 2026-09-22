@@ -142,7 +142,7 @@ assinatura; passa a exigir `reporter_name`/`reporter_email` no `context`
   `upstream_unavailable`; `reporter_*` ausente → `validation_failed`;
   `external_id` estável para a mesma entrada e diferente entre tenants.
 - Testes do api-gateway continuam passando após a mudança de import.
-- **Smoke real** contra `glpi.totvstbc.com.br` com um chamado de teste
+- **Smoke real** contra `suporte.dataagile.com.br` com um chamado de teste
   fechado em seguida — é o que valida o `filter=` e é o gate do plano.
 
 **Kit (scripts stdlib, como os existentes):**
