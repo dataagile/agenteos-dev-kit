@@ -4,7 +4,7 @@ description: Manages AgentOS AgentSpec YAML files under {drafts,published}/<slug
 license: MIT
 metadata:
   author: w1
-  version: "0.5.0"
+  version: "0.6.0"
   phase: F4 — spec content AND discovery are MCP-mediated (024/T017-T018, T027); only Backup/Remove stay local (co-located git/fs ops, see dogfood.md)
   role: tool
 ---
@@ -48,23 +48,25 @@ Explicit non-goals — always refuse and redirect to `/w1`:
 | Operation | Status | Reference |
 |---|---|---|
 | Read (list / inspect) | Live | `references/read.md` |
-| Descoberta (fase 0 do Create) | Live | `references/descoberta.md` |
-| Create | Live | `references/create.md` |
+| Descoberta (conversa com o analista) | Live | `references/descoberta.md` |
+| Create (derivação — interna, sem perguntas) | Live | `references/create.md` |
+| Proposta (roteiro + test run traduzido) | Live | `references/proposta.md` |
+| Gap (parar, reportar, retomar) | Live | `references/gap.md` |
 | Edit | Live | `references/edit.md` |
 | Clone | Live | `references/clone.md` |
 | Backup | Live | `references/backup.md` |
 | Publish | Live | `references/publish.md` |
 | Remove | Live | `references/remove.md` |
 
-**Create começa pela descoberta.** Quando o pedido for "criar um agente que
-faz X", rode `references/descoberta.md` ANTES do `create.md`: três rodadas em
-linguagem de negócio (propósito, invariante, fronteira) e uma decisão — caminho
-escolhido e alternativa descartada — que produzem a ficha de domínio que vira o
-cabeçalho do YAML. Quem conduz normalmente não é dev: a tabela de tradução
-(termo técnico → como falar) está no topo daquele arquivo. Perguntar campo de
-schema antes de saber o que nunca pode acontecer é como o grafo sai errado sem
-ninguém perceber.
+**O humano nunca responde campo de schema.** Quem autora é analista de negócio.
+Pedido "criar um agente que faz X" segue esta ordem, sem pular:
+`descoberta.md` (triagem + rodadas + ficha, gravada no rascunho desde a
+primeira linha) → `create.md` (deriva o YAML da ficha; não pergunta) →
+`proposta.md` (roteiro em negócio, decisão, test run traduzido) → `publish.md`
+(só após run verde, com o guard de conexão). Faltou recurso no ambiente em
+qualquer ponto: `gap.md` — parar, reportar por `spec_feedback`, deixar o
+rascunho retomável. Nunca contornar.
 
-All 8 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
+All 10 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
 
 Keep this file lean — it is the router, the boundary, and the shared rules. Operation-specific interview and execution detail lives in `references/`.

@@ -57,22 +57,30 @@ Abra o Claude Code **neste repositório** e use a skill:
 
 A skill conduz o ciclo completo, sempre via MCP:
 
-0. **Descoberta** — antes de qualquer campo, o domínio: o que nunca pode
-   acontecer, quem autoriza, o que o agente escreve. Produz a ficha de domínio
-   que vira o cabeçalho do YAML —
-   [`descoberta.md`](.claude/skills/agentos-builder/references/descoberta.md);
-1. `spec_node_types` / `spec_context` / `spec_connectors` / `spec_tools` /
-   `spec_models` — descobrir o que existe no ambiente (nunca de memória:
-   `connector_id` vem do `spec_connectors`; `tool_name` vem da lista
-   `platform_tools` de `spec_tools` — os itens da lista `tools` são de
-   MCP-servers do tenant e chegam com `callable: false`, não servem para um
-   nó `tool`; a semântica de condition/when/salto/erro-em-loop vem do bloco
-   `semantics` de `spec_node_types` — leia antes de escrever condition/loop);
-2. `spec_write` — gravar o rascunho (`drafts/<slug>/v<N>.yaml` no servidor;
-   os `.j2` viajam junto no parâmetro `templates`, como `{nome: conteúdo}`);
-3. `spec_validate` — validar (`{ok: true}` libera; erros vêm com `field_path`);
-4. `spec_publish` — publicar. **A publicação já entra no catálogo do ambiente
-   na hora** (não há passo manual de seed).
+0. **Descoberta** — o analista responde em linguagem de negócio: o que a
+   pessoa faz hoje na mão, o que liga o agente, o que nunca pode acontecer,
+   quem autoriza, o que lê e o que escreve. Duas perguntas de triagem decidem
+   se é uma rodada ou três. O produto é a **ficha de domínio**, gravada no
+   cabeçalho do rascunho desde a primeira linha
+   ([`descoberta.md`](.claude/skills/agentos-builder/references/descoberta.md)).
+1. **Derivação** — o kit consulta o ambiente (`spec_node_types`, `spec_context`,
+   `spec_connectors`, `spec_tools`, `spec_models`, sempre ao vivo) e deriva o
+   YAML inteiro da ficha, cada regra citando a seção do `ARMADILHAS.md` que a
+   justifica. O analista não vê slug, nó nem `when`
+   ([`create.md`](.claude/skills/agentos-builder/references/create.md)).
+2. **Proposta** — o agente volta como roteiro, uma linha por passo, em negócio;
+   o analista corrige em negócio e fecha com duas perguntas (caminho escolhido,
+   alternativa descartada)
+   ([`proposta.md`](.claude/skills/agentos-builder/references/proposta.md)).
+3. **Prova** — `spec_test_run` no rascunho, trace traduzido para o analista.
+   Publicar só com run verde.
+4. **Publicação** — `spec_publish`, com guard mecânico que recusa conexão com
+   `default`. **A publicação já entra no catálogo do ambiente na hora**.
+
+Faltou recurso no ambiente em qualquer ponto: o kit para, explica em uma frase,
+reporta pela tool `spec_feedback` (a mesma do megafone da tela) e deixa o
+rascunho retomável
+([`gap.md`](.claude/skills/agentos-builder/references/gap.md)).
 
 Para mudar um agente já publicado: `spec_revise` (abre a PRÓXIMA versão em
 draft semeada da última published — published é imutável), e daí o ciclo
