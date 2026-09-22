@@ -69,4 +69,12 @@ assert "allowed_ops=read_write" in redact("allowed_ops=read_write")
 out_json = redact('{"token": "abc123", "password": "p4ss"}')
 assert redact(out_json) == out_json
 
+# observações do review do #31: telefone sem +55, CNPJ (PIX), senha com espaço
+for bad in ("61 99999-8888", "(61) 3333-4444", "12.345.678/0001-90", "12345678000190"):
+    out2 = redact(f"contato {bad} fim")
+    assert bad not in out2, f"vazou: {bad}\n{out2}"
+assert "minha senha longa" not in redact("senha: minha senha longa\npassword = outra com espaco\n")
+assert "contato <removido> fim" in redact("contato 61 99999-8888 fim")
+assert redact("erro 2026-09-22 às 14:30 code=E1234") == "erro 2026-09-22 às 14:30 code=E1234"
+
 print("test_gap_redact: ok")

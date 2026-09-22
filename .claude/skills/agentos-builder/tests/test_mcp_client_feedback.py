@@ -66,4 +66,12 @@ except ValueError:
     pass
 assert len(calls) == n
 
+# reporter None não vira a string "None"
+try:
+    m.feedback("erro", "x", context={"reporter_name": None, "reporter_email": "a@b"})
+    raise AssertionError("devia levantar ValueError")
+except ValueError:
+    pass
+assert len(calls) == n
+
 print("test_mcp_client_feedback: ok")

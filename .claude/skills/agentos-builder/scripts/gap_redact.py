@@ -23,6 +23,10 @@ _RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"(?<!\d)\d{11}(?!\d)"), _R),
     (re.compile(r"(?i)\b(bearer|basic)\s+\S+"), rf"\1 {_R}"),
     (re.compile(r"(?i)(\b[\w-]*(?:token|secret|password|senha|api[-_]?key)[\w-]*\"?\s*[:=]\s*\"?)[^\"\s,;}\]]+"), rf"\1{_R}"),
+    (re.compile(r"(?im)^(\s*(?:senha|password)\s*[:=]\s*)(?!\").+$"), rf"\1{_R}"),
+    (re.compile(r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b"), _R),
+    (re.compile(r"(?<!\d)\d{14}(?!\d)"), _R),
+    (re.compile(r"(?<![\w+])\(?\d{2}\)?\s?9?\d{4}-\d{4}\b"), _R),
     (re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"), _R),
     (re.compile(r"\+55\s?\d{2}\s?\d{4,5}-?\d{4}\b"), _R),
 ]
