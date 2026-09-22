@@ -43,7 +43,8 @@ logo a chave de 6 scopes do README já a cobre — fecha a nota "a confirmar").
 
 **Chamado** (reaproveita `build_ticket` do console, movido junto com o cliente):
 
-- título: `[dev-kit] <Categoria>: <primeira linha, ≤ _TITLE_MAX>`
+- título: `[dev-kit] <Categoria>: <primeira linha, ≤ _TITLE_MAX>` (📏 #968: só a
+  primeira linha da mensagem entra no título; o resto vai no corpo)
 - corpo HTML: mensagem escapada, `<hr>`, tabela com Reportado por, Tenant
   (nome + slug, como `_load_context` já resolve), Slug/versão, Tool/passo,
   Versão do kit, Run, Data UTC. Requerente do GLPI = usuário técnico
@@ -74,7 +75,9 @@ e `httpx` (📏 `packages/mcp-server/pyproject.toml:7,39`). Settings: as mesmas
 ## 3. Plataforma — dedup, falhas, fora de escopo
 
 **Dedup.** Antes de criar: `GET /Assistance/Ticket?filter=external_id==<hash>`.
-Existe → devolve o existente com `deduplicated: true`, e acrescenta um
+Existe **e está aberto** (📏 #968: chamado fechado, status 5/6, não casa — o
+mesmo relato abre chamado novo) → devolve o existente com `deduplicated: true`,
+e acrescenta um
 followup "reportado de novo por <reporter> em <data>" (`POST
 .../Timeline/Followup`, endpoint já validado). 🔍 A busca por `filter=` é
 sugerida na referência (`2026-09-21-glpi-api-feedback-reference.md`, linha
@@ -186,6 +189,12 @@ assinatura; passa a exigir `reporter_name`/`reporter_email` no `context`
 
 O plano de implementação será um por repo. A parte 1 é repassada à sessão que
 cuida do Agente_OS com este spec como contrato.
+
+## 7b. Prova ao vivo (📏 22/09/2026)
+
+`feedback()` duas vezes com o mesmo texto no sandbox-os com o #968 deployado:
+1ª → `ticket_id 242, deduplicated false`; 2ª → `ticket_id 242, deduplicated
+true`. Chamado de teste fechado. Registro em agenteos-dev-kit#31.
 
 ## 8. Riscos aceitos
 

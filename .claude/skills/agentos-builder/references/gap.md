@@ -113,7 +113,8 @@ chamado. Nas próximas vezes só confirme ("continua sendo Ana?").
    Retorno `{"ticket_id": N, "url": ..., "deduplicated": bool}`. Diga ao
    usuário: `Chamado #N aberto: <url>`, ou, se `deduplicated`, `Já existe o
    #N para isto: <url>` (a plataforma acrescentou um followup com o novo
-   relato). Cabeçalho do rascunho: `# Gap reportado: glpi #N — <data>`.
+   relato). A dedup só casa chamado **aberto**: se o time já fechou o #N, o
+   mesmo relato abre um chamado novo — é o desenho, não erro. Cabeçalho do rascunho: `# Gap reportado: glpi #N — <data>`.
    Se o retorno vier **sem `ticket_id`** (plataforma ainda no contrato
    antigo), o relato foi entregue mesmo assim: diga "gap reportado" e grave
    `# Gap reportado: feedback — <data>`.
