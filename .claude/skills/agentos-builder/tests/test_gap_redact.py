@@ -46,4 +46,8 @@ assert out.count("<removido>") >= 8, out.count("<removido>")
 # idempotente
 assert redact(out) == out
 
+# ceiling documentado: 11 dígitos nus somem mesmo não sendo CPF; com pontuação ficam
+assert "<removido>" in redact("pedido número 20260922001 ficou pendente")
+assert "2026-0922-001" in redact("pedido nº 2026-0922-001 ficou pendente")
+
 print("test_gap_redact: ok")

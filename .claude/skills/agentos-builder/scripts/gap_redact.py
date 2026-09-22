@@ -4,7 +4,9 @@ O texto vai cru ao chamado do GLPI. Isto remove o que NUNCA pode ir: UUID
 (inclui id de conexão e chave PIX aleatória), valor de `default:`, CPF,
 valores de token/secret/password/Bearer, e-mail e telefone (chaves PIX).
 Ceiling: nome de host não é removido — cite conexão pelo NOME, não pelo
-endereço (gap.md §4). Stdlib puro.
+endereço (gap.md §4).
+Ceiling 2: qualquer número de 11 dígitos contíguos é tratado como CPF e removido — cite pedido/chamado/nota com prefixo ou pontuação (ex.: "pedido nº 2026-0922-001"), nunca como 11 dígitos nus.
+Stdlib puro.
 
 Uso: python3 scripts/gap_redact.py < pedido.txt
 """
