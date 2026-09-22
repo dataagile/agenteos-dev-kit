@@ -6,7 +6,7 @@ schema é resposta — não pergunta. Quem não sabe o que o negócio faz respon
 campo por campo e descobre tarde que o grafo inteiro estava errado.
 
 Destilado de Domain-Driven Design (Evans, 2003) para o tamanho de UM agente.
-Não é Event Storming de projeto: são três rodadas curtas e uma decisão. O
+Não é Event Storming de projeto: são uma triagem, até três rodadas curtas e uma decisão. O
 produto é a **ficha de domínio**, que vira o cabeçalho do YAML e responde
 sozinha às perguntas do `create.md`.
 
@@ -40,6 +40,22 @@ o usuário:
    pedir — segure até a decisão do fim.
 5. **Questione, não agrade.** Se dois termos parecem o mesmo conceito, pare e
    resolva antes de seguir. Ambiguidade de palavra vira ambiguidade de nó.
+
+## Triagem — duas perguntas antes de tudo
+
+1. Esse agente **escreve** em algum sistema (cria, muda, apaga, envia) ou só
+   consulta e informa?
+2. O processo tem **regra que muda por caso** (valor, cliente, dia, tipo)?
+
+| Resposta | Rota | Ficha |
+|---|---|---|
+| Não escreve **e** não tem regra por caso | **curta**: uma rodada só (a Rodada 1) | Trabalho, Começa quando, Lê, Termina bem, Descartado |
+| Qualquer outra | **completa**: Rodadas 1, 2 e 3 | todas as linhas |
+
+A triagem existe porque descoberta em agente simples vira overhead, e a maior
+parte dos agentes do AgenteOS é automação, não domínio de cliente. **A triagem
+é entrada, não veredito:** se a derivação (`create.md`) encontrar escrita ou
+regra condicional numa ficha curta, reabra a Rodada 2 antes de seguir.
 
 ## Rodada 1 — Propósito e gatilho
 
@@ -111,8 +127,9 @@ ainda não decidiu, só olhou uma opção. As duas respostas entram na ficha.
 ## Produto: a ficha de domínio
 
 Feche a fase com a ficha abaixo, confirmada pelo usuário em uma frase por linha.
-Ela **vira o cabeçalho do YAML** (o `create.md` já exige um bloco de comentário)
-e alimenta a entrevista de campos sem precisar perguntar de novo.
+Ela **é o cabeçalho do YAML** — já está gravada no rascunho linha a linha (ver
+"Onde a ficha vive") — e é a única entrada do `create.md`: a derivação lê a
+ficha, não pergunta nada ao humano.
 
 ```text
 # FICHA DE DOMÍNIO — <nome do agente>
@@ -132,6 +149,26 @@ Regra de saída: **campo da ficha em branco é pergunta não respondida**, não
 detalhe menor. Não comece o `create.md` com a ficha incompleta — o custo de
 descobrir isso depois é reescrever o grafo, e a §3 diz o que custa publicar
 errado.
+
+## Onde a ficha vive: no rascunho, desde a primeira linha
+
+Nada em arquivo local. A memória é o rascunho no MCP.
+
+1. Assim que a linha **Trabalho** é confirmada: proponha `name`, derive o `slug`
+   (kebab-case do nome), **cheque colisão** com `mcp_client.list_specs()` e
+   grave um rascunho mínimo válido com `mcp_client.write_draft(slug, "0.1",
+   content)` — `description`, `trigger`, um nó `render_template` com um `.j2`
+   de uma linha — com a ficha parcial como cabeçalho (linhas ainda não
+   respondidas ficam com `<pendente>`).
+2. A cada linha da ficha confirmada: `write_draft` de novo, mesma versão, só o
+   cabeçalho muda. O YAML cresce junto na fase de derivação.
+3. Sessão que cai no meio: `mcp_client.read_spec(slug, "0.1")`, leia o
+   cabeçalho, retome da primeira linha `<pendente>`.
+4. Reabrir uma decisão é regravar o rascunho com a ficha alterada. Publicado é
+   `spec_revise`, como qualquer mudança.
+
+O slug nasce validado porque a primeira gravação já passa pelo MCP — não existe
+pasta local a criar antes de o slug ser confirmado.
 
 ## Quando pular esta fase
 
