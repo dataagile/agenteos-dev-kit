@@ -229,6 +229,8 @@ def feedback(category: str, message: str, context: dict[str, str] | None = None)
     Primeira linha da message leva a classe: [ambiente] | [plataforma] | [kit]."""
     if category not in _FEEDBACK_CATEGORIES:
         raise ValueError(f"category deve ser um de {_FEEDBACK_CATEGORIES}, veio {category!r}")
+    if not message.strip():
+        raise ValueError("message vazia — o servidor recusa (minLength 1) e cairia no fallback de issue à toa")
     if len(message) > 4000:
         raise ValueError(f"message tem {len(message)} chars; máximo 4000")
     params: dict[str, Any] = {"category": category, "message": message}

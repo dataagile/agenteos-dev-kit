@@ -29,6 +29,14 @@ except ValueError:
     pass
 assert len(calls) == n
 
+# message vazia não chega na rede
+try:
+    m.feedback("erro", "   ")
+    raise AssertionError("devia levantar ValueError")
+except ValueError:
+    pass
+assert len(calls) == n
+
 # message > 4000 não chega na rede
 try:
     m.feedback("erro", "a" * 4001)

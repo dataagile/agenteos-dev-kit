@@ -11,6 +11,9 @@ segura.
 Ceiling conhecido, não garantia: forma flow (`conn: {x-ref: connection, default:
 x}`) não é reconhecida — `x-ref:`/`default:` só contam como linha própria, e o
 kit nunca escreve flow style. Ver `tests/test_publish_guard.py` para o caso.
+
+Ceiling 2: só nomes de property `[A-Za-z_][A-Za-z0-9_-]*` são reconhecidos;
+nome entre aspas ou com ponto passa em silêncio (mesma classe do flow-style).
 """
 import pathlib
 import re
