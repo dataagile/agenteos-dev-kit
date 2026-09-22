@@ -2,8 +2,10 @@
 
 **Data:** 2026-09-17
 **Estado:** proposta, para revisão de Gianluka e João Vitor antes de qualquer PR
-**Baseline:** `main` em `d92a0f0` (#21 mergeado, com a tabela de tradução e o
-fecho de duas perguntas trazidos do #19)
+**Baseline:** `main` em `5daca20` (#21 mergeado, com a tabela de tradução e o
+fecho de duas perguntas trazidos do #19; #20 com a §4 re-medida após DAI-918,
+que mantém a regra da seção 5: `when` reconhecido e falso pula o humano por
+desenho, e o gate no veredito cobre)
 
 ## 1. O problema que sobrou depois do #21
 
@@ -169,15 +171,25 @@ Saída em duas camadas:
 
 Canal, em ordem de preferência:
 
-1. **Tool de feedback no MCP** (`spec_feedback`, a criar no Agente_OS): o mesmo
-   mecanismo do megafone da tela do AgenteOS ("Reportar erro", "Sugestão de
-   melhoria", "Feedback geral"), exposto ao autor. O kit chama a tool com o
-   pedido nas duas camadas e a classe sugerida; o item cai na esteira de
-   manutenção do time interno sem passar por ninguém. É o que fecha o ciclo para
-   um analista sem `gh` nem git. Enquanto a tool não existir, é gap da
-   plataforma, e o kit usa o passo 2.
+1. **Tool de feedback no MCP** (`spec_feedback`, já exposta no servidor
+   `agenteos`: `category: erro|melhoria|feedback`, `message` até 4000
+   caracteres, `context: {slug, version, run_id, tool}`; vai para o Sentry com
+   `source=mcp`). É o mesmo mecanismo do megafone da tela do AgenteOS, e cai na
+   esteira de manutenção do time interno sem passar por ninguém. É o que fecha
+   o ciclo para um analista sem `gh` nem git. Regras de uso, que vão para o
+   `gap.md`:
+   - `context` sempre com `{slug, version}` do rascunho retomável e `tool` do
+     passo que travou; é o vínculo gap ↔ rascunho, sem texto livre.
+   - A classe do gap (ambiente / plataforma / kit) não tem campo na tool: vai
+     como prefixo fixo na primeira linha da `message` (`[ambiente]`,
+     `[plataforma]`, `[kit]`).
+   - **Redação mecânica antes de chamar:** a `message` vai crua ao Sentry. Nunca
+     incluir valor de `default:` de conexão, payload de conexão, conteúdo de
+     run, CPF, chave PIX ou segredo. "O que o catálogo devolveu" entra como
+     nome de tool/conector e código de erro, nunca como corpo de resposta.
 2. **Issue no repositório do kit** com etiqueta `gap`, aberta com `gh` quando
-   disponível e autenticado.
+   disponível e autenticado. Fallback de **indisponibilidade** do MCP, não de
+   inexistência da tool.
 3. **Texto pronto** para o analista repassar, quando nem 1 nem 2 estão
    disponíveis.
 
@@ -186,8 +198,8 @@ quando o gap fechar.
 
 Referência do tamanho que um relato de gap pode ter: o PRD de 18/09/2026 do
 José Miguel (TBC) lista dezesseis requisitos, cada um com run de evidência,
-levantados autorando um agente real pelo kit. Vários coincidem com issues já
-abertas aqui (#13 = RF-09; §18 = RF-05), e o RF-13 contradiz a §11 do
+levantados autorando um agente real pelo kit. Vários coincidem com gaps já
+registrados aqui (#13, fechada, = RF-09 = Agente_OS#777; §18 = RF-05), e o RF-13 contradiz a §11 do
 ARMADILHAS. É esse tipo de relato que o canal existe para receber cedo, item a
 item, em vez de um documento no fim.
 
