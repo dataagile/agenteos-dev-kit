@@ -4,7 +4,7 @@ A dedicated git commit — a snapshot of ONE spec file at this exact moment, res
 
 ## What a backup is
 
-- **Scope**: exactly one YAML file (the target spec version, e.g. `drafts/fin-collections/v0.5.yaml` or `published/fin-pagamentos/v1.yaml`).
+- **Scope**: exactly one YAML file (the target spec version, e.g. `drafts/test-sftp/v4.yaml` or `published/fin-pagamentos/v1.yaml`).
 - **Mechanism**: `git commit`, nothing else. Git history *is* the backup store — there is no second, parallel mechanism to keep in sync.
 - **Commit message convention** (always this exact shape): `chore(agent-specs): backup <slug> v<version>` — `<slug>` and `<version>` read from the YAML's own `slug`/`version` fields, not the filename (they can diverge from a stale filename).
 
