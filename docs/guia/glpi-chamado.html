@@ -1,0 +1,44 @@
+<section id="c15" data-track="daos glpi dev">
+  <div class="kicker g">Capítulo 15</div>
+  <h2>Dev-kit → GLPI: travou na autoria, vira chamado</h2>
+  <p class="lede">Quem cria agentes pelo dev-kit (analista ou dev) não precisa de acesso ao GLPI nem de credencial nenhuma: quando a autoria trava, o kit monta o rascunho, pergunta, e a <b>plataforma</b> abre o chamado. O número e o link voltam na conversa.</p>
+  <p>Contrato e desenho: <code>agenteos-dev-kit/docs/superpowers/specs/2026-09-22-glpi-chamado-pelo-kit-design.md</code>. Reaproveita o mesmo usuário técnico, o mesmo cliente e o mesmo mapeamento de categorias do capítulo 14.</p>
+
+  <h3>O mapa</h3>
+  <div class="mer"><pre class="mermaid">
+flowchart LR
+  A["Analista / dev&lt;br/&gt;Claude Code + dev-kit"] -->|"1. gap, MCP falhando 2x, ou /reportar"| K["skill agentos-builder&lt;br/&gt;references/gap.md"]
+  K -->|"2. rascunho redigido (gap_redact) → pergunta → sim"| M["MCP do AgenteOS&lt;br/&gt;tool spec_feedback"]
+  M -->|"3. dedup por external_id"| S["GLPI API v2&lt;br/&gt;GET /Assistance/Ticket?filter="]
+  M -->|"4. POST /Assistance/Ticket&lt;br/&gt;grant password, usuário técnico"| T["Chamado&lt;br/&gt;Incidente ou Requisição"]
+  M -->|"5. {ticket_id, url, deduplicated}"| K
+  K -->|"6. 'Chamado #N aberto: link'"| A
+  classDef g fill:#FBF1E1,stroke:#A8681A,color:#101B28
+  class S,T g
+  </pre></div>
+
+  <h3>O que dispara a sugestão</h3>
+  <ol class="steps">
+    <li><b>Gap.</b> A derivação ou o test run precisa de conexão, tool, strategy ou modelo que o ambiente não tem. O kit para ali.</li>
+    <li><b>MCP falhando duas vezes no mesmo passo.</b> Erro de servidor em <code>spec_write</code>, <code>spec_validate</code>, <code>spec_test_run</code> ou <code>spec_publish</code>, duas vezes seguidas. Erro de validação da spec não conta.</li>
+    <li><b>Pedido explícito.</b> "travou", "bug" ou <code>/reportar</code>.</li>
+  </ol>
+  <div class="callout g"><b class="t">Nunca abre sozinho</b>O kit mostra o rascunho inteiro — uma frase em linguagem de negócio e o pedido técnico, já sem UUID de conexão, CPF, token ou conteúdo de run — e só chama a plataforma depois do "sim".</div>
+
+  <h3>O que chega no GLPI</h3>
+  <ul>
+    <li>Título <code>[dev-kit] Reportar erro: &lt;primeira linha&gt;</code> (Incidente) ou <code>[dev-kit] Sugestão de melhoria: …</code> (Requisição).</li>
+    <li>Corpo: mensagem, depois <b>Reportado por</b> (nome e e-mail que o kit perguntou uma vez), tenant, slug e versão do rascunho, tool e passo, versão do kit, data.</li>
+    <li>Requerente: o usuário técnico <code>agenteos-api</code>, como no capítulo 14. A pessoa está no corpo.</li>
+    <li>Relato repetido (mesmo tenant, categoria, primeira linha e slug) não abre outro chamado: volta o existente com <em>deduplicated</em> e um followup "reportado de novo por …".</li>
+  </ul>
+
+  <h3>Quando o GLPI não responde</h3>
+  <p>Página de manutenção do NPM, 5xx ou token recusado viram <code>upstream_unavailable</code> na tool — nunca 500. O kit avisa que o canal está fora e cai no fallback: issue no repositório do kit (se houver <code>gh</code>) ou o texto pronto para repassar ao time TBC. Nada se perde; o rascunho fica marcado no cabeçalho para retomar.</p>
+
+  <h3>Para quem administra</h3>
+  <ul>
+    <li>O <code>mcp-server</code> do spoke precisa das cinco variáveis <code>glpi_*</code> da API v2 (as mesmas do api-gateway). Sem elas a tool devolve <code>upstream_unavailable</code>.</li>
+    <li>Anexos não entram nesta versão: o log vai no corpo. Quando entrarem, a API v1 já está ao alcance do servidor.</li>
+  </ul>
+</section>
