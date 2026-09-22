@@ -55,11 +55,19 @@ logo a chave de 6 scopes do README já a cobre — fecha a nota "a confirmar").
 **O que sai:** `sentry_sdk.capture_message` e as tags. O docstring/descrição da
 tool passa a dizer GLPI. A descrição mantém o aviso de que o texto vai cru.
 
-**Onde o cliente vive:** `apps/api-gateway/src/api_gateway/glpi.py` (só depende
-de `cdm.config` e `httpx`) sobe para `packages/cdm/src/cdm/glpi.py`, com
-`GlpiClient`, `GlpiError`, `GlpiTicket`, `build_ticket` e o `FakeGlpi` de
-teste. O api-gateway e o mcp-server importam de `cdm.glpi`. O mcp-server já
-depende de `cdm` e `httpx` (📏 `pyproject.toml`). Settings: as mesmas
+**Onde o cliente vive** (como ficou no Agente_OS#968): `GlpiClient`, `GlpiError`,
+`GlpiTicket` saem de `apps/api-gateway/src/api_gateway/glpi.py` para
+`packages/cdm/src/cdm/glpi.py`. `build_ticket` e `_CATEGORY_TYPE` **não** estavam
+em `glpi.py`: viviam em `apps/api-gateway/src/api_gateway/routers/feedback.py`
+(linhas 40–42 e 83) e montavam o título do console (`[instância] Categoria: …`
+com Instância/Empresa/Usuário/Rota). Foram **extraídos e parametrizados** em
+`cdm.glpi` como `build_ticket(category, message, *, prefix, rows)` e
+`CATEGORY_TYPE`; o console passa `prefix="[instância]"` e suas linhas, a tool
+passa `prefix="[dev-kit]"` e as linhas da tabela acima. O `FakeGlpi` era uma
+classe de teste (`apps/api-gateway/tests/unit/test_glpi_client.py:35`), não
+módulo; vive agora em `cdm.glpi.FakeGlpi`, importável pelos testes dos dois
+serviços. O mcp-server (`packages/mcp-server`, não `apps/`) já depende de `cdm`
+e `httpx` (📏 `packages/mcp-server/pyproject.toml:7,39`). Settings: as mesmas
 `glpi_*` de `BaseServiceSettings`; o mcp-server passa a exigir as cinco da v2
 (`feedback_enabled`) no spoke onde roda.
 
@@ -171,6 +179,7 @@ assinatura; passa a exigir `reporter_name`/`reporter_email` no `context`
 | Parte | Repo | Depende de |
 |---|---|---|
 | Mover `glpi.py` + `FakeGlpi` para `cdm`; estender `spec_feedback`; testes; smoke | Agente_OS | — |
+| **Breaking declarado:** saída deixa de ter `delivered`/`category` e passa a `{ticket_id, url, deduplicated}` (contrato `spec.feedback 1.5.0 spec.read` congelado em `test_contract_freeze.py:110` mantém nome/versão/escopo); remover a captura no Sentry e ajustar `packages/cdm/tests/test_sentry.py` | Agente_OS | parte 1 |
 | Deploy do mcp-server com `glpi_*` no env do spoke | infra do spoke | parte 1 |
 | `feedback()` exige `reporter_*`; `gap_redact.py`; `gap.md`/`SKILL.md`/README/ARMADILHAS | agenteos-dev-kit | contrato da parte 1 (pode ser escrito em paralelo contra o `FakeGlpi`) |
 | Capítulo do guia | HTML entregue no kit em `docs/guia/glpi-chamado.html` | parte 3 |

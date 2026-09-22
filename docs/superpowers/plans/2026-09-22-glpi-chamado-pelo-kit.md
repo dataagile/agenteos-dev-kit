@@ -21,6 +21,7 @@
 - Retorno ao usuário: `Chamado #N aberto: <url>` ou `Já existe o #N para isto: <url>`.
 - `spec_feedback` exige só `spec.read` (📏 código): a chave de 6 scopes cobre; a nota "a confirmar no sandbox" do README fecha.
 - Zero código do core; sem fallback a filesystem para operação de spec; nenhum arquivo local novo **por agente** (o `.local.json` é por instalação, não por agente).
+- ⚠️ Até o Agente_OS#968 estar deployado, o servidor filtra `context` por `_CONTEXT_KEYS` e **descarta em silêncio** `reporter_*`, `kit_version` e `step`, devolvendo `ok` sem `ticket_id`. Um `ok` do sandbox antes do deploy **não é prova**; a prova é a Task 6.
 - Todo commit termina com `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
 - Branch: `feat/glpi-chamado-kit` a partir de `origin/main` (≥ `0124614`). Um PR ao final.
 
@@ -452,6 +453,22 @@ mais tarde só se o usuário pedir; a plataforma deduplica pelo `external_id`.
 
 ```
 
+- [ ] **Step 3b: CLAUDE.md** — substitua o bullet que começa `- **Zero import/código do core da plataforma.**` (linhas ~12–15) por:
+
+```markdown
+- **Zero import/código do core da plataforma.** Falta algo para autorar =
+  gap — reportar, não contornar. O caminho é `references/gap.md`: parar,
+  gravar `# Pendente:` no rascunho, montar o rascunho do chamado já redigido,
+  **perguntar**, e só depois do "sim" abrir o chamado no GLPI pela tool
+  `spec_feedback` (fallback: issue `gap` neste repo); retomar quando fechar.
+```
+
+- [ ] **Step 3c: comando `/reportar`** — crie `.claude/commands/reportar.md` (o diretório não existe na `main`) com exatamente:
+
+```
+Abrir um chamado no GLPI sobre uma trava na autoria. Siga `references/gap.md` §0 gatilho 3 e §3–§5 da skill agentos-builder: classifique, monte o rascunho nas duas camadas, passe pelo `gap_redact`, mostre o rascunho inteiro e só chame `mcp_client.feedback()` depois do "sim". Contexto do usuário: $ARGUMENTS
+```
+
 - [ ] **Step 4: Verify**
 
 Run: `grep -n "All 11\|version: \"0.7.0\"\|Reportar" .claude/skills/agentos-builder/SKILL.md; grep -n "a confirmar" README.md; grep -n "^## 20" ARMADILHAS.md; cd .claude/skills/agentos-builder && for t in tests/test_mcp_client_error_parse.py tests/test_mcp_client_feedback.py tests/test_publish_guard.py tests/test_gap_redact.py; do python3 $t || exit 1; done`
@@ -460,7 +477,7 @@ Expected: três hits no SKILL.md; nenhum "a confirmar" no README; `## 20` presen
 - [ ] **Step 5: Commit**
 
 ```bash
-git add .claude/skills/agentos-builder/SKILL.md README.md ARMADILHAS.md
+git add .claude/skills/agentos-builder/SKILL.md README.md ARMADILHAS.md CLAUDE.md .claude/commands/reportar.md
 git commit -m "docs(skill,readme,armadilhas): /reportar no router, escopo do spec_feedback fechado, §20 GLPI HTML 200
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
