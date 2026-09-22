@@ -125,5 +125,7 @@ As consultas de leitura mínimas que devolvem 200 estão em
 ## Regra de ouro
 
 **Zero código do core.** Se para autorar você sentir falta de algo da
-plataforma, isso é um gap do MCP Server — reporte ao time da plataforma
-(Jira DAI), nunca contorne.
+plataforma, isso é um gap — reporte, nunca contorne. O caminho é
+[`gap.md`](.claude/skills/agentos-builder/references/gap.md): parar, gravar
+`# Pendente:` no rascunho, reportar pela tool `spec_feedback` (fallback: issue
+`gap` neste repositório), retomar quando fechar.

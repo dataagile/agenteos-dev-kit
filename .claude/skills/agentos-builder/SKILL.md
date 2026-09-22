@@ -69,4 +69,4 @@ rascunho retomável. Nunca contornar.
 
 All 10 operations share the rules above and the detail in `references/lifecycle.md`. For anything genuinely out of this skill's scope — node executors, DB migrations, slug renames, or anything else covered by the Boundary section above — refuse and point to `/w1`, regardless of which operation was asked for.
 
-Keep this file lean — it is the router, the boundary, and the shared rules. Operation-specific interview and execution detail lives in `references/`.
+Keep this file lean — it is the router, the boundary, and the shared rules. Operation-specific procedure and execution detail lives in `references/`.
