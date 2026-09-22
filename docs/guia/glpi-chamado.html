@@ -39,6 +39,7 @@ flowchart LR
   <h3>Para quem administra</h3>
   <ul>
     <li>O <code>mcp-server</code> do spoke precisa das cinco variáveis <code>glpi_*</code> da API v2 (as mesmas do api-gateway). Sem elas a tool devolve <code>upstream_unavailable</code>.</li>
+    <li><code>GLPI_URL</code> tem de ser o host <b>final</b>: <code>https://suporte.dataagile.com.br</code>. O host antigo <code>glpi.totvstbc.com.br</code> responde 301 e a integração não segue redirect — com ele, tudo vira <code>upstream_unavailable</code>.</li>
     <li>Anexos não entram nesta versão: o log vai no corpo. Quando entrarem, a API v1 já está ao alcance do servidor.</li>
   </ul>
 </section>
