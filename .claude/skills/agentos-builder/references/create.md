@@ -1,15 +1,15 @@
 # Create
 
-> **Fase 0 — descoberta primeiro.** Antes da primeira pergunta desta entrevista,
-> conduza `descoberta.md`: três rodadas curtas em linguagem de
-> negócio, mais a decisão de fechamento, que produzem a **ficha de domínio**. A entrevista abaixo pergunta
-> CAMPO DE SCHEMA; a ficha é o que torna cada resposta óbvia — inclusive as três
-> que mais custam retrabalho (tem escrita? quem autoriza? o disparo vem de
-> humano?). Pule a fase 0 só nos casos listados no fim daquele arquivo.
+> **Este arquivo não pergunta nada ao humano.** A entrada é a ficha de domínio
+> gravada no cabeçalho do rascunho por `references/descoberta.md`. O humano que
+> autora é analista de negócio: ele nunca vê slug, nó, `when` ou
+> `config_schema`. Se a ficha tem linha `<pendente>`, volte para a descoberta.
 
-Guided interview that builds a brand-new AgentSpec YAML from scratch and writes it to `a raiz deste repo: drafts/<slug>/v0.1.yaml`. Precise questions only — every question names the schema field it fills. One round at a time; don't front-load the whole interview in a wall of text.
+Procedimento interno que **deriva** o AgentSpec YAML a partir da ficha, valida
+pelo MCP e regrava o rascunho `drafts/<slug>/v0.1` que a descoberta já criou.
+O que o humano vê depois disto é o roteiro de `references/proposta.md`.
 
-Before asking anything, call `mcp_client.node_types()` fresh — `{node_types: [{type, runtime_ready, required, optional, ux_hint, variants: [...]}], trigger: {...}, spec_level: {...}, transform_strategies: [...], semantics: {...}}`. Never reuse a list from an earlier turn or from memory, and never read `packages/cdm/schemas/agent_spec_v1_builder_map.json` or `apps/agent-runtime/src/agent_runtime/executors.py` directly (T027 — this tool is the only source of truth for *which node types exist*, and it can change between sessions). The `semantics` block (keys `condition`, `when`, `jump`, `loop_body_errors`, plus `version` and `partial`) carries the flow semantics the environment actually enforces — read it before writing any `condition`/`loop`/`when` node, per SKILL.md's discovery-not-memory rule. If the artifact behind it is missing or incomplete only that block degrades (`{partial: true, warning: ...}`); the node-type catalog is still served.
+Before deriving anything, call `mcp_client.node_types()` fresh — `{node_types: [{type, runtime_ready, required, optional, ux_hint, variants: [...]}], trigger: {...}, spec_level: {...}, transform_strategies: [...], semantics: {...}}`. Never reuse a list from an earlier turn or from memory, and never read `packages/cdm/schemas/agent_spec_v1_builder_map.json` or `apps/agent-runtime/src/agent_runtime/executors.py` directly (T027 — this tool is the only source of truth for *which node types exist*, and it can change between sessions). The `semantics` block (keys `condition`, `when`, `jump`, `loop_body_errors`, plus `version` and `partial`) carries the flow semantics the environment actually enforces — read it before writing any `condition`/`loop`/`when` node, per SKILL.md's discovery-not-memory rule. If the artifact behind it is missing or incomplete only that block degrades (`{partial: true, warning: ...}`); the node-type catalog is still served.
 
 **Node `config` shape comes from `variants` (feature 063).** Each entry's `variants` lists every form the validator accepts for that type, derived from `agent_spec_v1.json` itself — including the `config` sub-schema with its required fields and enums. Use the variant marked `current: true`; the other one is the alternative form (e.g. `tool` accepts either top-level `tool_name`, dispatched by the Tool Registry, or `config.primitive` — the form every shipped spec uses). `identifier.one_of` says the node id field may be `key` **or** `id`. The entry's `required`/`optional` describe only the builder-map form and omit `config` — do not build a node from them.
 
@@ -19,66 +19,86 @@ Reading an existing spec to copy conventions is now optional (and impossible wit
 
 **For any `model_ref` / `intent_model_ref`, call `mcp_client.models()`** and pick an alias with `available: true`. Never invent an alias, and never write a literal model or provider name.
 
-## Interview flow
+## Derivação — da ficha ao YAML
 
-### a. Identity
+Cada linha da ficha decide algo. Cada decisão cita a seção do
+[`ARMADILHAS.md`](../../../../ARMADILHAS.md) que a justifica. Aplique na
+ordem; se uma linha exigir um recurso que o ambiente não tem (conector, tool,
+strategy, modelo), **pare aqui** e siga `references/gap.md` — nunca continue
+com o nó faltando.
 
-Com a ficha de domínio em mãos, **proponha** `name`, `slug` e `description` a
-partir dela e peça confirmação, em vez de perguntar do zero — os termos vêm do
-glossário da rodada 1 (fase 0), não do seu vocabulário.
+> **Rota curta (fecha a lacuna do spec §3.1/§5):** na ficha curta
+> (`descoberta.md` "Triagem"), as linhas Escreve, Autoriza, Nunca pode e Fora
+> do grafo não são perguntadas — e não ficam em branco nem viram `<pendente>`.
+> Escreva-as literalmente: `# Escreve: (nenhum)`, `# Autoriza: (não se
+> aplica)`, `# Nunca pode: (não se aplica)`, `# Fora do grafo: (nenhum)`.
+> `# Termos:` deriva dos verbos da linha **Trabalho**. Só uma linha
+> `<pendente>` de verdade manda de volta para a descoberta — as quatro linhas
+> acima, na rota curta, nunca chegam a esse estado.
 
-Ask, one line each, citing the field:
-- **name** (`name` — human-readable display name)
-- **slug** (`slug` — kebab-case; validate the pattern; check for collisions via `mcp_client.list_specs()` — if the slug already exists anywhere (either state), say where and ask for a different one, or confirm this is meant to extend an existing agent, in which case redirect to `edit.md` or `clone.md` instead of Create)
-- **category** (`category`)
-- **requires_erp** (`requires_erp` — boolean)
-- **description** (`description`)
+| Linha da ficha | Deriva | Regra |
+|---|---|---|
+| Trabalho | `name`, `slug` (já validado na descoberta), `description`, `id = agt_<slug_com_underscores>_v<major>` | `id` estável entre versões (§3) |
+| Começa quando | `trigger.type` e campos do tipo | enum de `node_types().trigger`; `schedule` exige cron; `chat` implica a regra da linha "Começa quando = chat" |
+| Termos | `id`/`key` dos nós (snake_case do termo do usuário); `title`/`description` das properties | mesmo valor em `id` e `key` (§8); property sempre com `title` e `description` (lint D-02) |
+| Lê | `io.reads`; um nó de leitura por fonte (`tool` / `http_request` / `sftp_op` / `erp_query`) | `connector_id` só de `connectors()`; `tool_name` só de `tools().platform_tools`; ler `allowed_ops`/`base_dir` antes de compor path (§6) |
+| Escreve | `io.writes`; nó de escrita **sempre precedido** de `approval` e de um `condition` que **autoriza** | condition `expr: "<approval>.decision.decision == 'approved'"`, `on_false` → nó terminal de aviso (§1, §4) |
+| Autoriza | `approval` com `context_from` apontando o passo que produz a lista; alçada em `config.when` **só** na gramática de condition (`len()`, `== 'str'`, `== null` e negações) | §2 (item sem `action` derruba a inbox), §4; sem alçada = sem `when` |
+| Começa quando = chat | nenhum `{{run.input.*}}` alcança nó de escrita; o pedido do usuário só ESCOLHE entre opções do `config` | §5 |
+| Nunca pode | um `condition` ou `approval` que a proteja; se não houver onde encaixar, a ficha está errada — volte à Rodada 2 | descoberta.md |
+| Fora do grafo | não vira nó; se exigir operation no serviço, é gap `[plataforma]` | §19 |
+| Termina bem | último nó `render_template` com o resumo; `.j2` só com o que `context()` resolve, enviado no mesmo `write_draft` | §8 |
+| Descartado | linha do cabeçalho; não deriva nó | — |
 
-Derive and propose `id` = `agt_<slug_with_underscores>_v<major>` from the slug once known; let the user confirm or override.
+Regras transversais, aplicadas sem perguntar:
 
-### b. Trigger block
+- Todo passo externo que pode falhar ganha um `condition` no `status` antes do
+  consumidor (`expr: "<passo>.status == 'ok'"`), porque `http_request` que
+  falha **não** aborta o run (§18).
+- Nó `agent` só com campos dentro de `config` (§16); o prompt instrui o modelo
+  a nunca emitir `{{}}` (§17); a saída é string — parse fica no serviço (§19).
+- `http_request`: `body` é objeto só em resposta JSON; fora disso é string sem
+  `body_raw` — teste `is string` no template antes de navegar (§11).
+- `version: "0.1.0"`, `change_class: "minor"`. Major é conversa com o admin (§3).
+- `config_schema`: o que o cliente escolhe na ativação (conexões, pastas,
+  limites). O que é fixo fica literal no YAML. Property `x-ref: connection`
+  **sem `default`** — exceto no draft de teste, com `# REMOVER antes de publicar`
+  (§9); o guard do `publish.md` recusa se sobrar.
+- `condition`: leia `semantics.condition` de `node_types()` antes de escrever
+  qualquer `expr`; `top_level` e `loop_body` não aceitam as mesmas formas.
+- `transform`: só strategies de `node_types().transform_strategies`; lista
+  vazia = gap `[plataforma]`.
+- Nó com `runtime_ready: false` que não é estrutural (trigger/condition): gap
+  `[plataforma]`, não "draft-only".
 
-Required by layer 2 and by every real spec in the repo. Use the `trigger` entry from the `node_types()` call above — its `type_enum` and per-type `constraints` (e.g. a schedule type needs a cron expression) — do not assume you already know the enum values from a prior read. Ask trigger type first, then only the fields that type's constraints require.
-
-### c. config_schema
-
-Iterate parameter by parameter: for each tenant-configurable value ask name, type, default, whether it's required, and a one-line description. Mention (as pattern examples, not a menu) the two `x-` conventions already used in the repo: `x-ref: connection` for a connection-selector field, and `x-format: cron` for a cron-string field — point to `published/fin-pagamentos/v1.yaml` as the live example if the user wants to see one in context.
-
-### d. io
-
-Ask for `reads` and `writes` as CDM entity+label pairs (what the agent reads from/writes to, in domain terms). As linhas **Lê:** e **Escreve:** da ficha já
-respondem isso — confirme, não repergunte. `writes` não-vazio é o gatilho da
-regra da rodada 2: precisa de `approval` e de escrita gateada no veredito.
-
-### e. Nodes, one at a time
-
-For each node:
-1. Offer the current set of node types from the `node_types()` call above, annotated with `runtime_ready`. Node types where `runtime_ready` is `false` are still valid to place in the YAML — some (e.g. the structural/interpreter-level ones like trigger and condition) are routed by the interpreter rather than dispatched as executors, so `runtime_ready: false` does not always mean "broken," just "not an executor dispatch target." Others may be genuinely unimplemented (executor falls through or raises). Say plainly which is which when the user picks a non-runtime_ready type, and warn that the resulting spec is draft-only for that node — mirror the precedent header in `drafts/test-sftp/v4.yaml`.
-2. Ask ONE question for the node's identifier (snake_case) and write the same value into **both** `id` and `key` on the node, plus `type`. Layer 1 (pydantic `NodeSpec`, the blocking layer) requires `id`; the runtime prefers `key` (`node.get("key") or node.get("id")` in `hatchet_app.py`). Dual-writing both fields with the same value keeps the node valid on the blocking layer and executable at runtime — until DAI-526 unifies the field, every node needs both.
-3. Ask for the required/optional fields for that type per the builder map — required fields are not optional to skip; optional ones can be deferred with their default noted.
-4. **Condition nodes specifically**: before the user writes an expression, read `semantics.condition` from the same `node_types()` response and state the grammar it serves, so they don't waste a round on something that will fail validation. Never recite a grammar from memory or from an earlier session — it comes from the environment. Quote the scope that matches the node being written: `condition.top_level` and `condition.loop_body` do **not** accept the same set of forms. `when` is a separate grammar again (`semantics.when`) — a form that works in one is not guaranteed in the other, so never carry a form across. Arbitrary Jinja2 (filters, math, function calls) is forbidden and fails at validation time. Following house style (see above), write the expression to `config.expr`, and ask which node to go to on true and which on false, writing those to `config.on_true` / `config.on_false` (omit `on_true` if the node simply falls through to `next` on the true path, matching the `fin-pagamentos` precedent).
-5. **Transform nodes specifically**: use `node_types()`'s `transform_strategies` list (the MCP parses `executors.py`'s `_execute_transform` dispatch server-side — T027). Offer the user only the strategy names it returned. If `transform_strategies` is `null`/empty, say so plainly — do not guess a name — and ask the user for the intended strategy, then flag that node as **unverified** in the header comment so it gets a second look before this spec is trusted.
-6. **Approval nodes specifically — never use `when` on them.** In an `approval` node the expression goes through a *different* grammar — one that crosses with the ordinary `when` grammar instead of being a reduced version of it: each accepts forms the other rejects. Whatever it fails to recognize evaluates to `False` — which in that node means **skip the human approval**, with no error. Copying a `when` form seen working on an ordinary node is the live trap, not an exotic one. Gate the write with a `condition` that **authorizes** it, never one that blocks it, and read the verdict two levels down: `<node>.decision.decision == 'approved'` (the outer `decision` is the item dict, not the verdict). See `ARMADILHAS.md` §4.
+O analista nunca vê esta tabela. Ela é o contrato entre a ficha e o YAML.
 
 ## File conventions
 
-- Destination: `a raiz deste repo: drafts/<slug>/v0.1.yaml`.
+- Destination: no store do MCP (`drafts/<slug>/v0.1` do servidor) — nunca um
+  arquivo local.
 - `version: "0.1.0"`, `change_class: "minor"`.
-- **Cabeçalho = a ficha de domínio** da fase 0, colada como bloco de comentário
-  no topo do arquivo. Ela viaja com a spec pelo MCP e é o que o próximo autor lê
-  antes de mexer no grafo. Depois dela, seguindo o precedente em
-  `drafts/test-sftp/v4.yaml`: a status line (draft, doesn't load on current runtime if any node isn't `runtime_ready`), which nodes (if any) are draft-only and why, and a pointer to a design doc if the user has one.
+- **Cabeçalho = a ficha de domínio**, já gravada pela descoberta. A derivação
+  acrescenta abaixo dela, ainda como comentário: `# Derivado em <data> a partir
+  da ficha acima; regras em references/create.md`. Nada de "draft-only": nó que
+  não roda é gap, não nota de rodapé.
 
 ## Write sequence
 
 `mcp_client.py` is the **only** sanctioned way this skill writes a spec to the store. Never use the Write/Edit tool to place the final spec directly in `drafts/` e `published/` deste repo — always go through `mcp_client.write_draft`.
 
-1. Assemble the full YAML from the interview answers, in memory (or a scratch/temp path if easier to work with) — this draft-in-progress copy is disposable scratch work, not the deliverable.
+1. Derive o YAML completo a partir da ficha (tabela acima), em memória. Leia o
+   rascunho atual com `mcp_client.read_spec(slug, "0.1")` para preservar o
+   cabeçalho.
 2. Validate: `mcp_client.validate(content)`.
-3. **Pydantic errors present** (blocking) → show them, fix the offending answers with the user, do not proceed to write. Loop back to the relevant interview step, update the draft content, re-validate.
-4. **Pydantic clean** → `mcp_client.write_draft(slug, "0.1", content)`. This both re-validates server-side and performs the write; `McpClientError(code="parse_error")` means the YAML itself is malformed (show the message) and `code="immutable_published"` should never happen here (0.1 is a fresh slug) — if it does, stop and say the slug collided with something already published.
+3. **Pydantic errors present** (blocking) → do not write. Treat it as a derivation failure: find which line of the ficha and which rule of the table above produced the offending field, re-derive, re-validate. If the ficha itself cannot resolve it (a rule the table does not cover, or a resource the environment lacks), follow `references/gap.md`. Never ask the human for a schema value.
+4. **Pydantic clean** → `mcp_client.write_draft(slug, "0.1", content, templates)` — sempre com os `.j2` no mesmo write (§8). This both re-validates server-side and performs the write; `McpClientError(code="parse_error")` means the YAML itself is malformed (show the message) and `code="immutable_published"` should never happen here (0.1 already exists as the draft descoberta created) — if it does, stop and say the slug collided with something already published.
 5. Report the `validate` result's `errors` (JSON-Schema structural — trigger shape, node `oneOf`, condition grammar), if any — non-blocking but real; suggest fixes. There is no `known_drift` bucket in the MCP validator (see `lifecycle.md` §7) — every non-blocking error is reported flat, not sub-classified as "expected drift" vs "novel."
 
-## Boundary reminders during the interview
+## Quando a derivação não fecha
 
-If the user asks, mid-interview, for a node **type** that doesn't exist in the freshly-fetched node-type list — that's a request for a new runtime executor, not a YAML change. Refuse per the SKILL.md boundary (point to `/w1`), then continue the interview offering only the types that actually exist right now.
+Tipo de nó, conector, tool, strategy ou modelo que a ficha exige e o ambiente
+não tem: **não é** "peça para o dev", nem `/w1`. É gap. Pare na linha da tabela
+que travou, grave o rascunho com `# Pendente: <linha> — <o que falta>` no
+cabeçalho e siga `references/gap.md`. A regra de ouro do kit continua: zero
+código do core, zero contorno.

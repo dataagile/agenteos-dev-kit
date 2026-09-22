@@ -10,7 +10,9 @@ Repositório de **autoria de agentes** via MCP. Só specs de trabalho do dev
   connectors, tools, models). Sem fallback a filesystem quando o MCP falhar —
   reporte o erro.
 - **Zero import/código do core da plataforma.** Falta algo para autorar =
-  gap do MCP Server — reportar ao time da plataforma, não contornar.
+  gap — reportar, não contornar. O caminho é `references/gap.md`: parar,
+  gravar `# Pendente:` no rascunho, reportar pela tool `spec_feedback`
+  (fallback: issue `gap` neste repo), retomar quando fechar.
 - Publicado é imutável por versão: mudança = `spec_revise` (abre a próxima
   versão em draft a partir da published) + ciclo write→validate→publish.
 - Um agente = `<slug>/vN.yaml` + `templates/` ao lado (unidade autocontida).

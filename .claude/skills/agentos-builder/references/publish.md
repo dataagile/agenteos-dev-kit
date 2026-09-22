@@ -27,22 +27,32 @@ Condition to show this: `change_class == "major"` **and** the target slug alread
    - **Pydantic errors present → refuse to publish.** Show the errors, stop here. A spec that fails the blocking check has no business entering the catalog.
    - **JSON-Schema structural errors present** (trigger shape, node `oneOf`, condition grammar) → pause and confirm, do not silently proceed. A spec about to become part of the live catalog deserves a human look at these even though they're non-blocking. Ask the user to confirm they still want to publish as-is, and only continue on explicit confirmation. There is no `known_drift` bucket (see `lifecycle.md` §7) — every non-blocking error is reported flat, not pre-filtered as "expected G6/DAI-526 baseline."
 
-2. **Slug+version collision check across BOTH states** — o catálogo exige `(slug, version)` único: `mcp_client.list_specs()` (no state filter) already enumerates every `(slug, version, state)` in the store — confirm the `(slug, version)` pair this publish is about to write does not already exist anywhere else in the catalog. Catch the collision before the write, not after.
+2. **Guard de conexão (mecânico, não confiança).** Chame
+   `publish_guard.connection_defaults(content)` direto com o `content` que já
+   veio do `read_spec` (é a forma primária — não precisa gravar arquivo). Só se
+   preferir a CLI, grave o `content` num arquivo de scratch descartável e rode
+   `python3 scripts/publish_guard.py <arquivo.yaml>`. Qualquer property do
+   `config_schema` com `x-ref: connection` **e** `default` → **recuse o
+   publish** e diga quais. Conexão vem da ativação; o `default` só existe em
+   draft de teste porque `spec_test_run` não recebe config (ARMADILHAS §9).
+   Remova o `default` (mantendo a property), regrave o draft e volte ao passo 1.
 
-3. **Node-type readiness banner.** Call `mcp_client.node_types()` fresh (never reuse an earlier run). Check every node in the draft's `nodes` list against the returned `runtime_ready` set:
-   - **All nodes `runtime_ready: true`** → drop any "DRAFT — não carrega no runtime atual" banner and draft-only node callouts from the header comment (see `create.md`'s header-comment precedent) — the spec is fully runnable, the warning is stale.
+3. **Slug+version collision check across BOTH states** — o catálogo exige `(slug, version)` único: `mcp_client.list_specs()` (no state filter) already enumerates every `(slug, version, state)` in the store — confirm the `(slug, version)` pair this publish is about to write does not already exist anywhere else in the catalog. Catch the collision before the write, not after.
+
+4. **Node-type readiness banner.** Call `mcp_client.node_types()` fresh (never reuse an earlier run). Check every node in the draft's `nodes` list against the returned `runtime_ready` set:
+   - **All nodes `runtime_ready: true`** → drop any "DRAFT — não carrega no runtime atual" banner and draft-only node callouts from the header comment (see `clone.md` §3 "Header comment" for the same convention) — the spec is fully runnable, the warning is stale.
    - **Any node `runtime_ready: false`** → keep the warning, naming exactly which node(s) and type(s) are not runtime-ready, so the published spec is honest about its own limitations even after leaving draft status.
 
-4. **Bump the `version` field** in the YAML content to the confirmed publish version (step 1 of the interview) — this happens in memory, not by hand-editing the draft file in place.
+5. **Bump the `version` field** in the YAML content to the confirmed publish version (step 1 of the interview) — this happens in memory, not by hand-editing the draft file in place.
 
-5. **Write the bumped draft, then publish it — two MCP calls, not one.** The MCP has no single "write straight to published" tool; `spec.publish` only promotes a *draft that already exists on disk at exactly that (slug, version)* (`specs_service.publish_spec` copies `drafts/<slug>/v<major>.yaml` → `published/<slug>/v<major>.yaml` verbatim — it does not rewrite the YAML's internal `version:` field for you).
+6. **Write the bumped draft, then publish it — two MCP calls, not one.** The MCP has no single "write straight to published" tool; `spec.publish` only promotes a *draft that already exists on disk at exactly that (slug, version)* (`specs_service.publish_spec` copies `drafts/<slug>/v<major>.yaml` → `published/<slug>/v<major>.yaml` verbatim — it does not rewrite the YAML's internal `version:` field for you).
    1. `mcp_client.write_draft(slug, "<major>", bumped_content)` — lands the bumped content as a draft at the target version (e.g. `drafts/<slug>/v1.yaml`). This re-validates server-side (blocking on pydantic). `<major>` é a versão do interview — que, no caminho de revisão, é exatamente a `version` que o `revise` retornou (passo 1): escrever nela ATUALIZA o draft semeado, nunca cria um paralelo.
-   2. `mcp_client.publish(slug, "<major>")` — promotes that exact draft to `published/<slug>/v<major>.yaml`. The server re-validates once more and refuses with `McpClientError(code="validation_failed")` if it doesn't pass — treat that as a hard stop, not a warning; something changed between step 5.1 and here (shouldn't happen, but the server is the final gate).
+   2. `mcp_client.publish(slug, "<major>")` — promotes that exact draft to `published/<slug>/v<major>.yaml`. The server re-validates once more and refuses with `McpClientError(code="validation_failed")` if it doesn't pass — treat that as a hard stop, not a warning; something changed between step 6.1 and here (shouldn't happen, but the server is the final gate).
    3. Never use the Write/Edit tool to place the published file directly — same rule as Create.
 
-6. **Ask whether to delete the original (pre-bump) draft.** This refers to the draft at its *original* slug/version (e.g. `v0.5`), not the new bumped-version draft step 5.1 just created (which mirrors what's now published — no reason to delete it right after creating it). Default answer: **keep it.** Deleting a draft is Remove's job (`remove.md`, local filesystem + git-clean gate — there is no MCP delete tool). Only delete on the user's explicit request, and only after confirming the publish write actually succeeded.
+7. **Ask whether to delete the original (pre-bump) draft.** This refers to the draft at its *original* slug/version (e.g. `v0.5`), not the new bumped-version draft step 6.1 just created (which mirrors what's now published — no reason to delete it right after creating it). Default answer: **keep it.** Deleting a draft is Remove's job (`remove.md`, local filesystem + git-clean gate — there is no MCP delete tool). Only delete on the user's explicit request, and only after confirming the publish write actually succeeded.
 
 ## What Publish never does
 
 - Never renames a slug (a slug rename is a coordinated YAML+DB-migration change — out of scope, redirect to `/w1`, per SKILL.md's boundary).
-- Never overwrites an existing `published/<slug>/v<major>.yaml` silently — a version collision at that exact path is exactly what step 2's collision check exists to catch before the write is attempted (and `spec.publish` itself is idempotent no-op on an already-published version, per `interfaces/mcp-tools.md` — it never silently clobbers different content under the same path).
+- Never overwrites an existing `published/<slug>/v<major>.yaml` silently — a version collision at that exact path is exactly what step 3's collision check exists to catch before the write is attempted (and `spec.publish` itself is idempotent no-op on an already-published version, per `interfaces/mcp-tools.md` — it never silently clobbers different content under the same path).
