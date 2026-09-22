@@ -27,10 +27,12 @@ Condition to show this: `change_class == "major"` **and** the target slug alread
    - **Pydantic errors present → refuse to publish.** Show the errors, stop here. A spec that fails the blocking check has no business entering the catalog.
    - **JSON-Schema structural errors present** (trigger shape, node `oneOf`, condition grammar) → pause and confirm, do not silently proceed. A spec about to become part of the live catalog deserves a human look at these even though they're non-blocking. Ask the user to confirm they still want to publish as-is, and only continue on explicit confirmation. There is no `known_drift` bucket (see `lifecycle.md` §7) — every non-blocking error is reported flat, not pre-filtered as "expected G6/DAI-526 baseline."
 
-2. **Guard de conexão (mecânico, não confiança).** Rode
-   `python3 scripts/publish_guard.py <draft.yaml>` sobre o conteúdo fresco
-   (ou chame `publish_guard.connection_defaults(content)`). Qualquer property
-   do `config_schema` com `x-ref: connection` **e** `default` → **recuse o
+2. **Guard de conexão (mecânico, não confiança).** Chame
+   `publish_guard.connection_defaults(content)` direto com o `content` que já
+   veio do `read_spec` (é a forma primária — não precisa gravar arquivo). Só se
+   preferir a CLI, grave o `content` num arquivo de scratch descartável e rode
+   `python3 scripts/publish_guard.py <arquivo.yaml>`. Qualquer property do
+   `config_schema` com `x-ref: connection` **e** `default` → **recuse o
    publish** e diga quais. Conexão vem da ativação; o `default` só existe em
    draft de teste porque `spec_test_run` não recebe config (ARMADILHAS §9).
    Remova o `default` (mantendo a property), regrave o draft e volte ao passo 1.
@@ -38,7 +40,7 @@ Condition to show this: `change_class == "major"` **and** the target slug alread
 3. **Slug+version collision check across BOTH states** — o catálogo exige `(slug, version)` único: `mcp_client.list_specs()` (no state filter) already enumerates every `(slug, version, state)` in the store — confirm the `(slug, version)` pair this publish is about to write does not already exist anywhere else in the catalog. Catch the collision before the write, not after.
 
 4. **Node-type readiness banner.** Call `mcp_client.node_types()` fresh (never reuse an earlier run). Check every node in the draft's `nodes` list against the returned `runtime_ready` set:
-   - **All nodes `runtime_ready: true`** → drop any "DRAFT — não carrega no runtime atual" banner and draft-only node callouts from the header comment (see `create.md`'s header-comment precedent) — the spec is fully runnable, the warning is stale.
+   - **All nodes `runtime_ready: true`** → drop any "DRAFT — não carrega no runtime atual" banner and draft-only node callouts from the header comment (see `clone.md` §3 "Header comment" for the same convention) — the spec is fully runnable, the warning is stale.
    - **Any node `runtime_ready: false`** → keep the warning, naming exactly which node(s) and type(s) are not runtime-ready, so the published spec is honest about its own limitations even after leaving draft status.
 
 5. **Bump the `version` field** in the YAML content to the confirmed publish version (step 1 of the interview) — this happens in memory, not by hand-editing the draft file in place.

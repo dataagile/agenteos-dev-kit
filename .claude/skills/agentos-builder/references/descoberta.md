@@ -1,14 +1,15 @@
 # Descoberta — fase 0 do Create
 
-Antes de perguntar `slug`, `trigger` ou nó, descubra o **domínio**. Esta fase
-existe porque a entrevista do `create.md` pergunta campos de schema, e campo de
-schema é resposta — não pergunta. Quem não sabe o que o negócio faz responde
-campo por campo e descobre tarde que o grafo inteiro estava errado.
+Antes de perguntar `slug`, `trigger` ou nó, descubra o **domínio**. Esta fase é
+a única conversa com o humano no fluxo de Create — `create.md` não pergunta
+nada, só deriva a partir da ficha que esta fase produz. Quem não sabe o que o
+negócio faz responde campo por campo e descobre tarde que o grafo inteiro
+estava errado.
 
 Destilado de Domain-Driven Design (Evans, 2003) para o tamanho de UM agente.
 Não é Event Storming de projeto: são uma triagem, até três rodadas curtas e uma decisão. O
-produto é a **ficha de domínio**, que vira o cabeçalho do YAML e responde
-sozinha às perguntas do `create.md`.
+produto é a **ficha de domínio**, que vira o cabeçalho do YAML e é a única
+entrada da derivação em `create.md`.
 
 ## Falando com quem decide
 
@@ -54,7 +55,10 @@ o usuário:
 
 Na rota curta, a linha **Lê** é preenchida a partir da execução real descrita
 na Rodada 1 (o que a pessoa consulta e onde), sem pergunta extra; **Descartado**
-vem da Decisão.
+vem da Decisão. As linhas que a rota curta não pergunta (Escreve, Autoriza,
+Nunca pode, Fora do grafo) não ficam em branco: `create.md` as grava como
+`(nenhum)`/`(não se aplica)`, e `Termos` deriva dos verbos de Trabalho — ver a
+nota acima da tabela de derivação em `create.md`.
 
 A triagem existe porque descoberta em agente simples vira overhead, e a maior
 parte dos agentes do AgenteOS é automação, não domínio de cliente. **A triagem
@@ -117,7 +121,7 @@ Volte e pergunte de novo.
 
 Confira primeiro que o desenho **existe no ambiente**: `mcp_client.node_types()`,
 `connectors()` e `models()` (a mesma discovery que o `create.md` faz). Forma
-impossível descoberta aqui custa uma pergunta; descoberta no meio da entrevista
+impossível descoberta aqui custa uma pergunta; descoberta no meio da derivação
 custa o grafo inteiro.
 
 Aí feche com duas perguntas — uma frase cada:
@@ -161,9 +165,10 @@ Nada em arquivo local. A memória é o rascunho no MCP.
 1. Assim que a linha **Trabalho** é confirmada: proponha `name`, derive o `slug`
    (kebab-case do nome), **cheque colisão** com `mcp_client.list_specs()` e
    grave um rascunho mínimo válido com `mcp_client.write_draft(slug, "0.1",
-   content)` — `description`, `trigger`, um nó `render_template` com um `.j2`
-   de uma linha — com a ficha parcial como cabeçalho (linhas ainda não
-   respondidas ficam com `<pendente>`).
+   content, templates)` — `description`, `trigger`, um nó `render_template` com
+   um `.j2` de uma linha enviado no mesmo `templates` (§8: `write_draft` sem
+   `templates` grava `templates: []` e a spec quebra em execução) — com a ficha
+   parcial como cabeçalho (linhas ainda não respondidas ficam com `<pendente>`).
 2. A cada linha da ficha confirmada: `write_draft` de novo, mesma versão, só o
    cabeçalho muda. O YAML cresce junto na fase de derivação.
 3. Sessão que cai no meio: `mcp_client.read_spec(slug, "0.1")`, leia o
@@ -178,6 +183,5 @@ pasta local a criar antes de o slug ser confirmado.
 
 - O usuário já chega com o processo escrito e sabe dizer a invariante → confirme
   a ficha em uma rodada só e siga.
-- Agente de teste/probe descartável, sem escrita → pule; a ficha é uma linha.
 - Ajuste em agente que já existe → não é Create, é `edit.md`. Reabra só a linha
   da ficha que mudou.

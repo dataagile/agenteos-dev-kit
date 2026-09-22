@@ -56,8 +56,14 @@ Sem a segunda, não segue. As respostas vão para a linha "Descartado" da ficha.
 
 ## 4. Prova: test run traduzido
 
-Chame a tool MCP `spec_test_run(slug, "0.1")` → `run_id`; depois
-`spec_run_status(run_id)` até `status` sair de `received`/`running`.
+Antes de chamar `spec_test_run`: se o `config_schema` do rascunho tiver alguma
+property marcada `x-company-scoped`, passe `erp_company_id` junto. Peça esse id
+ao **admin do ambiente** — nunca ao analista, não é pergunta de negócio. Sem
+ele o run cai na empresa default do tenant, que num sandbox costuma não ter
+parâmetro nenhum preenchido e morre em `COMPANY_CONFIG_INCOMPLETE` (§9).
+
+Chame a tool MCP `spec_test_run(slug, "0.1"[, erp_company_id])` → `run_id`;
+depois `spec_run_status(run_id)` até `status` sair de `received`/`running`.
 Traduza o trace para o analista, um passo por linha:
 
 | `steps[].status` / `status` do run | Como falar |
@@ -67,6 +73,7 @@ Traduza o trace para o analista, um passo por linha:
 | passo `skipped` com `reason: when_false` | "<passo>: pulado pela regra <alçada em palavras>." |
 | passo `skipped` com `reason: empty_context` | "**Atenção:** a lista veio vazia e a aprovação foi pulada. Confira o passo anterior." (§4) |
 | run `awaiting_approval` | "Parou no ponto de aprovação, como esperado. Em teste não dá para aprovar (§13); a prova da escrita vem depois da ativação." |
+| run `failed` com `COMPANY_CONFIG_INCOMPLETE` | "Rodou na empresa errada, ou sem empresa: confirmar o `erp_company_id` com o admin. **Não é gap.**" (§9) |
 | passo `failed` / run `failed` | "<passo>: falhou — <mensagem do erro em uma frase>." Depois: `gap.md` se for recurso do ambiente; senão corrija a ficha e re-derive. |
 | run `completed` sem escrita | "Rodou até o fim." |
 

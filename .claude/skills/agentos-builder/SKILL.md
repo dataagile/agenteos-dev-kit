@@ -1,6 +1,6 @@
 ---
 name: agentos-builder
-description: Manages AgentOS AgentSpec YAML files under {drafts,published}/<slug>/vN.yaml — read, create, edit, clone, backup, publish, remove. List/read/write/validate/publish/revise e toda a discovery (node_types, context, models, connectors, tools) go through the AgenteOS MCP server (not direct filesystem access); validates every write against the two-layer schema (pydantic + JSON Schema). Use when the user says "/agentos-builder", "agentos-builder", "build an agent spec", "create a new agent", "edit an AgentSpec", "clone an agent spec", or wants to inspect/list existing agent YAML definitions.
+description: Manages AgentOS AgentSpec YAML files under {drafts,published}/<slug>/vN.yaml — read, create, edit, clone, backup, publish, remove, e a descoberta com o analista de negócio que vira proposta em roteiro antes do YAML. List/read/write/validate/publish/revise e toda a discovery (node_types, context, models, connectors, tools) go through the AgenteOS MCP server (not direct filesystem access); validates every write against the two-layer schema (pydantic + JSON Schema). Use when the user says "/agentos-builder", "agentos-builder", "build an agent spec", "create a new agent", "edit an AgentSpec", "clone an agent spec", or wants to inspect/list existing agent YAML definitions.
 license: MIT
 metadata:
   author: w1
@@ -26,7 +26,7 @@ Every operation calls `scripts/mcp_client.py`, which reads `MCP_URL` and `MCP_KE
 > That's outside what agentos-builder does — I only read and write AgentSpec YAML under `drafts/` e `published/` deste repo. For [creating a node executor / renaming a published slug / anything touching runtime, DB, or spec material], use the W1 flow (`/w1`) instead.
 
 Explicit non-goals — always refuse and redirect to `/w1`:
-- Creating or editing a node executor (`executors.py` / `interpreter.py`) or any agent-runtime code.
+- Creating or editing a node executor (`executors.py` / `interpreter.py`) or any agent-runtime code. This is about the **user** asking for executor code — a derivation (`create.md`) hitting a node type the environment doesn't have is a different case: that's a gap (`references/gap.md`), not a redirect to `/w1`.
 - Renaming a published slug. Lesson from feature 007: a slug rename requires a YAML change **and** a DB migration together, done as one coordinated delivery — this skill cannot do half of that safely. Refuse and point to `/w1`.
 - Editing anything under `spec/`, `.reversa/`, `_reversa_sdd/`, or `_reversa_forward/` — spec material is append-only and out of this skill's remit entirely.
 

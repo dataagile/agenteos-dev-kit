@@ -27,6 +27,8 @@ As demais tools não têm escopo próprio — cavalgam nestes: `spec_context`,
 em `spec.write` (é o `required_scope` declarado no registry do servidor; uma
 chamada real com a chave de 6 scopes acima autorizou no ambiente de
 validação em 14/08/2026). A lista acima já autoriza a superfície inteira.
+`spec_feedback` (usada pelo `gap.md`) — cobertura pelos 6 scopes acima **a
+confirmar no sandbox**.
 
 ## Conectando o Claude Code
 
@@ -81,6 +83,11 @@ Faltou recurso no ambiente em qualquer ponto: o kit para, explica em uma frase,
 reporta pela tool `spec_feedback` (a mesma do megafone da tela) e deixa o
 rascunho retomável
 ([`gap.md`](.claude/skills/agentos-builder/references/gap.md)).
+
+O fluxo do analista (descoberta → derivação → proposta → prova, passos 0-3
+acima) está implementado, mas suas três provas de sandbox (rota curta, rota
+completa, gap forçado) e a sessão com um não-dev ainda estão pendentes; o que
+foi validado ao vivo em 13/08/2026 foi o ciclo MCP write→validate→publish.
 
 Para mudar um agente já publicado: `spec_revise` (abre a PRÓXIMA versão em
 draft semeada da última published — published é imutável), e daí o ciclo

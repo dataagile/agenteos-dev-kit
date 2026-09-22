@@ -9,7 +9,7 @@ Procedimento interno que **deriva** o AgentSpec YAML a partir da ficha, valida
 pelo MCP e regrava o rascunho `drafts/<slug>/v0.1` que a descoberta já criou.
 O que o humano vê depois disto é o roteiro de `references/proposta.md`.
 
-Before asking anything, call `mcp_client.node_types()` fresh — `{node_types: [{type, runtime_ready, required, optional, ux_hint, variants: [...]}], trigger: {...}, spec_level: {...}, transform_strategies: [...], semantics: {...}}`. Never reuse a list from an earlier turn or from memory, and never read `packages/cdm/schemas/agent_spec_v1_builder_map.json` or `apps/agent-runtime/src/agent_runtime/executors.py` directly (T027 — this tool is the only source of truth for *which node types exist*, and it can change between sessions). The `semantics` block (keys `condition`, `when`, `jump`, `loop_body_errors`, plus `version` and `partial`) carries the flow semantics the environment actually enforces — read it before writing any `condition`/`loop`/`when` node, per SKILL.md's discovery-not-memory rule. If the artifact behind it is missing or incomplete only that block degrades (`{partial: true, warning: ...}`); the node-type catalog is still served.
+Before deriving anything, call `mcp_client.node_types()` fresh — `{node_types: [{type, runtime_ready, required, optional, ux_hint, variants: [...]}], trigger: {...}, spec_level: {...}, transform_strategies: [...], semantics: {...}}`. Never reuse a list from an earlier turn or from memory, and never read `packages/cdm/schemas/agent_spec_v1_builder_map.json` or `apps/agent-runtime/src/agent_runtime/executors.py` directly (T027 — this tool is the only source of truth for *which node types exist*, and it can change between sessions). The `semantics` block (keys `condition`, `when`, `jump`, `loop_body_errors`, plus `version` and `partial`) carries the flow semantics the environment actually enforces — read it before writing any `condition`/`loop`/`when` node, per SKILL.md's discovery-not-memory rule. If the artifact behind it is missing or incomplete only that block degrades (`{partial: true, warning: ...}`); the node-type catalog is still served.
 
 **Node `config` shape comes from `variants` (feature 063).** Each entry's `variants` lists every form the validator accepts for that type, derived from `agent_spec_v1.json` itself — including the `config` sub-schema with its required fields and enums. Use the variant marked `current: true`; the other one is the alternative form (e.g. `tool` accepts either top-level `tool_name`, dispatched by the Tool Registry, or `config.primitive` — the form every shipped spec uses). `identifier.one_of` says the node id field may be `key` **or** `id`. The entry's `required`/`optional` describe only the builder-map form and omit `config` — do not build a node from them.
 
@@ -26,6 +26,15 @@ Cada linha da ficha decide algo. Cada decisão cita a seção do
 ordem; se uma linha exigir um recurso que o ambiente não tem (conector, tool,
 strategy, modelo), **pare aqui** e siga `references/gap.md` — nunca continue
 com o nó faltando.
+
+> **Rota curta (fecha a lacuna do spec §3.1/§5):** na ficha curta
+> (`descoberta.md` "Triagem"), as linhas Escreve, Autoriza, Nunca pode e Fora
+> do grafo não são perguntadas — e não ficam em branco nem viram `<pendente>`.
+> Escreva-as literalmente: `# Escreve: (nenhum)`, `# Autoriza: (não se
+> aplica)`, `# Nunca pode: (não se aplica)`, `# Fora do grafo: (nenhum)`.
+> `# Termos:` deriva dos verbos da linha **Trabalho**. Só uma linha
+> `<pendente>` de verdade manda de volta para a descoberta — as quatro linhas
+> acima, na rota curta, nunca chegam a esse estado.
 
 | Linha da ficha | Deriva | Regra |
 |---|---|---|
@@ -66,7 +75,8 @@ O analista nunca vê esta tabela. Ela é o contrato entre a ficha e o YAML.
 
 ## File conventions
 
-- Destination: `a raiz deste repo: drafts/<slug>/v0.1.yaml`.
+- Destination: no store do MCP (`drafts/<slug>/v0.1` do servidor) — nunca um
+  arquivo local.
 - `version: "0.1.0"`, `change_class: "minor"`.
 - **Cabeçalho = a ficha de domínio**, já gravada pela descoberta. A derivação
   acrescenta abaixo dela, ainda como comentário: `# Derivado em <data> a partir
@@ -82,7 +92,7 @@ O analista nunca vê esta tabela. Ela é o contrato entre a ficha e o YAML.
    cabeçalho.
 2. Validate: `mcp_client.validate(content)`.
 3. **Pydantic errors present** (blocking) → do not write. Treat it as a derivation failure: find which line of the ficha and which rule of the table above produced the offending field, re-derive, re-validate. If the ficha itself cannot resolve it (a rule the table does not cover, or a resource the environment lacks), follow `references/gap.md`. Never ask the human for a schema value.
-4. **Pydantic clean** → `mcp_client.write_draft(slug, "0.1", content, templates)` — sempre com os `.j2` no mesmo write (§8). This both re-validates server-side and performs the write; `McpClientError(code="parse_error")` means the YAML itself is malformed (show the message) and `code="immutable_published"` should never happen here (0.1 is a fresh slug) — if it does, stop and say the slug collided with something already published.
+4. **Pydantic clean** → `mcp_client.write_draft(slug, "0.1", content, templates)` — sempre com os `.j2` no mesmo write (§8). This both re-validates server-side and performs the write; `McpClientError(code="parse_error")` means the YAML itself is malformed (show the message) and `code="immutable_published"` should never happen here (0.1 already exists as the draft descoberta created) — if it does, stop and say the slug collided with something already published.
 5. Report the `validate` result's `errors` (JSON-Schema structural — trigger shape, node `oneOf`, condition grammar), if any — non-blocking but real; suggest fixes. There is no `known_drift` bucket in the MCP validator (see `lifecycle.md` §7) — every non-blocking error is reported flat, not sub-classified as "expected drift" vs "novel."
 
 ## Quando a derivação não fecha

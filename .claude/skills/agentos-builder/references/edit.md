@@ -21,7 +21,7 @@ This check runs before any question about *what* to edit — no point interviewi
 Ask which field(s) or which node(s) the user wants to change. Two paths:
 
 - **Root-level field edit** (name, description, category, config_schema property, trigger, io, etc.) — ask for the new value, citing the field.
-- **Node edit** (add/change/remove a node) — reuse the Create node-interview rules from `create.md` in full: call `mcp_client.node_types()` fresh (never stale), house style applies (a real spec's `config` shape wins over the builder-map per-type shape when they disagree, per `create.md`), state the condition-expression grammar *before* the user writes one if editing a condition node, and dual-write `id`+`key` with the same value for any new or renamed node identifier.
+- **Node edit** (add/change/remove a node) — reuse `create.md`'s "Regras transversais" and derivation table (Create's own node-interview is analyst-only now, scoped to "criar um agente" in SKILL.md, and doesn't apply here — Edit stays dev-facing by design): call `mcp_client.node_types()` fresh (never stale), house style applies (a real spec's `config` shape wins over the builder-map per-type shape when they disagree, per `create.md`), state the condition-expression grammar *before* the user writes one if editing a condition node, and dual-write `id`+`key` with the same value for any new or renamed node identifier.
 
 ## 4. Slug rename — refuse
 

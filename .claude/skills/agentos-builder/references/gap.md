@@ -64,11 +64,16 @@ nunca o corpo.
 
 1. **`mcp_client.feedback(category, message, context)`** — `category`:
    `"erro"` se algo que devia funcionar falhou; `"melhoria"` se falta recurso.
-   `context={"slug": slug, "version": "0.1", "tool": "<tool/nó que travou>"}`.
-   Cai na esteira do time interno sem passar por ninguém.
-2. Se o MCP estiver **indisponível** (`McpClientError` sem `code`, ou HTTP ≠
-   401): `gh issue create --label gap --title "<classe> <uma linha>" --body
-   "<pedido técnico>"` no repositório do kit.
+   `context={"slug": slug, "version": "0.1", "run_id": "<se veio de um test
+   run>", "tool": "<tool/nó que travou>"}`. Cai na esteira do time interno sem
+   passar por ninguém.
+2. Se `mcp_client.feedback()` levantar `McpClientError` — **qualquer** erro,
+   inclusive `code="unauthorized"`: hoje não há confirmação de que
+   `spec_feedback` cavalga nos 6 scopes de autoria (README, "a confirmar no
+   sandbox"), então um 401 aqui é tão possível quanto qualquer outra falha, e
+   não há nada a perder tentando o fallback: `gh issue create --label gap
+   --title "<classe> <uma linha>" --body "<pedido técnico>"` no repositório do
+   kit.
 3. Se nem `gh` houver: entregue o pedido técnico pronto para o analista
    repassar, e diga a quem.
 
