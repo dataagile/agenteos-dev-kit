@@ -4,7 +4,8 @@
 # 500 respectivamente — ver ARMADILHAS.md §18. Como criar as conexões: docs/conexoes.md.
 #
 # Lembre: falha de http_request NÃO aborta o run (o nó seguinte roda com result
-# vazio) e o body volta como STRING (§11). Este grafo só dispara e devolve o cru.
+# vazio); o body de resposta JSON volta como OBJETO navegável, com body_raw ao
+# lado (§11, re-medida em 22/09). Este grafo só dispara e devolve o cru.
 # Passou no spec_validate em 15/09/2026 (trigger chat; "manual" não existe no schema). NÃO foi executada com estas
 # conexões — troque os ids de conexão pelos do seu spec_connectors.
 id: "agt_http_leitura_v1"

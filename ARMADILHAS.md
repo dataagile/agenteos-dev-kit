@@ -586,24 +586,40 @@ resultado precisa de `{{item.left.<campo>}}` / `{{item.right.<campo>}}` —
 > fail-closed de verdade — mas só descobri porque li o erro, não porque a
 > validação pegou.
 
-### `http_request` devolve `body` como STRING
+### `http_request` devolve `body` como OBJETO quando a resposta é JSON — a versão antiga desta seção estava errada
+
+📏 **Re-medido em 22/09/2026** (agenteos-dev-kit#23, provocado pelo RF-13 do
+PRD TBC de 18/09). Probe `probe-http-body` v1, `GET /drive/v3/about` com
+`Content-Type: application/json`, runs `d8275132` e `361f9577`:
 
 ```json
-{"result": {"body": "{\"data\": [...]}", "status": 200, "headers": {...}}}
+{"result": {"body": {"user": {...}, "storageQuota": {...}},
+            "body_raw": "{\n  \"user\": ...}",
+            "status": 200, "headers": {...}, "truncated": false}}
 ```
 
-O `body` é **texto**, não objeto. E **não há como parsear em YAML**:
+- `body` é o **JSON já convertido** — objeto, navegável.
+- `body_raw` é a **string** original, ao lado.
+- `truncated` diz se o corpo foi cortado.
 
-| tentativa | resultado |
-|---|---|
-| `.result.body.data` no transform | não resolve para lista |
-| filtro `fromjson` / `from_json` no Jinja | **não existe** — o nó falha antes de executar |
-| `tojson` | existe (serializa), não ajuda |
-| qualquer transform strategy | nenhuma parseia string |
+E **navega em YAML**: um `render_template` com
+`{{ steps.about.result.body.user.displayName }}` rendeu o valor (run
+`361f9577`), sem filtro nenhum. O probe está em
+[`examples/probe-http-body/v1.yaml`](examples/probe-http-body/v1.yaml).
 
-Ou seja: hoje o `http_request` serve para **disparar** uma chamada, não para
-**alimentar** um pipeline com o que ela devolve. Se precisa do corpo, a leitura
-tem que vir por `tool`/`primitive: read`.
+O que a versão anterior desta seção dizia (`body` texto, "não há como parsear",
+"o `http_request` serve para disparar, não para alimentar") **não vale** para
+resposta JSON. Ou foi medido contra uma resposta que não era JSON, ou a
+plataforma mudou entre 01/09 e 22/09 — o run original não foi citado, então não
+dá para saber. O que continua valendo:
+
+- filtro `fromjson`/`from_json` no Jinja **não existe** — mas com `body` objeto
+  você não precisa dele para resposta JSON;
+- resposta que **não** é JSON (texto, XML, binário) só chega em `body_raw`, e aí
+  sim não há como parsear no grafo (§19).
+- 🔍 índice de lista (`body.0.campo` ou `body[0].campo`) **não foi medido aqui**;
+  o PRD TBC (RF-03, run `e1bdb39f`) diz que resolve `None` em silêncio. Se a
+  API devolve lista, confira no trace antes de desenhar.
 
 ---
 

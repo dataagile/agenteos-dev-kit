@@ -1,0 +1,49 @@
+# PROBE DE REFERÊNCIA — não publicar. Mede o shape de `result` do http_request
+# com resposta JSON (ARMADILHAS §11, re-medida em 22/09/2026, dev-kit#23).
+# Runs no sandbox-os: d8275132 (shape) e 361f9577 (template navegando o body).
+# Resultado: result = {body: OBJETO, body_raw: STRING, status, headers, truncated}.
+# `default` na conexão só porque spec_test_run não recebe config (§9) — troque
+# pelo id do seu spec_connectors e REMOVA antes de qualquer publish.
+id: "agt_probe_http_body_v1"
+slug: "probe-http-body"
+name: "probe_http_body"
+version: "1.0.0"
+change_class: "minor"
+category: "integracao"
+requires_erp: false
+description: >
+  Probe descartável: shape de result do http_request com resposta JSON.
+
+config_schema:
+  type: object
+  required: [connection_id]
+  properties:
+    connection_id:
+      type: string
+      x-ref: connection
+      default: "<id da conexão http_generic no seu spec_connectors>"   # REMOVER antes de publicar
+      title: "Conexão Google"
+      description: Conexão http_generic oauth2 do Google (Drive + Agenda).
+
+trigger:
+  type: chat
+
+nodes:
+  - id: about
+    key: about
+    type: http_request
+    connection: "{{config.connection_id}}"
+    method: GET
+    path: /drive/v3/about
+    params:
+      fields: "user,storageQuota"
+    output: about_drive
+    next: [resumo]
+
+  - id: resumo
+    key: resumo
+    type: render_template
+    config:
+      template: resumo.md.j2
+      output_format: markdown
+    next: []

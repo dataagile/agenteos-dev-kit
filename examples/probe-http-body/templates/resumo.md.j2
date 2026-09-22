@@ -1,0 +1,4 @@
+usuario={{ steps.about.result.body.user.displayName | default('NAO_RESOLVEU') }}
+status={{ steps.about.result.status | default('NAO_RESOLVEU') }}
+limite={{ steps.about.result.body.storageQuota.limit | default('NAO_RESOLVEU') }}
+raw_e_string={{ steps.about.result.body_raw is string }}
