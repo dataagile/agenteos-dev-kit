@@ -1,8 +1,27 @@
 # Gap — parar, explicar, reportar, retomar
 
-Quando a derivação (`create.md`) ou o test run (`proposta.md`) esbarra em algo
-que o ambiente não tem, o kit **para naquele ponto**. Nunca entrega rascunho
+Quando um dos gatilhos do §0 dispara, o kit **para naquele ponto**. Nunca entrega rascunho
 parcial como pronto. Nunca contorna com código, serviço externo ou "faz na mão".
+
+## 0. Quando o kit sugere — e nunca abre sozinho
+
+Três gatilhos. Todos terminam numa **pergunta** com o rascunho inteiro (§3)
+na tela; o chamado só é aberto se o usuário responder que sim.
+
+1. **Gap.** `create.md` ou `proposta.md` esbarra em recurso que o ambiente
+   não tem. É o caso deste arquivo inteiro.
+2. **MCP falhando duas vezes no mesmo passo.** `spec_write`, `spec_validate`,
+   `spec_test_run` ou `spec_publish` levanta `McpClientError` com `code` em
+   `internal`, `upstream_unavailable`, HTTP 5xx, ou sem `code` — **duas vezes
+   seguidas no mesmo passo**. Não conta: `validation_failed`, `not_found`,
+   `unauthorized` (são da spec ou da chave, não da plataforma). Classe
+   `[plataforma]`. Se o próprio MCP está fora, o chamado não sobe por ele:
+   diga isso na frase e vá direto ao canal 2 ou 3 do §5.
+3. **O usuário pede.** "travou", "bug", "abre um chamado", ou `/reportar`.
+   Sem heurística; pergunte a classe se não estiver óbvia.
+
+Erro de git, python, rede local ou de um comando fora do MCP **não** dispara
+sugestão: é do ambiente de quem autora.
 
 ## 1. Classificar
 
@@ -49,7 +68,9 @@ saiu> — <por quê>`. Não é a versão final; é a que roda hoje.
 
 ## 4. Redação mecânica — antes de qualquer envio
 
-A `message` vai **crua** ao Sentry. Confira, linha a linha, que **não** há:
+A `message` vai **crua** ao chamado do GLPI. Passe o pedido técnico por
+`python3 scripts/gap_redact.py` (stdin → stdout) ou `gap_redact.redact(texto)`
+**antes** de montar o rascunho, e confira o resultado: **não** pode haver:
 
 - valor de `default:` de conexão, nem UUID de conexão
 - payload de conexão, host, usuário, token
@@ -62,23 +83,41 @@ nunca o corpo.
 
 ## 5. Canal, em ordem
 
-1. **`mcp_client.feedback(category, message, context)`** — `category`:
-   `"erro"` se algo que devia funcionar falhou; `"melhoria"` se falta recurso.
-   `context={"slug": slug, "version": "0.1", "run_id": "<se veio de um test
-   run>", "tool": "<tool/nó que travou>"}`. Cai na esteira do time interno sem
-   passar por ninguém.
-2. Se `mcp_client.feedback()` levantar `McpClientError` — **qualquer** erro,
-   inclusive `code="unauthorized"`: hoje não há confirmação de que
-   `spec_feedback` cavalga nos 6 scopes de autoria (README, "a confirmar no
-   sandbox"), então um 401 aqui é tão possível quanto qualquer outra falha, e
-   não há nada a perder tentando o fallback: `gh issue create --label gap
-   --title "<classe> <uma linha>" --body "<pedido técnico>"` no repositório do
-   kit.
-3. Se nem `gh` houver: entregue o pedido técnico pronto para o analista
-   repassar, e diga a quem.
+**Reportante, uma vez.** O chamado precisa de "Reportado por". Leia
+`.claude/agentos-builder.local.json` na raiz do repositório; se não existir ou
+faltar chave, pergunte nome e e-mail e grave:
 
-Registre no cabeçalho do rascunho qual canal foi usado:
-`# Gap reportado: feedback|issue #N|texto — <data>`.
+```json
+{"reporter_name": "Ana Analista", "reporter_email": "ana@cliente.com.br"}
+```
+
+O arquivo está no `.gitignore`; não é segredo, é o que vai no corpo do
+chamado. Nas próximas vezes só confirme ("continua sendo Ana?").
+
+1. **`mcp_client.feedback(category, message, context)`** — a plataforma abre
+   o chamado no GLPI (o kit não tem credencial). `category`: `"erro"` se algo
+   que devia funcionar falhou (vira Incidente); `"melhoria"` se falta recurso
+   (vira Requisição). `context`:
+
+   ```python
+   {"reporter_name": ..., "reporter_email": ...,          # obrigatórios
+    "slug": slug, "version": "0.1",
+    "tool": "<tool/nó que travou>", "step": "<derivacao|test_run|publish>",
+    "run_id": "<se veio de um test run>", "kit_version": "<metadata.version do SKILL.md>"}
+   ```
+
+   Retorno `{"ticket_id": N, "url": ..., "deduplicated": bool}`. Diga ao
+   usuário: `Chamado #N aberto: <url>`, ou, se `deduplicated`, `Já existe o
+   #N para isto: <url>` (a plataforma acrescentou um followup com o novo
+   relato). Cabeçalho do rascunho: `# Gap reportado: glpi #N — <data>`.
+2. Se `feedback()` levantar `McpClientError` — **qualquer** código, inclusive
+   `upstream_unavailable` (o GLPI não respondeu) e `unauthorized` — não há
+   nada a perder tentando o fallback: `gh issue create --label gap --title
+   "<classe> <uma linha>" --body "<pedido técnico redigido>"` no repositório
+   do kit. Cabeçalho: `# Gap reportado: issue #N — <data>`.
+3. Se nem `gh` houver: entregue o pedido técnico redigido para o usuário
+   repassar, e diga a quem (time interno da TBC). Cabeçalho:
+   `# Gap reportado: texto — <data>`.
 
 ## 6. Retomar
 
