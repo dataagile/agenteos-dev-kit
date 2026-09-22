@@ -235,8 +235,8 @@ def feedback(category: str, message: str, context: dict[str, str] | None = None)
         raise ValueError("message vazia — o servidor recusa (minLength 1) e cairia no fallback à toa")
     if len(message) > 4000:
         raise ValueError(f"message tem {len(message)} chars; máximo 4000")
-    ctx = {k: str(v) for k, v in (context or {}).items()}
+    ctx = {k: str(v) for k, v in (context or {}).items() if v is not None}
     for k in ("reporter_name", "reporter_email"):
-        if not str(ctx.get(k, "")).strip():
+        if not ctx.get(k, "").strip():
             raise ValueError(f"context.{k} é obrigatório — o chamado precisa de 'Reportado por' (references/gap.md §5)")
     return _call("spec.feedback", {"category": category, "message": message, "context": ctx})
