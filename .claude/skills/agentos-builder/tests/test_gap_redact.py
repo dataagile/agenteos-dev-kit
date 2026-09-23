@@ -77,4 +77,9 @@ assert "minha senha longa" not in redact("senha: minha senha longa\npassword = o
 assert "contato <removido> fim" in redact("contato 61 99999-8888 fim")
 assert redact("erro 2026-09-22 às 14:30 code=E1234") == "erro 2026-09-22 às 14:30 code=E1234"
 
+# token do GitHub solto no texto (sem "token=" na frente)
+for pat in ("ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", "github_pat_11AAAAAAA0abcdefghijklmnopqrstuvwxyz"):
+    out3 = redact(f"usei o PAT {pat} no header")
+    assert pat not in out3 and "<removido>" in out3, out3
+
 print("test_gap_redact: ok")
