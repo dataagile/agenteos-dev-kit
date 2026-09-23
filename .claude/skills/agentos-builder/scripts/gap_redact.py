@@ -27,6 +27,7 @@ _RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b"), _R),
     (re.compile(r"(?<!\d)\d{14}(?!\d)"), _R),
     (re.compile(r"(?<![\w+])\(?\d{2}\)?\s?9?\d{4}-\d{4}\b"), _R),
+    (re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b"), _R),
     (re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"), _R),
     (re.compile(r"\+55\s?\d{2}\s?\d{4,5}-?\d{4}\b"), _R),
 ]
