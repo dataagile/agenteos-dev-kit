@@ -19,7 +19,7 @@ _R = "<removido>"
 _RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"), _R),
     (re.compile(r"^(\s*default:\s*)(?:\"[^\"]*\"|'[^']*'|[^#\n]*?)(\s*(?:#.*)?)$", re.M), rf"\1{_R}\2"),
-    (re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b"), _R),  # antes do CPF: token com 11+ dígitos seguidos
+    (re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b"), _R),  # antes de CPF/CNPJ: token com 11+ dígitos seguidos
     (re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b"), _R),
     (re.compile(r"(?<!\d)\d{11}(?!\d)"), _R),
     (re.compile(r"(?i)\b(bearer|basic)\s+\S+"), rf"\1 {_R}"),
