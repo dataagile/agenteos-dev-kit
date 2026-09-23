@@ -45,6 +45,26 @@ Fluig só fala **OAuth 1.0a (HMAC-SHA1)**: modo `oauth1a` do `http_generic`
 | `token` | Usuário Aplicativo |
 | `token_secret` | Usuário Aplicativo |
 
+## GitHub — `http_generic` com Bearer PAT (📏 arquiteto-totvs 0.9, 22/09/2026)
+
+Enquanto não existe preset `github` na plataforma (issue #29), preencha à mão:
+
+| campo | valor |
+|---|---|
+| `base_url` | `https://api.github.com` |
+| auth | Bearer, com um **PAT fine-grained só-leitura** (Contents: read; Metadata: read) restrito aos repositórios necessários |
+| headers | `Accept: application/vnd.github+json` e `X-GitHub-Api-Version: 2022-11-28` |
+| `test_path` | `/user` (`GET`, 200 com o login do dono do token) |
+
+Leitura que funciona: `GET /search/code?q=<termo>+org:<org>` (§18 do ARMADILHAS
+vale aqui também: falha do `http_request` não aborta o run).
+
+**Segurança, antes de sair do sandbox:** PAT fine-grained é de **uma pessoa** —
+expira, some quando ela sai da org, e aparece no audit como ela. Para produção
+use um **machine user** da org do cliente com o PAT, ou uma **GitHub App**
+instalada na org; nunca o PAT de um dev. Não cole o PAT em spec, `default:` ou
+chamado (o `gap_redact` remove `token=` mas não um PAT solto).
+
 ## Cadastro via API (sem a tela)
 
 Funciona, com três detalhes que custam tempo:
