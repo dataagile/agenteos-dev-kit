@@ -82,4 +82,9 @@ for pat in ("ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", "github_pat_11AAAAAAA0ab
     out3 = redact(f"usei o PAT {pat} no header")
     assert pat not in out3 and "<removido>" in out3, out3
 
+# token com dígitos seguidos: a regra do PAT roda antes das de CPF (11) e CNPJ (14), sem sobrar fragmento
+for tok in ("ghp_abc12345678901234xyzABCDEFGHIJK", "ghp_abc12345678901xyzABCDEFGHIJKLMN"):  # 14 e 11 dígitos
+    out4 = redact(f"PAT {tok} fim")
+    assert out4 == "PAT <removido> fim", out4
+
 print("test_gap_redact: ok")
