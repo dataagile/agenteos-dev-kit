@@ -10,9 +10,11 @@ Ask, one at a time, citing the field:
 - **New slug** (`slug`) — kebab-case; validate the pattern; check collision via `mcp_client.list_specs()` (covers both states). If it already exists anywhere, say where and ask for a different one.
 - **New human name** (`name`).
 
-From the new slug, regenerate `id` = `agt_<new_slug_snake>_v0` (v0, not carried over from the source's `id` — this is a new spec lineage). Set `version: "0.1.0"` and `change_class: "minor"`, regardless of the source's version/change_class — a clone always starts fresh as a draft.
+From the new slug, regenerate `id` = `agt_<new_slug_snake>_v1` (fixed `_v1` from `0.1.0` on — §21.5: an `id` derived from the major would change at the first `1.0.0` publish and be refused (§3); not carried over from the source's `id` — this is a new spec lineage). Set `version: "0.1.0"` and `change_class: "minor"`, regardless of the source's version/change_class — a clone always starts fresh as a draft.
 
 ## 2. Carry-over
+
+**Templates travel with the content.** `mcp_client.read_spec(slug, version)` returns `{slug, version, content, templates}` — `templates` is the `{name: content}` map of the source's `.j2` files (📏 23/09/2026: `examples/prova-*-sftp/templates/` were saved from exactly this field). Carry that map into `write_draft(new_slug, "0", content, templates)` as-is; a source with `render_template` nodes and an empty `templates` map is a gap (`gap.md`), not something to rewrite by hand.
 
 Everything else — `description` (unless the user wants to adjust it, ask), `category`, `requires_erp`, `trigger`, `config_schema`, `io`, and the full `nodes` graph — carries over **verbatim** from the source. Do not re-run the full Create node interview; this is a copy, not a rebuild. If the user wants to change something beyond identity, that's an Edit performed after the clone lands, not part of Clone itself.
 

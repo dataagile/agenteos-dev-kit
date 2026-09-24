@@ -36,7 +36,7 @@ As três que mais custam tempo:
 
 E uma que não custa tempo, custa segurança: **`when` em nó `approval` só com
 caminhos `config.*`** (📏 caminho de passo vale `None` ali e a aprovação é pulada; §21) **e só com a
-gramática de condition** (`len()`, `== 'str'`, `== null` e negações). Até
+gramática de condition** (hoje unificada com a do `condition`; §21.6). Até
 DAI-918 qualquer outra forma (`>`, truthiness pura, `!= true`, um typo) avaliava
 `False` e **pulava a aprovação humana** sem erro; 📏 re-medido em 15/09/2026, a
 forma ilegível agora EXIGE o humano. Mas uma forma reconhecida e falsa dispensa
