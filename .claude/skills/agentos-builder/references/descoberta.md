@@ -165,8 +165,8 @@ Nada em arquivo local. A memória é o rascunho no MCP.
 1. Assim que a linha **Trabalho** é confirmada: proponha `name`, derive o `slug`
    (kebab-case do nome), **cheque colisão** com `mcp_client.list_specs()` e
    grave um rascunho mínimo válido com `mcp_client.write_draft(slug, "0",
-   ` — a versão do store é o **major puro** (`"0"` para `0.1.0`; §8; 📏 o servidor recusa `"0.1"` com `slug/version inválido`) — `
-   content, templates)` — `description`, `trigger`, um nó `render_template` com
+   content, templates)` — a versão do store é o **major puro** (`"0"` para
+   `0.1.0`; §8; 📏 o servidor recusa `"0.1"` com `slug/version inválido`) — `description`, `trigger`, um nó `render_template` com
    um `.j2` de uma linha enviado no mesmo `templates` (§8: `write_draft` sem
    `templates` grava `templates: []` e a spec quebra em execução) — com a ficha
    parcial como cabeçalho (linhas ainda não respondidas ficam com `<pendente>`).

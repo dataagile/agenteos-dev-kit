@@ -11,8 +11,8 @@
 # Descartado:    mandar a lista por e-mail — o chat já é onde a pessoa pergunta; e-mail seria um segundo lugar para olhar
 # Derivado em 2026-09-23 a partir da ficha acima; regras em references/create.md
 # PROVA §8 caso curto — run 6f02b574 mostrou que ramo on_false vira nó extra na execução linear; v2: um template final trata ok/falha
-# draft de teste; `default:` de conexão REMOVER antes de publicar
-id: "agt_prova_lista_sftp_v0"
+# id `_v1` fixo desde o 0.1.0 (§21.5; os runs citados rodaram com `_v0`, sem efeito no resultado). draft de teste; `default:` de conexão REMOVER antes de publicar
+id: "agt_prova_lista_sftp_v1"
 slug: "prova-lista-sftp"
 name: "Lista de arquivos do SFTP"
 version: "0.1.0"

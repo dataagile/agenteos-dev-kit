@@ -37,5 +37,5 @@ If either signal is present:
 1. Assemble the new YAML content in memory/scratch — never write directly into `drafts/` e `published/` deste repo with the skill's own tools; `mcp_client.py` is the only sanctioned path.
 2. Validate: `mcp_client.validate(content)`.
 3. **Pydantic errors** (blocking) → show them, fix, do not write. (Should be rare since content is carried over from an already-valid source, but the identity fields are new and can still collide or mistype.)
-4. **Pydantic clean** → `mcp_client.write_draft(new_slug, "0.1", content)`.
+4. **Pydantic clean** → `mcp_client.write_draft(new_slug, "0", content, templates)  # versão = major puro (§8, §21.4); templates viajam junto (§8)`.
 5. Report `validate`'s errors (JSON-Schema structural), if any — non-blocking. No `known_drift` bucket (see `lifecycle.md` §7) — every non-blocking error is reported flat.

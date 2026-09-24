@@ -11,7 +11,7 @@
 # Descartado:    mover automaticamente sem aprovação — o gerente quer olhar antes, e o custo de mover errado é alto
 # Derivado em 2026-09-23 a partir da ficha acima; regras em references/create.md
 # PROVA §8 caso completo — run 4e3413eb: pasta 'entrada' não existe no SFTP DEV e sftp_op que falha ABORTA o run; defaults de teste apontam para '.' e 'asd.xml' (existem). run 54395ea4: `when` no approval só resolve config.* — caminho de passo vale None e a aprovação é PULADA (alcada_below_threshold); gate no veredito barrou o mover (condition_guard). Sem when. draft de teste; `default:` de conexão REMOVER antes de publicar
-id: "agt_prova_move_sftp_v0"
+id: "agt_prova_move_sftp_v1"
 slug: "prova-move-sftp"
 name: "Mover fechamento conferido"
 version: "0.1.0"

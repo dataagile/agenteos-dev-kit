@@ -237,7 +237,7 @@ Três sessões reais no sandbox, com `spec_test_run`, sem publicar:
 3. **Gap forçado.** Pedir conexão que não existe. Deve parar, gerar as duas
    camadas, abrir (ou entregar) a issue e deixar o rascunho retomável.
 
-📏 23/09/2026: provas 1 e 2 feitas (`examples/prova-lista-sftp`, `examples/prova-move-sftp`; runs `f6994f26` e `61faf8fb`), com seis achados devolvidos ao kit (ARMADILHAS §21). A prova 3 ficou coberta pelo canal GLPI (#31, chamado #242).
+📏 23/09/2026: provas 1 e 2 feitas (`examples/prova-lista-sftp`, `examples/prova-move-sftp`; runs `f6994f26` e `61faf8fb` — os re-runs verdes das versões finais; `6f02b574`, `4e3413eb` e `54395ea4` são os runs que mediram os defeitos, citados na §21), com seis achados devolvidos ao kit (ARMADILHAS §21). A prova 3 ficou coberta pelo canal GLPI (#31, chamado #242).
 
 Os três provam que o mecanismo funciona. **Não provam** que o analista entende o
 roteiro. Isso só uma sessão com uma pessoa não-dev responde, e é o primeiro
