@@ -912,6 +912,45 @@ mais tarde só se o usuário pedir; a plataforma deduplica pelo `external_id`.
 
 ---
 
+## 21. A execução é LINEAR por posição — `next: []` não encerra, e `on_false` sozinho roda o "aviso" no caminho feliz
+
+📏 Provas do fluxo de autoria (23/09/2026, sandbox, drafts `prova-lista-sftp`
+e `prova-move-sftp`, guardados em `examples/`). Seis fatos, todos medidos:
+
+1. **Não existe nó terminal.** Run `6f02b574`: `listar → condition
+   (on_false: avisar_falha) → avisar (next: []) → avisar_falha`. A condition deu
+   `true`, `avisar` rendeu a lista certa, e **`avisar_falha` rodou também** —
+   e virou a saída do run. O bloco `semantics.jump` do catálogo diz o porquê:
+   "veredito verdadeiro segue linear", e o salto é "por posição na lista de
+   nodes". `next: []` é documentação, não fim.
+   **Desenho que funciona:** um único `render_template` **último** que trata
+   todos os casos no `.j2` (`steps.x.status`, lista vazia, aprovação pulada);
+   `condition` só como **guarda** com `on_true` no nó protegido (run
+   `54395ea4`: `mover` ficou `skipped`, `reason: condition_guard`).
+2. **`when` no approval só resolve `config.*`.** Run `54395ea4`: com um item
+   no `context_from`, `when: "len(achar_fechamento.result) > 0"` deu falso —
+   caminho de passo vale `None` ali, `len` dá 0 — e a aprovação veio `skipped`
+   com `alcada_below_threshold`. O humano foi dispensado sem erro. A defesa
+   da §4 segurou: o gate no veredito barrou o `mover`. Regra: alçada só sobre
+   `config.*`; "só pede quando há item" já é o `empty_context` do
+   `context_from`.
+3. **`sftp_op` que falha ABORTA o run** (run `4e3413eb`: `not_found` na pasta,
+   run `failed` com `node_error_result`). Diferente do `http_request` (§18).
+   O nó ganhou `on_error` no catálogo (RF-05 do PRD TBC) — não medido.
+4. **A versão do `write_draft` é o major puro.** `"0.1"` é recusado com
+   `slug/version inválido`; `"0"` grava `drafts/<slug>/v0.yaml`. A §8 já dizia;
+   o texto novo da skill dizia errado e foi corrigido neste ciclo.
+5. **`id` derivado do major muda no primeiro publish** (`_v0` em 0.1.0 vira
+   `_v1` em 1.0.0) — e a §3 exige `id` estável. Regra: `_v1` fixo desde o
+   `0.1.0`, como os exemplos publicados.
+6. 🔍 **A gramática do `when` foi unificada** com a de `condition`
+   (151/#898, lido em `semantics.when` em 23/09): truthiness, `and/or/not` e
+   comparação numérica valem também no approval, e DAI-918 mantém o ilegível
+   como fail-closed. As tabelas da §4 e da §12 são **históricas**; a regra que
+   sobrevive é a do item 2: só `config.*`.
+
+---
+
 ## Quando algo não for culpa da sua spec
 
 Estes são defeitos de plataforma conhecidos em 26/08/2026. Se bater neles, não

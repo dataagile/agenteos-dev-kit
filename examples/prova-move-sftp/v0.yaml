@@ -1,0 +1,109 @@
+# FICHA DE DOMÍNIO — Mover fechamento conferido
+# Trabalho:      No dia 5 a pessoa confere se o arquivo de fechamento chegou na pasta de entrada do SFTP e, com o ok do gerente, move ele para a pasta de processados; depois avisa o grupo
+# Começa quando: todo dia 5 às 8h   -> trigger schedule
+# Termos:        fechamento = o arquivo mensal (nome fixo, ex. fechamento.csv); entrada = pasta onde ele chega; processados = pasta para onde vai depois do ok; gerente = quem autoriza
+# Nunca pode:    mover o fechamento sem o ok do gerente; mover um arquivo que não seja o fechamento   -> approval + condition que autoriza
+# Autoriza:      o gerente, sempre que o fechamento estiver na entrada; se não chegou, ninguém é incomodado   -> approval sempre; sem arquivo o context_from vem vazio e a aprovação é pulada (empty_context), com a escrita barrada pelo gate
+# Lê:            a pasta de entrada do SFTP (nome, tamanho)   -> io.reads
+# Escreve:       move o fechamento de entrada para processados no SFTP   -> io.writes
+# Fora do grafo: conferir o conteúdo do arquivo (é do gerente, ao aprovar)
+# Termina bem:   o gerente aprovou, o arquivo está em processados e o grupo recebeu o aviso; se o arquivo não chegou, o aviso diz isso e nada foi movido
+# Descartado:    mover automaticamente sem aprovação — o gerente quer olhar antes, e o custo de mover errado é alto
+# Derivado em 2026-09-23 a partir da ficha acima; regras em references/create.md
+# PROVA §8 caso completo — run 4e3413eb: pasta 'entrada' não existe no SFTP DEV e sftp_op que falha ABORTA o run; defaults de teste apontam para '.' e 'asd.xml' (existem). run 54395ea4: `when` no approval só resolve config.* — caminho de passo vale None e a aprovação é PULADA (alcada_below_threshold); gate no veredito barrou o mover (condition_guard). Sem when. draft de teste; `default:` de conexão REMOVER antes de publicar
+id: "agt_prova_move_sftp_v1"
+slug: "prova-move-sftp"
+name: "Mover fechamento conferido"
+version: "0.1.0"
+change_class: "minor"
+category: "integracao"
+requires_erp: false
+description: >
+  Todo dia 5 confere se o arquivo de fechamento está na pasta de entrada do
+  SFTP; se estiver, pede o ok do gerente e só então o move para processados.
+  Sem arquivo, avisa e não incomoda ninguém.
+config_schema:
+  type: object
+  required: [connection_sftp_id]
+  properties:
+    connection_sftp_id:
+      type: string
+      x-ref: connection
+      default: "<id de uma conexão sftp do seu spec_connectors>"   # REMOVER antes de publicar (§9)
+      title: "Conexão SFTP"
+      description: Conexão SFTP com a pasta de entrada e a de processados. Precisa permitir escrita.
+    pasta_entrada:
+      type: string
+      default: "."
+      title: "Pasta de entrada"
+      description: Onde o fechamento chega, relativa à raiz da conexão.
+    pasta_processados:
+      type: string
+      default: "processado"
+      title: "Pasta de processados"
+      description: Para onde o fechamento vai depois do ok do gerente.
+    arquivo:
+      type: string
+      default: "asd.xml"
+      title: "Arquivo de fechamento"
+      description: Nome exato do arquivo mensal que pode ser movido. Nenhum outro é tocado.
+io:
+  reads:
+    - entity: File
+      label: Pasta de entrada do SFTP
+  writes:
+    - entity: File
+      label: Fechamento movido para processados
+trigger:
+  type: schedule
+  cron: "0 8 5 * *"
+nodes:
+  - id: listar_entrada
+    key: listar_entrada
+    type: sftp_op
+    connection: "{{config.connection_sftp_id}}"
+    op: list
+    path: "{{config.pasta_entrada}}"
+    next: [achar_fechamento]
+  - id: achar_fechamento
+    key: achar_fechamento
+    type: transform
+    config:
+      strategy: filter_by_field
+      source: "listar_entrada.result.entries"
+      field: "name"
+      equals: "{{config.arquivo}}"
+    next: [aprovar]
+  - id: aprovar
+    key: aprovar
+    type: approval
+    config:
+      decision_set: "sftp.aprovar_operacao"
+      timeout_hours: 48
+      on_timeout: abort
+      context_from: "achar_fechamento"
+      title_path: "name"
+      amount_path: "size"
+    next: [autorizar]
+  - id: autorizar
+    key: autorizar
+    type: condition
+    config:
+      expr: "aprovar.decision.decision == 'approved'"
+      on_true: mover
+    next: [mover]
+  - id: mover
+    key: mover
+    type: sftp_op
+    connection: "{{config.connection_sftp_id}}"
+    op: move
+    path: "{{config.pasta_entrada}}/{{config.arquivo}}"
+    dest_path: "{{config.pasta_processados}}/{{config.arquivo}}"
+    next: [avisar]
+  - id: avisar
+    key: avisar
+    type: render_template
+    config:
+      template: avisar.md.j2
+      output_format: markdown
+    next: []

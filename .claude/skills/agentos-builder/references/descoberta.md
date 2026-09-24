@@ -164,14 +164,15 @@ Nada em arquivo local. A memória é o rascunho no MCP.
 
 1. Assim que a linha **Trabalho** é confirmada: proponha `name`, derive o `slug`
    (kebab-case do nome), **cheque colisão** com `mcp_client.list_specs()` e
-   grave um rascunho mínimo válido com `mcp_client.write_draft(slug, "0.1",
-   content, templates)` — `description`, `trigger`, um nó `render_template` com
+   grave um rascunho mínimo válido com `mcp_client.write_draft(slug, "0",
+   content, templates)` — a versão do store é o **major puro** (`"0"` para
+   `0.1.0`; §8; 📏 o servidor recusa `"0.1"` com `slug/version inválido`) — `description`, `trigger`, um nó `render_template` com
    um `.j2` de uma linha enviado no mesmo `templates` (§8: `write_draft` sem
    `templates` grava `templates: []` e a spec quebra em execução) — com a ficha
    parcial como cabeçalho (linhas ainda não respondidas ficam com `<pendente>`).
 2. A cada linha da ficha confirmada: `write_draft` de novo, mesma versão, só o
    cabeçalho muda. O YAML cresce junto na fase de derivação.
-3. Sessão que cai no meio: `mcp_client.read_spec(slug, "0.1")`, leia o
+3. Sessão que cai no meio: `mcp_client.read_spec(slug, "0")`, leia o
    cabeçalho, retome da primeira linha `<pendente>`.
 4. Reabrir uma decisão é regravar o rascunho com a ficha alterada. Publicado é
    `spec_revise`, como qualquer mudança.

@@ -1,0 +1,3 @@
+{% set s = steps.listar %}{% if s.status != 'ok' %}Não consegui listar a pasta `{{ config.pasta }}` (status {{ s.status | default('desconhecido') }}). Nada foi feito.{% else %}{% set itens = s.result.entries | default([]) %}{% if itens | length == 0 %}A pasta `{{ config.pasta }}` está vazia — nenhum arquivo chegou.{% else %}Arquivos na pasta `{{ config.pasta }}` ({{ itens | length }}):
+{% for a in itens %}- {{ a.name }} — {{ a.size }} bytes — {{ a.mtime }}
+{% endfor %}{% endif %}{% endif %}

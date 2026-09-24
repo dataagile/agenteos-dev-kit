@@ -125,7 +125,8 @@ def list_specs(state: str | None = None) -> list[dict[str, Any]]:
 
 
 def read_spec(slug: str, version: str) -> dict[str, Any]:
-    """Returns `{"slug", "version", "content"}` — `content` is the raw YAML text."""
+    """Lê `{slug, version, content, templates}` — `templates` é o mapa {nome: conteúdo}
+    dos `.j2` do artefato (📏 23/09/2026), a repassar em `write_draft`."""
     return _call("spec.read", {"slug": slug, "version": version})
 
 
