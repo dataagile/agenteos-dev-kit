@@ -1,0 +1,5 @@
+{% set achou = steps.achar_fechamento.result | default([]) %}{% set ap = steps.aprovar | default({}) %}{% set mv = steps.mover | default({}) %}
+{% if achou | length == 0 %}O fechamento `{{ config.arquivo }}` não está em `{{ config.pasta_entrada }}`. Nada foi movido e ninguém foi acionado.
+{% elif mv.status == 'ok' %}Fechamento `{{ config.arquivo }}` movido para `{{ config.pasta_processados }}` com o ok do gerente.
+{% else %}Fechamento `{{ config.arquivo }}` encontrado em `{{ config.pasta_entrada }}`; aprovação: {{ ap.status | default('pendente') }}. Nada foi movido.
+{% endif %}

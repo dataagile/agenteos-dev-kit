@@ -6,7 +6,7 @@ Uma linha por nó, em linguagem de negócio, usando os termos da ficha (linha
 
 ## 1. Montar o roteiro
 
-Leia o rascunho (`mcp_client.read_spec(slug, "0.1")`) e traduza nó a nó, na
+Leia o rascunho (`mcp_client.read_spec(slug, "0")`) e traduza nó a nó, na
 ordem do grafo, com a tabela abaixo. O vocabulário dentro de cada linha vem do
 glossário "Falando com quem decide" de `descoberta.md` e da linha "Termos" da
 ficha:
@@ -17,12 +17,12 @@ ficha:
 | trigger `chat` | "Liga quando alguém pede no chat." |
 | trigger `event`/`webhook`/`email` | "Liga quando <evento da ficha> acontece." |
 | nó de leitura | "Busca <o que a ficha diz que lê> em <sistema>." |
-| `condition` de status | "Se não conseguir buscar, avisa e para." |
+| `condition` de status (guarda com `on_true`) | "Se não conseguir buscar, não faz o passo seguinte e avisa no fim." |
 | `transform` | "Separa/organiza <o que a strategy faz, em palavras>." |
 | `approval` | "**Para e pede o ok de <quem autoriza>**<, só acima de <alçada>>." |
 | `condition` no veredito | (não vira linha — está implícito na anterior) |
 | nó de escrita | "Só depois do ok, <o que escreve> em <onde>." |
-| nó de aviso (`on_false`) | "Se não for aprovado, avisa e não faz nada." |
+| escrita pulada pela guarda (`condition_guard`) | (não vira linha — o template final diz "não foi aprovado, nada foi feito") |
 | `render_template` final | "No fim, entrega <o resumo>." |
 | `agent` | "Lê <entrada> e escreve <saída>, com apoio de IA." |
 
@@ -62,14 +62,14 @@ ao **admin do ambiente** — nunca ao analista, não é pergunta de negócio. Se
 ele o run cai na empresa default do tenant, que num sandbox costuma não ter
 parâmetro nenhum preenchido e morre em `COMPANY_CONFIG_INCOMPLETE` (§9).
 
-Chame a tool MCP `spec_test_run(slug, "0.1"[, erp_company_id])` → `run_id`;
+Chame a tool MCP `spec_test_run(slug, "0"[, erp_company_id])` → `run_id`;
 depois `spec_run_status(run_id)` até `status` sair de `received`/`running`.
 Traduza o trace para o analista, um passo por linha:
 
 | `steps[].status` / `status` do run | Como falar |
 |---|---|
 | passo `completed`/`ok` | "<nome do passo em negócio>: rodou." (+ um número se houver: "buscou 12 títulos") |
-| passo `skipped` com `reason: condition_jump` | "<passo>: não precisou rodar." |
+| passo `skipped` com `reason: condition_jump` ou `condition_guard` | "<passo>: não precisou rodar" / "<escrita>: não foi feita porque não houve aprovação." |
 | passo `skipped` com `reason: when_false` | "<passo>: pulado pela regra <alçada em palavras>." |
 | passo `skipped` com `reason: empty_context` | "**Atenção:** a lista veio vazia e a aprovação foi pulada. Confira o passo anterior." (§4) |
 | run `awaiting_approval` | "Parou no ponto de aprovação, como esperado. Em teste não dá para aprovar (§13); a prova da escrita vem depois da ativação." |

@@ -43,7 +43,7 @@ Antes de reportar, regrave o rascunho com a linha pendente no cabeçalho:
 # Pendente: <linha da ficha que travou> — <o que falta, em uma frase>
 ```
 
-`mcp_client.write_draft(slug, "0.1", content, templates)`. É o que permite
+`mcp_client.write_draft(slug, "0", content, templates)`. É o que permite
 retomar quando o gap fechar: `read_spec`, achar `# Pendente:`, continuar da
 linha.
 
@@ -105,7 +105,7 @@ chamado. Nas próximas vezes só confirme ("continua sendo Ana?").
 
    ```python
    {"reporter_name": ..., "reporter_email": ...,          # obrigatórios
-    "slug": slug, "version": "0.1",
+    "slug": slug, "version": "0",
     "tool": "<tool/nó que travou>", "step": "<derivacao|test_run|publish>",
     "run_id": "<se veio de um test run>", "kit_version": "<metadata.version do SKILL.md>"}
    ```

@@ -85,10 +85,15 @@ com o seu nome como reportante, sempre depois de você aprovar o rascunho) e
 deixa o rascunho retomável
 ([`gap.md`](.claude/skills/agentos-builder/references/gap.md)).
 
-O fluxo do analista (descoberta → derivação → proposta → prova, passos 0-3
-acima) está implementado, mas suas três provas de sandbox (rota curta, rota
-completa, gap forçado) e a sessão com um não-dev ainda estão pendentes; o que
-foi validado ao vivo em 13/08/2026 foi o ciclo MCP write→validate→publish.
+📏 O fluxo do analista (descoberta → derivação → proposta → prova) foi provado
+no sandbox em 23/09/2026, sem publicar: caso curto
+[`examples/prova-lista-sftp`](examples/prova-lista-sftp/v0.yaml) (run verde,
+lista de 269 arquivos) e caso completo
+[`examples/prova-move-sftp`](examples/prova-move-sftp/v0.yaml)
+(`awaiting_approval` com o item achado; aprovação pulada → escrita barrada pela
+guarda). O que as provas corrigiram no kit está na §21 do `ARMADILHAS.md`.
+Faltam a prova de gap forçado (o canal GLPI foi provado no #31) e a sessão com
+uma pessoa não-dev.
 
 Para mudar um agente já publicado: `spec_revise` (abre a PRÓXIMA versão em
 draft semeada da última published — published é imutável), e daí o ciclo
