@@ -636,7 +636,12 @@ de medição; era outra versão.
 
 O que continua valendo: filtro `fromjson`/`from_json` no Jinja **não existe**
 (nenhum filtro custom registrado), então resposta não-JSON não tem como ser
-parseada no grafo (§19). 🔍 Índice de lista (`body.0.campo` / `body[0].campo`)
+parseada no grafo (§19). **Exceção, o sentido inverso (texto montado → objeto):**
+`render_template` com `output_format: json` devolve também `parsed` (objeto)
+quando o JSON é válido; use `body: "{{pedido_json.parsed}}"` num `http_request`
+POST (valor inteiro do campo) para enviar objeto, não string escapada. `.result`
+continua texto. Plataforma: Agente_OS PR #1076 (GLPI #257); só vale depois do
+deploy dele. 🔍 Índice de lista (`body.0.campo` / `body[0].campo`)
 **não foi medido aqui**; o PRD TBC (RF-03, run `e1bdb39f`) diz que resolve
 `None` em silêncio — se a API devolve lista, confira no trace antes de desenhar.
 
@@ -859,7 +864,8 @@ campo o que o modelo produziu:
 - `structured_output_schema` do nó `agent` **não é lido pelo runtime**; a saída
   é `<id>.content`, string.
 - `render_template` não tem filtro para parsear JSON (`from_json` não existe,
-  sem filtro custom) e nenhuma estratégia de `transform` faz isso — o mesmo
+  sem filtro custom) e nenhuma estratégia de `transform` faz isso (para o
+  `render_template` que PRODUZ JSON, use `.parsed` — §11, Agente_OS #1076) — o mesmo
   limite que a §11 mede para o `body` do `http_request`.
 - Nenhum tipo de nó produz `.docx`/`.xlsx`. `render_template` emite texto
   (🔍 o catálogo lista `output_format: pdf`; não medido).
