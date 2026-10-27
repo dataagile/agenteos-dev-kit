@@ -8,6 +8,42 @@ o `config` público (`ARMADILHAS.md` §6). O `connection_id` da spec vem de lá.
 Consultas de leitura mínimas que devolvem 200 estão em
 [`examples/http-leitura/v1.yaml`](../examples/http-leitura/v1.yaml).
 
+## Conexão que não está em `connectors()` — criar pelo MCP (🔍 GLPI #245)
+
+🔍 Lido no código da plataforma (Agente_OS#900, `spec_connections.py`), não
+medido por run daqui. A plataforma tem `spec.connection_create`,
+`spec.connection_update` e `spec.connection_test`. Elas só aparecem para a chave
+MCP com o escopo **`connection.write`**, que é dado de propósito (age como
+admin do tenant). Sem esse escopo, `connectors()` mostra só o que já existe.
+Daí o falso "não há como cadastrar".
+
+Antes de classificar como gap `[ambiente]`:
+
+1. **Ambiente de teste.** Conexão nova para teste aponta para o **laboratório**,
+   nunca para a produção do cliente. Usar a conexão de produção "porque é a
+   única que existe" grava dados reais (o GED do caso #245).
+2. **Quem digita o segredo.** `connection_create` recebe as credenciais no
+   `config`, e o que passa pela sessão do Claude passa pelo modelo. Com a chave
+   em mãos e o escopo, o autor cria:
+   `mcp_client._call("spec.connection_create", {"name": ..., "connector_type":
+   "http_generic", "erp_company_id": <UUID>, "config": {...}})`, e depois
+   `mcp_client._call("spec.connection_test", {"connection_id": <UUID>})`.
+   O teste pode levar até 90 s no gateway, e o `_call` desiste em 30 s. Se der
+   timeout, confira o resultado em `connectors()` antes de repetir.
+   Se as chaves foram entregues ao admin por canal privado, o caminho é o admin
+   cadastrar na tela. O pedido leva só os campos públicos abaixo, nunca o segredo.
+3. Criada a conexão, confira com `connectors()` e siga a derivação.
+
+Campos públicos do pedido (Fluig de lab, `http_generic` + `oauth1a`):
+
+| campo | valor |
+|---|---|
+| nome | ex.: `Fluig Lab <servidor> — GED` |
+| `base_url` | URL do Fluig do laboratório |
+| `auth_mode` | `oauth1a` |
+| `test_method` / `test_path` | `GET` `/api/public/2.0/users/getCurrent` (responde o login do usuário de integração) |
+| credenciais | `consumer_key`, `consumer_secret`, `token`, `token_secret`: pelo canal privado, nunca no chamado |
+
 ## Google (Drive / Agenda / Gmail) — `http_generic` com `oauth2`
 
 O caminho oficial é o **app OAuth da plataforma** (interno na organização, sem

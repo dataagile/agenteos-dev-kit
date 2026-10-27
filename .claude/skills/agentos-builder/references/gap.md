@@ -29,7 +29,7 @@ sugestão: é do ambiente de quem autora.
 
 | Classe | Quem resolve | Exemplos |
 |---|---|---|
-| `[ambiente]` | Admin do ambiente do cliente | conexão que não existe em `connectors()`; modelo com `available: false` |
+| `[ambiente]` | Admin do ambiente do cliente | conexão que não existe em `connectors()` (antes, veja se dá para criar pelo MCP: `docs/conexoes.md`); modelo com `available: false` |
 | `[plataforma]` | Time do Agente_OS | tool fora de `platform_tools`; strategy de `transform` inexistente; nó `runtime_ready: false`; transformação que exige operation no serviço (§19) |
 | `[kit]` | Time do kit | pergunta que a descoberta não soube fazer; armadilha nova; regra de derivação que não cobre o caso |
 
