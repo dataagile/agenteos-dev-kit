@@ -957,6 +957,54 @@ e `prova-move-sftp`, guardados em `examples/`). Seis fatos, todos medidos:
 
 ---
 
+## 22. Saída de nó `tool` é `{{nó.data.x}}`; de `http_request`, `{{nó.result.x}}`
+
+📏 28/10/2026 (instância local, runs `18a25ed9` e `7ce1f452`, Agente_OS #1119/#1120).
+Os dois tipos de nó guardam o resultado em chaves diferentes, e errar a chave
+não dá erro de validação: a referência fica sem resolver.
+
+| Nó | Forma do resultado | Exemplo de referência |
+|---|---|---|
+| `http_request` | `{result: {body, status, headers, ...}, status}` | `{{baixar.result.storage_key}}`, `{{listar.result.body.messages.0.id}}` |
+| `tool` (`document.*` etc.) | `{success, data: {...}, error_code, message}` | `{{abrir.data.storage_key}}`, `abrir.success == true` |
+
+Referência que não resolve chega à tool como o literal `'{{...}}'`: 📏 no run
+`6ce5f9cc` (passo anterior falhou, `data` vazio) a `document.extract_text`
+falhou com `storage_key fora do run corrente (...): '{{abrir.data.storage_key}}'`
+— a mensagem aponta o storage, não a referência. 🔍 Chave errada (`.result` num
+nó `tool`) não resolve pelo mesmo motivo. Confira no trace do passo qual é a
+chave de cima.
+
+---
+
+## 23. Dentro de `loop`, passo que falha NÃO impede o passo seguinte do mesmo item
+
+📏 28/10/2026 (instância local; sem guarda, run `6ce5f9cc`; com guarda, runs
+`949efcd0` e `fc870625`). No corpo do loop, `abrir` (`document.unlock`) falhou
+com `wrong_password` e o `texto` (`document.extract_text`) **rodou mesmo assim**,
+com a referência sem resolver, e falhou de novo. O loop termina `failed`, mas
+cada item executa todos os passos do corpo.
+
+Defesa: gatear o passo seguinte no `success` do anterior (gramática de condition,
+§4; caminho de passo vale no `when` de nó comum — a restrição a `config.*` é só
+do `approval`, §21.2):
+
+```yaml
+        - id: texto
+          key: texto
+          type: tool
+          tool_name: document.extract_text
+          params:
+            storage_key: "{{abrir.data.storage_key}}"
+          config:
+            when: "abrir.success == true"
+```
+
+Com a guarda: senha errada → `texto` `skipped` (`when_false`); senha certa →
+`texto` leu o PDF. Spec completa: [`examples/gmail-pdf-senha/v1.yaml`](examples/gmail-pdf-senha/v1.yaml).
+
+---
+
 ## Quando algo não for culpa da sua spec
 
 Estes são defeitos de plataforma conhecidos em 26/08/2026. Se bater neles, não

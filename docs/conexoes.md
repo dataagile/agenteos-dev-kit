@@ -69,6 +69,74 @@ Fluxo:
    num cookie `__Host-`; iniciar por `curl` e consentir no navegador (ou
    vice-versa) dá `state_invalid`.
 
+📏 27/10/2026 (sandbox-tbc, GLPI #284): cada clique em "Autorizar com Google"
+no card Google de Configurações → Conexões cria **duas** conexões (Gmail;
+Drive + Agenda). Dá para ligar várias contas; os nomes ainda não trazem o
+e-mail da conta.
+
+### Anexo do Gmail como arquivo do run (Agente_OS #1119)
+
+📏 28/10/2026 (instância local, Gmail real, runs `ada28a98` e `18a25ed9`).
+A API do Gmail devolve o anexo **dentro do JSON** (`{size, data: <base64url>}`),
+não como bytes. `response_as: binary` sozinho guardaria o JSON; com
+`binary_from_json` o campo é decodificado e vira artefato do run, legível
+pelas tools `document.*`:
+
+```yaml
+- id: baixar
+  key: baixar
+  type: http_request
+  connection: "{{config.conexao_gmail}}"
+  method: GET
+  path: "/gmail/v1/users/me/messages/{{listar.result.body.messages.0.id}}/attachments/{{item.body.attachmentId}}"
+  response_as: binary
+  binary_from_json:
+    field: data            # caminho do campo no JSON
+    encoding: base64url    # o Gmail usa base64url; base64 comum também é aceito
+    content_type: "{{item.mimeType}}"
+  filename: "{{item.filename}}"
+  config:
+    when: "item.body.attachmentId != null"   # partes de texto/HTML não têm anexo
+```
+
+Saída: `{{baixar.result.storage_key}}`. As partes do e-mail ficam em
+`ler.result.body.payload.parts` (`GET /gmail/v1/users/me/messages/{id}`) — é
+sobre elas que o `loop` itera. Spec completa:
+[`examples/gmail-pdf-senha/v1.yaml`](../examples/gmail-pdf-senha/v1.yaml).
+
+## PDF com senha — conexão `file_password` + `document.unlock` (Agente_OS #1120)
+
+📏 28/10/2026 (instância local; runs `7ce1f452`, `de633b23`, `6ce5f9cc`).
+A senha do arquivo é uma **conexão** do tipo "Senha de arquivo"
+(`file_password`, um único campo `password`, guardado no cofre). A tool
+`document.unlock` manda o PDF ao data-plane, que abre com a senha e devolve
+uma cópia sem proteção; a senha nunca chega à spec, ao run nem aos logs.
+
+```yaml
+- id: abrir
+  key: abrir
+  type: tool
+  tool_name: document.unlock
+  params:
+    storage_key: "{{baixar.result.storage_key}}"
+    connection: "{{config.conexao_senha}}"   # x-ref: connection no config_schema
+    filename: "{{item.filename}}"
+```
+
+| Caso | Resultado medido |
+|---|---|
+| PDF protegido, senha certa | `unlocked: true`; `{{abrir.data.storage_key}}` é o PDF novo, sem senha |
+| PDF sem senha | `unlocked: false`, devolve o mesmo `storage_key` (não usa a conexão) |
+| Senha errada | falha com `wrong_password`; conta 1 tentativa |
+
+🔍 Limite de **10 senhas erradas por hora por conexão**: na 11ª a tool responde
+`too_many_attempts` por até 1 h — **inclusive para a senha certa**. Não teste
+senha por tentativa e erro numa conexão que o agente de produção usa.
+
+A saída do nó `tool` é `{{abrir.data.*}}`, não `.result` (`ARMADILHAS.md` §22),
+e o passo seguinte precisa da guarda `when: "abrir.success == true"`
+(`ARMADILHAS.md` §23).
+
 ## Fluig — `http_generic` com `oauth1a`
 
 Fluig só fala **OAuth 1.0a (HMAC-SHA1)**: modo `oauth1a` do `http_generic`
@@ -123,3 +191,5 @@ O `test` por API tem a mesma limitação do botão "Testar" abaixo.
 | `state_invalid` ao voltar do consentimento | Início e consentimento em contextos diferentes (curl + navegador, ou navegador deslogado). Refaça tudo no navegador logado. |
 | `502 CONNECTOR_ERROR` com corpo do destino dentro | Autenticou; a **consulta** está errada (`ARMADILHAS.md` §18). |
 | Conta pessoal não consegue autorizar | App interno exige conta da organização (item 1). |
+| "Autorizar com Google" não faz nada (no celular) | O botão fica **desabilitado** quando o ambiente não tem o app OAuth (item 3) ou a `OAUTH_CALLBACK_BASE_URL`; o motivo só aparece como dica ao passar o mouse. É do admin (GLPI #284). |
+| Tool `document.*` falha com `storage_key fora do run corrente` e o valor é `'{{...}}'` | Referência sem resolver — saída de nó `tool` é `.data`, não `.result` (`ARMADILHAS.md` §22). |

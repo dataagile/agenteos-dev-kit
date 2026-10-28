@@ -1,0 +1,93 @@
+id: "agt_gmail_pdf_senha_v1"
+slug: "gmail-pdf-senha"
+name: "Gmail: ler o texto de um PDF anexo, com ou sem senha"
+version: "0.1.0"
+category: "testes"
+description: >
+  Busca o e-mail mais recente que casa a consulta, baixa cada anexo pela API do
+  Gmail (binary_from_json: o arquivo vem em base64url dentro do JSON), tira a
+  senha do PDF com document.unlock (senha na conexão "Senha de arquivo") e lê o
+  texto com document.extract_text. Só leitura. Medido em 28/10/2026 (Agente_OS
+  #1119/#1120): ARMADILHAS.md §22 e §23, docs/conexoes.md.
+config_schema:
+  type: object
+  required: [conexao_gmail, conexao_senha]
+  properties:
+    conexao_gmail:
+      type: string
+      x-ref: connection
+      title: "Conexão Gmail"
+      description: "Conexão Gmail (Google) autorizada no navegador"
+    conexao_senha:
+      type: string
+      x-ref: connection
+      title: "Senha do PDF"
+      description: "Conexão do tipo Senha de arquivo"
+    consulta:
+      type: string
+      default: "has:attachment filename:pdf"
+      title: "Busca no Gmail"
+      description: "Filtro de busca do Gmail para achar o e-mail com o anexo"
+trigger:
+  type: chat
+nodes:
+  - id: listar
+    key: listar
+    type: http_request
+    connection: "{{config.conexao_gmail}}"
+    method: GET
+    path: "/gmail/v1/users/me/messages"
+    params:
+      q: "{{config.consulta}}"
+      maxResults: 1
+    output: mensagens
+  - id: ler
+    key: ler
+    type: http_request
+    connection: "{{config.conexao_gmail}}"
+    method: GET
+    path: "/gmail/v1/users/me/messages/{{listar.result.body.messages.0.id}}"
+    output: mensagem
+  - id: anexos
+    key: anexos
+    type: loop
+    config:
+      over: "ler.result.body.payload.parts"
+      max_iterations: 20
+      body:
+        - id: baixar
+          key: baixar
+          type: http_request
+          connection: "{{config.conexao_gmail}}"
+          method: GET
+          path: "/gmail/v1/users/me/messages/{{listar.result.body.messages.0.id}}/attachments/{{item.body.attachmentId}}"
+          response_as: binary
+          binary_from_json:
+            field: data
+            encoding: base64url
+            content_type: "{{item.mimeType}}"
+          filename: "{{item.filename}}"
+          output: anexo
+          config:
+            when: "item.body.attachmentId != null"
+        - id: abrir
+          key: abrir
+          type: tool
+          tool_name: document.unlock
+          params:
+            storage_key: "{{baixar.result.storage_key}}"
+            connection: "{{config.conexao_senha}}"
+            filename: "{{item.filename}}"
+          config:
+            when: "item.mimeType == 'application/pdf'"
+        - id: texto
+          key: texto
+          type: tool
+          tool_name: document.extract_text
+          params:
+            storage_key: "{{abrir.data.storage_key}}"
+            max_chars: 2000
+          config:
+            when: "abrir.success == true"
+metadata:
+  author: "agenteos-dev-kit — exemplo medido"
