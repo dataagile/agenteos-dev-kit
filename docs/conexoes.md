@@ -28,11 +28,16 @@ Antes de classificar como gap `[ambiente]`:
    `mcp_client._call("spec.connection_create", {"name": ..., "connector_type":
    "http_generic", "erp_company_id": <UUID>, "config": {...}})`, e depois
    `mcp_client._call("spec.connection_test", {"connection_id": <UUID>})`.
-   O teste pode levar até 90 s no gateway, e o `_call` desiste em 30 s. Se der
-   timeout, confira o resultado em `connectors()` antes de repetir.
+   O `erp_company_id` é obrigatório e nenhuma tool do MCP o devolve
+   (`connectors()` não traz a empresa): peça o UUID ao admin.
+   O teste pode levar até 90 s no gateway, e o `_call` desiste em 30 s com um
+   `TimeoutError` cru (não `McpClientError`). Nesse caso, veja em `connectors()`
+   se a conexão ficou com `status` `active` (o teste que passa a promove) antes
+   de repetir.
    Se as chaves foram entregues ao admin por canal privado, o caminho é o admin
    cadastrar na tela. O pedido leva só os campos públicos abaixo, nunca o segredo.
-3. Criada a conexão, confira com `connectors()` e siga a derivação.
+3. Criada a conexão, confira em `connectors()` que ela está com `status`
+   `active` e siga a derivação.
 
 Campos públicos do pedido (Fluig de lab, `http_generic` + `oauth1a`):
 
@@ -40,6 +45,7 @@ Campos públicos do pedido (Fluig de lab, `http_generic` + `oauth1a`):
 |---|---|
 | nome | ex.: `Fluig Lab <servidor> — GED` |
 | `base_url` | URL do Fluig do laboratório |
+| `erp_company_id` | UUID da empresa no tenant (o admin informa) |
 | `auth_mode` | `oauth1a` |
 | `test_method` / `test_path` | `GET` `/api/public/2.0/users/getCurrent` (responde o login do usuário de integração) |
 | credenciais | `consumer_key`, `consumer_secret`, `token`, `token_secret`: pelo canal privado, nunca no chamado |
