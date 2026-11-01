@@ -150,8 +150,8 @@ def validate(content: str) -> dict[str, Any]:
 
 def node_types() -> dict[str, Any]:
     """Node-type catalog (+ `runtime_ready`) and the `trigger`/`spec_level` shape —
-    replaces reading `agent_spec_v1_builder_map.json` and running
-    `validate_spec.py --list-node-types` directly (T027, closes gap #3).
+    replaces reading `agent_spec_v1_builder_map.json` directly
+    (T027, closes gap #3).
 
     Read `variants` (063/#484), not `required`/`optional`: those two describe only
     the builder-map form and omit `config`, the block that carries the behaviour of
