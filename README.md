@@ -142,4 +142,4 @@ plataforma, isso é um gap — reporte, nunca contorne. O caminho é
 [`gap.md`](.claude/skills/agentos-builder/references/gap.md): parar, gravar
 `# Pendente:` no rascunho, montar o rascunho do chamado já redigido, **perguntar**,
 e só depois do seu "sim" abrir o chamado no GLPI pela tool `spec_feedback`
-(fallback: issue `gap` neste repositório); retomar quando fechar.
+(se falhar: pedido redigido guardado no rascunho e entregue ao analista); retomar quando fechar.

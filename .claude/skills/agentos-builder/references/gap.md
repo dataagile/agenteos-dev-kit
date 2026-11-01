@@ -118,12 +118,9 @@ chamado. Nas próximas vezes só confirme ("continua sendo Ana?").
    antigo), o relato foi entregue mesmo assim: diga "gap reportado" e grave
    `# Gap reportado: feedback — <data>`.
 2. Se `feedback()` levantar `McpClientError` — **qualquer** código, inclusive
-   `upstream_unavailable` (o GLPI não respondeu) e `unauthorized` — não há
-   nada a perder tentando o fallback: `gh issue create --label gap --title
-   "<classe> <uma linha>" --body "<pedido técnico redigido>"` no repositório
-   do kit. Cabeçalho: `# Gap reportado: issue #N — <data>`.
-3. Se nem `gh` houver: entregue o pedido técnico redigido para o usuário
-   repassar, e diga a quem (time interno da TBC). Cabeçalho:
+   `upstream_unavailable` (o GLPI não respondeu) e `unauthorized` — não tente
+   outro canal: guarde o pedido técnico redigido no rascunho, entregue-o ao
+   usuário para repassar e diga a quem (time interno da TBC). Cabeçalho:
    `# Gap reportado: texto — <data>`.
 
 ## 6. Retomar
