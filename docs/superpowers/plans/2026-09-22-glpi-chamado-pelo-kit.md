@@ -56,7 +56,7 @@
 - Consumes: `_call(tool, params) -> dict` (existente).
 - Produces: `feedback(category: str, message: str, context: dict[str, str] | None = None) -> dict[str, Any]` — `ValueError` se `context` não tiver `reporter_name` e `reporter_email` não-vazios; devolve o dict da tool sem transformar. A Task 3 (`gap.md`) chama assim.
 
-- [ ] **Step 1: Write the failing test** — substitua o conteúdo de `tests/test_mcp_client_feedback.py` por:
+- [x] **Step 1: Write the failing test** — substitua o conteúdo de `tests/test_mcp_client_feedback.py` por:
 
 ```python
 """feedback(): valida category/message/reporter localmente e repassa o retorno da tool. Sem rede.
@@ -130,12 +130,12 @@ assert len(calls) == n
 print("test_mcp_client_feedback: ok")
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_mcp_client_feedback.py`
 Expected: `AssertionError: devia levantar ValueError` (a chamada sem context hoje passa).
 
-- [ ] **Step 3: Write minimal implementation** — substitua a função `feedback` inteira por:
+- [x] **Step 3: Write minimal implementation** — substitua a função `feedback` inteira por:
 
 ```python
 def feedback(category: str, message: str, context: dict[str, str] | None = None) -> dict[str, Any]:
@@ -158,17 +158,17 @@ def feedback(category: str, message: str, context: dict[str, str] | None = None)
     return _call("spec.feedback", {"category": category, "message": message, "context": ctx})
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_mcp_client_feedback.py`
 Expected: `test_mcp_client_feedback: ok`
 
-- [ ] **Step 5: Run the other tests**
+- [x] **Step 5: Run the other tests**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_mcp_client_error_parse.py && python3 tests/test_publish_guard.py`
 Expected: dois `: ok`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/scripts/mcp_client.py .claude/skills/agentos-builder/tests/test_mcp_client_feedback.py
@@ -189,7 +189,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: nada.
 - Produces: `redact(text: str) -> str`. Substitui por `<removido>`: UUIDs; o valor de qualquer linha `default:`; CPF (`000.000.000-00` ou 11 dígitos contíguos); o valor após `token`, `secret`, `password`, `senha`, `Bearer`, `user_token`, `App-Token` (`=` ou `:`); chaves PIX no formato e-mail ou telefone `+55…`. Mantém o resto intacto. A Task 3 manda o modelo chamar isto antes do `feedback()`. Ceiling documentado: PIX aleatória (UUID já coberta) e nomes de host não são removidos — host é citado por nome de conexão, não por endereço (gap.md §4).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 """gap_redact.redact(): o que não pode ir cru ao chamado some. Sem rede.
@@ -243,12 +243,12 @@ assert redact(out) == out
 print("test_gap_redact: ok")
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_gap_redact.py`
 Expected: `ModuleNotFoundError: No module named 'gap_redact'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 """Redação mecânica do pedido técnico antes de `mcp_client.feedback()` (gap.md §4).
@@ -287,12 +287,12 @@ if __name__ == "__main__":
     sys.stdout.write(redact(sys.stdin.read()))
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_gap_redact.py`
 Expected: `test_gap_redact: ok`. Se `allowed_ops=read_write` for atingido pela regra de `token|secret|...` (não deve — a chave não está na lista), ajuste a lista, não o teste.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/scripts/gap_redact.py .claude/skills/agentos-builder/tests/test_gap_redact.py
@@ -313,7 +313,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: `mcp_client.feedback(...)` (Task 1) e `gap_redact.redact()` (Task 2), `python3 scripts/gap_redact.py` via stdin.
 - Produces: o procedimento que o modelo segue; os nomes de seção `## 0. Quando o kit sugere`, `## 5. Canal, em ordem` são citados por `SKILL.md` (Task 4).
 
-- [ ] **Step 1: Insert the trigger section** — imediatamente antes de `## 1. Classificar`:
+- [x] **Step 1: Insert the trigger section** — imediatamente antes de `## 1. Classificar`:
 
 ```markdown
 ## 0. Quando o kit sugere — e nunca abre sozinho
@@ -337,7 +337,7 @@ Erro de git, python, rede local ou de um comando fora do MCP **não** dispara
 sugestão: é do ambiente de quem autora.
 ```
 
-- [ ] **Step 2: Replace §4's first sentence and add the script** — substitua `A `message` vai **crua** ao Sentry. Confira, linha a linha, que **não** há:` por:
+- [x] **Step 2: Replace §4's first sentence and add the script** — substitua `A `message` vai **crua** ao Sentry. Confira, linha a linha, que **não** há:` por:
 
 ```markdown
 A `message` vai **crua** ao chamado do GLPI. Passe o pedido técnico por
@@ -345,7 +345,7 @@ A `message` vai **crua** ao chamado do GLPI. Passe o pedido técnico por
 **antes** de montar o rascunho, e confira o resultado: **não** pode haver:
 ```
 
-- [ ] **Step 3: Replace §5 entirely** — do `## 5. Canal, em ordem` até a linha `` `# Gap reportado: feedback|issue #N|texto — <data>`. `` inclusive, por:
+- [x] **Step 3: Replace §5 entirely** — do `## 5. Canal, em ordem` até a linha `` `# Gap reportado: feedback|issue #N|texto — <data>`. `` inclusive, por:
 
 ```markdown
 ## 5. Canal, em ordem
@@ -387,16 +387,16 @@ chamado. Nas próximas vezes só confirme ("continua sendo Ana?").
    `# Gap reportado: texto — <data>`.
 ```
 
-- [ ] **Step 4: Update the intro sentence and §6** — na linha 3, `Quando a derivação (`create.md`) ou o test run (`proposta.md`) esbarra em algo que o ambiente não tem, o kit **para naquele ponto**.` → `Quando um dos gatilhos do §0 dispara, o kit **para naquele ponto**.` Em §6, `remova `# Pendente:` e `# Gap reportado:`` fica como está (já cobre `glpi #N`).
+- [x] **Step 4: Update the intro sentence and §6** — na linha 3, `Quando a derivação (`create.md`) ou o test run (`proposta.md`) esbarra em algo que o ambiente não tem, o kit **para naquele ponto**.` → `Quando um dos gatilhos do §0 dispara, o kit **para naquele ponto**.` Em §6, `remova `# Pendente:` e `# Gap reportado:`` fica como está (já cobre `glpi #N`).
 
-- [ ] **Step 5: `.gitignore`** — acrescente a linha `.claude/agentos-builder.local.json`.
+- [x] **Step 5: `.gitignore`** — acrescente a linha `.claude/agentos-builder.local.json`.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run: `grep -n "^## " .claude/skills/agentos-builder/references/gap.md; grep -n "Sentry" .claude/skills/agentos-builder/references/gap.md; grep -n "agentos-builder.local.json" .gitignore`
 Expected: seções `0.`–`6.`; nenhuma linha com "Sentry"; uma linha no `.gitignore`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/references/gap.md .gitignore
@@ -414,7 +414,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `README.md` (linhas ~30–31 e ~83)
 - Modify: `ARMADILHAS.md` (nova §20 antes de `## Quando algo não for culpa da sua spec`)
 
-- [ ] **Step 1: SKILL.md** — na tabela do router, substitua a linha `| Gap (parar, reportar, retomar) | Live | `references/gap.md` |` por:
+- [x] **Step 1: SKILL.md** — na tabela do router, substitua a linha `| Gap (parar, reportar, retomar) | Live | `references/gap.md` |` por:
 
 ```markdown
 | Gap (parar, reportar, retomar) | Live | `references/gap.md` |
@@ -423,7 +423,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 No parágrafo **O humano nunca responde campo de schema.**, substitua `gap.md` — parar, reportar por `spec_feedback`, deixar o rascunho retomável. Nunca contornar.` por `gap.md` — parar, montar o rascunho redigido, perguntar, e só então abrir o chamado no GLPI por `spec_feedback`; deixar o rascunho retomável. Nunca contornar, nunca abrir sem "sim".` Substitua `All 10 operations` por `All 11 operations`. Bump `version: "0.6.0"` → `"0.7.0"`.
 
-- [ ] **Step 2: README.md** — substitua as duas linhas `` `spec_feedback` (usada pelo `gap.md`) — cobertura pelos 6 scopes acima **a\nconfirmar no sandbox**. `` por:
+- [x] **Step 2: README.md** — substitua as duas linhas `` `spec_feedback` (usada pelo `gap.md`) — cobertura pelos 6 scopes acima **a\nconfirmar no sandbox**. `` por:
 
 ```markdown
 `spec_feedback` (usada pelo `gap.md`) exige só `spec.read` (🔍 `required_scope`
@@ -432,7 +432,7 @@ no registry, 22/09/2026) — a lista acima já a cobre.
 
 Na frase da seção "Autorando" que diz `reporta pela tool `spec_feedback` (a mesma do megafone da tela) e deixa o`, troque `(a mesma do megafone da tela)` por `(que abre o chamado no GLPI pela plataforma, com o seu nome como reportante, sempre depois de você aprovar o rascunho)`.
 
-- [ ] **Step 3: ARMADILHAS.md** — insira antes de `## Quando algo não for culpa da sua spec`:
+- [x] **Step 3: ARMADILHAS.md** — insira antes de `## Quando algo não for culpa da sua spec`:
 
 ```markdown
 ## 20. O GLPI responde HTML com 200 quando o NPM está em manutenção
@@ -453,7 +453,7 @@ mais tarde só se o usuário pedir; a plataforma deduplica pelo `external_id`.
 
 ```
 
-- [ ] **Step 3b: CLAUDE.md** — substitua o bullet que começa `- **Zero import/código do core da plataforma.**` (linhas ~12–15) por:
+- [x] **Step 3b: CLAUDE.md** — substitua o bullet que começa `- **Zero import/código do core da plataforma.**` (linhas ~12–15) por:
 
 ```markdown
 - **Zero import/código do core da plataforma.** Falta algo para autorar =
@@ -463,18 +463,18 @@ mais tarde só se o usuário pedir; a plataforma deduplica pelo `external_id`.
   `spec_feedback` (fallback: issue `gap` neste repo); retomar quando fechar.
 ```
 
-- [ ] **Step 3c: comando `/reportar`** — crie `.claude/commands/reportar.md` (o diretório não existe na `main`) com exatamente:
+- [x] **Step 3c: comando `/reportar`** — crie `.claude/commands/reportar.md` (o diretório não existe na `main`) com exatamente:
 
 ```
 Abrir um chamado no GLPI sobre uma trava na autoria. Siga `references/gap.md` §0 gatilho 3 e §3–§5 da skill agentos-builder: classifique, monte o rascunho nas duas camadas, passe pelo `gap_redact`, mostre o rascunho inteiro e só chame `mcp_client.feedback()` depois do "sim". Contexto do usuário: $ARGUMENTS
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `grep -n "All 11\|version: \"0.7.0\"\|Reportar" .claude/skills/agentos-builder/SKILL.md; grep -n "a confirmar" README.md; grep -n "^## 20" ARMADILHAS.md; cd .claude/skills/agentos-builder && for t in tests/test_mcp_client_error_parse.py tests/test_mcp_client_feedback.py tests/test_publish_guard.py tests/test_gap_redact.py; do python3 $t || exit 1; done`
 Expected: três hits no SKILL.md; nenhum "a confirmar" no README; `## 20` presente; quatro `: ok`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/SKILL.md README.md ARMADILHAS.md CLAUDE.md .claude/commands/reportar.md
@@ -494,7 +494,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: o markup da seção `c14` de `~/shared/keycloak-glpi-guia.html` (classes `kicker g`, `lede`, `mer`/`mermaid`, `steps`, `callout g`). Não há como validar contra o guia publicado daqui; o fragmento é colado pelo Gianluka depois de `c14`.
 - Produces: `<section id="c15" data-track="daos glpi dev">` autocontida.
 
-- [ ] **Step 1: Write the fragment**
+- [x] **Step 1: Write the fragment**
 
 ```html
 <section id="c15" data-track="daos glpi dev">
@@ -543,12 +543,12 @@ flowchart LR
 </section>
 ```
 
-- [ ] **Step 2: Verify well-formedness**
+- [x] **Step 2: Verify well-formedness**
 
 Run: `python3 -c "import html.parser,sys; p=html.parser.HTMLParser(); p.feed(open('docs/guia/glpi-chamado.html',encoding='utf-8').read()); print('parse ok')"; grep -c "<section\|</section>" docs/guia/glpi-chamado.html`
 Expected: `parse ok`; `2`.
 
-- [ ] **Step 3: Commit and open the PR**
+- [x] **Step 3: Commit and open the PR**
 
 ```bash
 git add docs/guia/glpi-chamado.html

@@ -52,7 +52,7 @@
 - Consumes: `_call(tool: str, params: dict) -> dict` (já existe; troca `.` por `_` no nome da tool).
 - Produces: `feedback(category: str, message: str, context: dict[str, str] | None = None) -> dict[str, Any]`. Levanta `ValueError` se `category` não está em `{"erro", "melhoria", "feedback"}` ou `len(message) > 4000`. Task 6 chama esta função.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 """feedback(): valida category/message localmente e monta a chamada certa. Sem rede.
@@ -97,12 +97,12 @@ assert len(calls) == n
 print("test_mcp_client_feedback: ok")
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_mcp_client_feedback.py`
 Expected: `AttributeError: module 'mcp_client' has no attribute 'feedback'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Append after `publish()` in `scripts/mcp_client.py`:
 
@@ -125,17 +125,17 @@ def feedback(category: str, message: str, context: dict[str, str] | None = None)
     return _call("spec.feedback", params)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_mcp_client_feedback.py`
 Expected: `test_mcp_client_feedback: ok`
 
-- [ ] **Step 5: Run the existing tests to confirm nothing broke**
+- [x] **Step 5: Run the existing tests to confirm nothing broke**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_mcp_client_error_parse.py`
 Expected: `test_mcp_client_error_parse: ok`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/scripts/mcp_client.py .claude/skills/agentos-builder/tests/test_mcp_client_feedback.py
@@ -157,7 +157,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: nada do cliente MCP; recebe o YAML como string.
 - Produces: `connection_defaults(content: str) -> list[str]` — nomes das properties do `config_schema` com `x-ref: connection` **e** `default`. Lista vazia = pode publicar. Sem dependência de PyYAML: parse por regex de indentação, suficiente para o formato que o kit escreve (uma property por bloco, `x-ref:` e `default:` como chaves diretas da property).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 """publish_guard.connection_defaults(): acha property x-ref: connection com default. Sem rede.
@@ -221,12 +221,12 @@ assert connection_defaults("nodes: []\n") == []
 print("test_publish_guard: ok")
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_publish_guard.py`
 Expected: `ModuleNotFoundError: No module named 'publish_guard'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 `scripts/publish_guard.py`:
 
@@ -283,12 +283,12 @@ if __name__ == "__main__":
     print("publish_guard: ok")
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd .claude/skills/agentos-builder && python3 tests/test_publish_guard.py`
 Expected: `test_publish_guard: ok`
 
-- [ ] **Step 5: Wire the guard into `publish.md`**
+- [x] **Step 5: Wire the guard into `publish.md`**
 
 In `references/publish.md`, section "Steps (in order — do not skip or reorder)", insert a new step between the current step 1 (re-validate) and step 2 (collision check), and renumber the following steps 2→3, 3→4, 4→5, 5→6, 6→7:
 
@@ -302,7 +302,7 @@ In `references/publish.md`, section "Steps (in order — do not skip or reorder)
    Remova o `default` (mantendo a property), regrave o draft e volte ao passo 1.
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/scripts/publish_guard.py .claude/skills/agentos-builder/tests/test_publish_guard.py .claude/skills/agentos-builder/references/publish.md
@@ -321,7 +321,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 **Interfaces:**
 - Produces: a ficha de domínio com os rótulos exatos que a Task 4 consome, mais a regra "gravar a cada linha". Nomes de seção que outras tasks citam: `## Triagem`, `## Produto: a ficha de domínio`, `## Onde a ficha vive`.
 
-- [ ] **Step 1: Insert the triage section**
+- [x] **Step 1: Insert the triage section**
 
 Insert immediately after the "## Regras da conversa (não negociáveis)" list (before "## Rodada 1 — Propósito e gatilho"):
 
@@ -343,7 +343,7 @@ parte dos agentes do AgenteOS é automação, não domínio de cliente. **A tria
 regra condicional numa ficha curta, reabra a Rodada 2 antes de seguir.
 ```
 
-- [ ] **Step 2: Add the persistence section**
+- [x] **Step 2: Add the persistence section**
 
 Insert immediately before "## Quando pular esta fase":
 
@@ -369,7 +369,7 @@ O slug nasce validado porque a primeira gravação já passa pelo MCP — não e
 pasta local a criar antes de o slug ser confirmado.
 ```
 
-- [ ] **Step 3: Update the intro and the fecho to match**
+- [x] **Step 3: Update the intro and the fecho to match**
 
 Replace, in the intro paragraph: `são três rodadas curtas e uma decisão` → `são uma triagem, até três rodadas curtas e uma decisão`.
 
@@ -381,12 +381,12 @@ Ela **é o cabeçalho do YAML** — já está gravada no rascunho linha a linha 
 ficha, não pergunta nada ao humano.
 ```
 
-- [ ] **Step 4: Verify the labels are exactly the ones Task 4 will reference**
+- [x] **Step 4: Verify the labels are exactly the ones Task 4 will reference**
 
 Run: `grep -c "^# \(Trabalho\|Começa quando\|Termos\|Nunca pode\|Autoriza\|Lê\|Escreve\|Fora do grafo\|Termina bem\|Descartado\):" .claude/skills/agentos-builder/references/descoberta.md`
 Expected: `10`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/references/descoberta.md
@@ -406,7 +406,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: ficha de domínio (rótulos da Task 3); `mcp_client.node_types()/context()/connectors()/tools()/models()/validate()/write_draft()`.
 - Produces: YAML derivado, validado, gravado em `drafts/<slug>/v0.1`; a Task 5 lê esse YAML para montar o roteiro. Regra de saída para a Task 6: qualquer linha da tabela de derivação que não encontre o recurso no ambiente **para** e chama `gap.md`.
 
-- [ ] **Step 1: Replace the intro blockquote and the "Guided interview" sentence**
+- [x] **Step 1: Replace the intro blockquote and the "Guided interview" sentence**
 
 Replace the leading blockquote (`> **Fase 0 — descoberta primeiro.** ... no fim daquele arquivo.`) and the sentence `Guided interview that builds a brand-new AgentSpec YAML from scratch and writes it to ... don't front-load the whole interview in a wall of text.` with:
 
@@ -423,7 +423,7 @@ O que o humano vê depois disto é o roteiro de `references/proposta.md`.
 
 Keep the four paragraphs that follow (node_types fresh, variants, context before `.j2`, models for `model_ref`) unchanged.
 
-- [ ] **Step 2: Replace "## Interview flow" (sections a–e) with "## Derivação"**
+- [x] **Step 2: Replace "## Interview flow" (sections a–e) with "## Derivação"**
 
 Delete everything from `## Interview flow` through the end of item 6 of section e (the approval bullet ending `See ARMADILHAS.md §4.`). Insert:
 
@@ -474,7 +474,7 @@ Regras transversais, aplicadas sem perguntar:
 O analista nunca vê esta tabela. Ela é o contrato entre a ficha e o YAML.
 ```
 
-- [ ] **Step 3: Rewrite "## File conventions" header bullet**
+- [x] **Step 3: Rewrite "## File conventions" header bullet**
 
 Replace the bullet starting `- **Cabeçalho = a ficha de domínio** da fase 0, colada como bloco de comentário ...` (through the end of that bullet) with:
 
@@ -485,7 +485,7 @@ Replace the bullet starting `- **Cabeçalho = a ficha de domínio** da fase 0, c
   não roda é gap, não nota de rodapé.
 ```
 
-- [ ] **Step 4: Adjust "## Write sequence" step 1 and step 4**
+- [x] **Step 4: Adjust "## Write sequence" step 1 and step 4**
 
 Replace step 1 `Assemble the full YAML from the interview answers, in memory ...` with:
 
@@ -497,7 +497,7 @@ Replace step 1 `Assemble the full YAML from the interview answers, in memory ...
 
 Replace in step 4: `→ `mcp_client.write_draft(slug, "0.1", content)`. This both re-validates` with `→ `mcp_client.write_draft(slug, "0.1", content, templates)` — sempre com os `.j2` no mesmo write (§8). This both re-validates`.
 
-- [ ] **Step 5: Replace "## Boundary reminders during the interview"**
+- [x] **Step 5: Replace "## Boundary reminders during the interview"**
 
 Replace that section entirely with:
 
@@ -511,12 +511,12 @@ cabeçalho e siga `references/gap.md`. A regra de ouro do kit continua: zero
 código do core, zero contorno.
 ```
 
-- [ ] **Step 6: Verify no interview language remains**
+- [x] **Step 6: Verify no interview language remains**
 
 Run: `grep -n -i "ask\b\|pergunt\|interview" .claude/skills/agentos-builder/references/create.md`
 Expected: zero matches for "Ask ", "interview"; the only allowed hit is the intro sentence "não pergunta nada ao humano".
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/references/create.md
@@ -536,7 +536,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: o YAML derivado (Task 4) via `mcp_client.read_spec(slug, "0.1")`; `spec_test_run` e `spec_run_status` (tools MCP `spec_test_run(slug, version)` → `{run_id}`; `spec_run_status(run_id)` → `{status, steps[], output}`; não estão no `mcp_client.py`, chame pela tool MCP diretamente).
 - Produces: o texto que o analista lê; as duas perguntas de decisão; a oferta de publicar só após run verde.
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 ```markdown
 # Proposta — o que o analista vê
@@ -616,12 +616,12 @@ recusa se sobrar. Publicar continua sendo decisão explícita do humano; a §3
 diz o que custa publicar errado.
 ```
 
-- [ ] **Step 2: Verify every node type named in the table exists in the current catalog**
+- [x] **Step 2: Verify every node type named in the table exists in the current catalog**
 
 Run: `python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(sorted(n['type'] for n in d['node_types']))" <um dump recente de spec_node_types>` — or call the MCP tool `spec_node_types` and list `node_types[].type`.
 Expected: contém `trigger`, `condition`, `transform`, `approval`, `render_template`, `agent`, `http_request`, `sftp_op`, `tool`. Se algum faltar, remova a linha da tabela.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/references/proposta.md
@@ -641,7 +641,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: `mcp_client.feedback(category, message, context)` (Task 1); `mcp_client.write_draft` para gravar `# Pendente:`; `gh issue create` como fallback.
 - Produces: o item na esteira (Sentry via `spec_feedback`) ou a issue `gap`, e o rascunho retomável.
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 ```markdown
 # Gap — parar, explicar, reportar, retomar
@@ -727,12 +727,12 @@ Quando o gap fechar: `read_spec`, remova `# Pendente:` e `# Gap reportado:`,
 volte à linha da tabela de derivação que travou, siga até o roteiro.
 ```
 
-- [ ] **Step 2: Verify cross-references resolve**
+- [x] **Step 2: Verify cross-references resolve**
 
 Run: `grep -o "§[0-9]*" .claude/skills/agentos-builder/references/gap.md | sort -u` and confirm each section exists in `ARMADILHAS.md` (`grep -n "^## <n>\." ARMADILHAS.md`).
 Expected: every § listed has a heading.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .claude/skills/agentos-builder/references/gap.md
@@ -750,7 +750,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `README.md` (seção "Autorando", itens 0–4)
 - Modify: `CLAUDE.md` (bullet "Zero import/código do core")
 
-- [ ] **Step 1: SKILL.md — version, router, rule**
+- [x] **Step 1: SKILL.md — version, router, rule**
 
 Replace `  version: "0.5.0"` with `  version: "0.6.0"`.
 
@@ -778,7 +778,7 @@ rascunho retomável. Nunca contornar.
 
 Replace `All 7 operations share the rules above` with `All 9 operations share the rules above`.
 
-- [ ] **Step 2: README.md — the five moments**
+- [x] **Step 2: README.md — the five moments**
 
 Replace items `0.` through `4.` of the "Autorando" list (from `0. **Descoberta**` through the item `4. `spec_publish` — publicar. ...` inclusive) with:
 
@@ -809,7 +809,7 @@ rascunho retomável
 ([`gap.md`](.claude/skills/agentos-builder/references/gap.md)).
 ```
 
-- [ ] **Step 3: CLAUDE.md — the golden rule gets its path**
+- [x] **Step 3: CLAUDE.md — the golden rule gets its path**
 
 Replace the bullet:
 
@@ -827,17 +827,17 @@ with:
   (fallback: issue `gap` neste repo), retomar quando fechar.
 ```
 
-- [ ] **Step 4: Run all skill tests**
+- [x] **Step 4: Run all skill tests**
 
 Run: `cd .claude/skills/agentos-builder && for t in tests/test_mcp_client_error_parse.py tests/test_mcp_client_feedback.py tests/test_publish_guard.py; do python3 $t || exit 1; done`
 Expected: three `: ok` lines.
 
-- [ ] **Step 5: Verify every reference file named in SKILL.md exists**
+- [x] **Step 5: Verify every reference file named in SKILL.md exists**
 
 Run: `cd .claude/skills/agentos-builder && grep -o 'references/[a-z-]*\.md' SKILL.md | sort -u | while read f; do test -f "$f" && echo "ok $f" || echo "MISSING $f"; done`
 Expected: no `MISSING`.
 
-- [ ] **Step 6: Commit and open the PR**
+- [x] **Step 6: Commit and open the PR**
 
 ```bash
 git add .claude/skills/agentos-builder/SKILL.md README.md CLAUDE.md
