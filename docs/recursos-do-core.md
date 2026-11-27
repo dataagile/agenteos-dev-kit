@@ -687,6 +687,12 @@ nodes:
       title_path: source_id
       amount_path: fields.valor
       timeout_hours: 24
+  - id: foi_aprovado
+    key: foi_aprovado
+    type: condition
+    config:
+      expr: "aprovar.decision.decision == 'approved'"
+      on_false: tem_anexo
   - id: vincular_doc
     key: vincular_doc
     type: tool
