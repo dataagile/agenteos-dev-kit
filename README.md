@@ -115,6 +115,7 @@ NÃO tem nó `agent`. Os tropeços do caminho estão em [`ARMADILHAS.md`](ARMADI
 
 Para conectar a APIs externas (Google via app da plataforma, Fluig oauth1a, cadastro
 por API, o que o botão "Testar" mente), leia [`docs/conexoes.md`](docs/conexoes.md).
+Veja [Recursos do core](docs/recursos-do-core.md) para política de erro, saída do run, loops com alias, operações com PDF, filtro e projeção, enriquecimento, envio HTTP de artefatos, cards de aprovação, configuração temporária, arquivamento de rascunhos, conectores RM e extrato em PDF, e anexos.
 As consultas de leitura mínimas que devolvem 200 estão em
 [`examples/http-leitura/v1.yaml`](examples/http-leitura/v1.yaml).
 

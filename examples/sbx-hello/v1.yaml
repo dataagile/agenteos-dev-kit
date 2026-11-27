@@ -13,4 +13,4 @@ nodes:
     key: saudacao
     type: llm_step
     prompt: "Diga ola ao usuario e explique em 1 frase o que e o AgenteOS."
-    model_ref: default
+    model_ref: Anthropic-claude-haiku-4-5-20251001  # model_ref é alias do tenant: consulte spec_models e escolha um ativo
