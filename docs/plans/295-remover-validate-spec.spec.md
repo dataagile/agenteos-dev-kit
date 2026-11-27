@@ -2,7 +2,7 @@
 
 ## Intenção
 
-GLPI #295 / OP 2404 (filha da 1161). O `validate_spec.py` do dev-kit recusa toda spec: o tripwire DAI-526 dispara porque o core já tem `NodeSpec.key`. A validação oficial já é a do MCP (`mcp_client.validate` → `spec.validate`), e nenhuma operação da skill usa o script desde a feature 024. **Corrige:** remove o script quebrado e o teste dele, e aponta os dois trechos do guia que ainda o citam para o `mcp_client.validate`. **Exclui:** documentar os ~12 recursos do core citados no chamado (fica para OP à parte) e o `dogfood_check.py`. **Não muda:** o `mcp_client.py`, os outros scripts e testes, e o MCP e o core (Agente_OS).
+GLPI #295 / OP 2404 (filha da 1161). O `validate_spec.py` do dev-kit recusa toda spec: o tripwire DAI-526 dispara porque o core já tem `NodeSpec.key`. A validação oficial já é a do MCP (`mcp_client.validate` → `spec.validate`), e nenhuma operação da skill usa o script desde a feature 024. **Corrige:** remove o script quebrado e o teste dele, e aponta os dois trechos do guia que ainda o citam para o `mcp_client.validate`. **Inclui (gestor, 27/11):** remover também o `dogfood_check.py` do dev-kit e a cópia do script no Agente_OS (PR próprio). A documentação dos ~12 recursos do core vai em spec à parte (item 8). **Não muda:** o `mcp_client.py`, os outros scripts e testes, o MCP e o código do core.
 
 ## Causa (com prova)
 
@@ -22,6 +22,9 @@ Apagar é menor que consertar e acaba com a duplicidade. Consertar exigiria o co
 3. `references/backup.md:74`: trocar o comando `.venv/bin/python …/validate_spec.py <path>` por `mcp_client.validate(content)` sobre o conteúdo restaurado, mantendo o resto da frase.
 4. `references/lifecycle.md:59`: trocar a frase "`scripts/validate_spec.py --list-node-types` still exists (own test suite, …, kept green) but is no longer part of any documented skill operation" por uma frase dizendo que o script local foi removido (GLPI #295) por ter quebrado contra o core (tripwire DAI-526, `NodeSpec.key` do DAI-626). As linhas 55 e 57 contam a história no passado e ficam como estão.
 5. `scripts/mcp_client.py:154` (docstring histórica, "replaces … running `validate_spec.py --list-node-types`"): não tocar.
+6. Apagar `.claude/skills/agentos-builder/scripts/dogfood_check.py` (decisão do gestor, 27/11). Ele também importa o core (alembic, testcontainers, `packages/`), proibido neste repositório, e nada o cita fora do próprio docstring. A cópia do Agente_OS, onde ele roda no monorepo, fica.
+7. Agente_OS (PR próprio, decisão do gestor, 27/11): a cópia da skill no monorepo tem o mesmo script e o mesmo tripwire. Nela, os itens 1 a 4 se repetem; `.claude/context/zero-hardcode.md:30` e `_reversa_forward/` são histórico e ficam.
+8. A outra metade do #295, documentar os ~12 recursos do core, sai em spec própria: `docs/plans/295-documentar-recursos-core.spec.md`.
 
 ## Critério de aceite
 
@@ -33,8 +36,8 @@ Apagar é menor que consertar e acaba com a duplicidade. Consertar exigiria o co
 
 Sem lógica nova, então nada de teste novo. Valem o grep do CA-1 (com o controle positivo), os 4 testes do CA-2 e a chamada do CA-3.
 
-## Achados fora do escopo (para o gestor)
+## Entrega (27/11)
 
-- `scripts/dogfood_check.py` também presume o layout do monorepo (alembic, testcontainers, `packages/`).
-- O Agente_OS ainda tem uma cópia própria de `.claude/skills/agentos-builder/scripts/validate_spec.py` (último commit 2bc31311, #183), com o mesmo tripwire.
-- A segunda metade do #295, documentar os ~12 recursos do core, segue em aberto.
+- dev-kit: commit 4a41134 (script, teste e `dogfood_check.py` removidos; `backup.md:74` e `lifecycle.md:59` atualizados).
+- Agente_OS: commit ba403833 na branch `fix/295-remover-validate-spec` (os mesmos itens, menos o `dogfood_check.py`).
+- Documentação dos ~12 recursos: `docs/plans/295-documentar-recursos-core.spec.md`.
