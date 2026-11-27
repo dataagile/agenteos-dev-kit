@@ -53,7 +53,7 @@ nodes:
     type: loop
     config:
       over: "ler.result.body.payload.parts"
-      max_iterations: 20
+      limit: 20
       body:
         - id: baixar
           key: baixar
