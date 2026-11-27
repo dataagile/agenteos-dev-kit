@@ -1007,14 +1007,14 @@ Com a guarda: senha errada → `texto` `skipped` (`when_false`); senha certa →
 
 ## 24. Recursos do core: o que o validador NÃO pega
 
-- 🔍 `filter_by_field` sem `operator` passa e devolve só itens sem o campo. [Filtro e projeção de campos](docs/recursos-do-core.md#5-filtro-e-projeção-de-campos).
-- 🔍 `enrich` sem `join_on` ou com `on:` passa e falha no run. [Enriquecimento por chave composta](docs/recursos-do-core.md#6-enriquecimento-por-chave-composta).
-- 🔍 Loop com falha parcial segue por padrão. [Política de erro por nó](docs/recursos-do-core.md#1-política-de-erro-por-nó).
-- 🔍 O validador não confere `tool_name` nem `params` de `document.*`, nem a [`strategy` do transform](docs/recursos-do-core.md#5-filtro-e-projeção-de-campos). [Operações com PDF](docs/recursos-do-core.md#4-operações-com-pdf).
-- 🔍 Escrita HTTP em `spec_test_run` é dry-run e o upload não sai. [Envio HTTP de artefato](docs/recursos-do-core.md#7-envio-http-de-artefato).
-- 🔍 `extrato_pdf` lê todos os PDFs da conversa. [Conectores TOTVS RM e extrato em PDF](docs/recursos-do-core.md#11-conectores-totvs-rm-e-extrato-em-pdf).
-- 🔍 Chave inventada em `config` do approval passa sem aviso. [Rótulos e edição no card de aprovação](docs/recursos-do-core.md#8-rótulos-e-edição-no-card-de-aprovação).
-- 🔍 Com `on_reject: continue`, a guarda de escrita exigida é `aprovar.status == 'approved'` (`E-APPROVAL-ON-REJECT-CONTINUE-WRITE`). Ela difere de `aprovar.decision.decision` da §1. [Rótulos e edição no card de aprovação](docs/recursos-do-core.md#8-rótulos-e-edição-no-card-de-aprovação).
+- 🔍 `filter_by_field` sem `operator` passa e devolve só itens sem o campo. [Filtro e projeção de campos](docs/recursos-do-core.md#5-filtro-e-projeção-de-campos-filter_by_field-map_fields).
+- 🔍 `enrich` sem `join_on` ou com `on:` passa e falha no run. [Enriquecimento por chave composta](docs/recursos-do-core.md#6-enriquecimento-por-chave-composta-enrich).
+- 🔍 Loop com falha parcial segue por padrão. [Política de erro por nó](docs/recursos-do-core.md#1-política-de-erro-por-nó-on_error).
+- 🔍 O validador não confere `tool_name` nem `params` de `document.*`, nem a [`strategy` do transform](docs/recursos-do-core.md#5-filtro-e-projeção-de-campos-filter_by_field-map_fields). [Operações com PDF](docs/recursos-do-core.md#4-operações-com-pdf-document).
+- 🔍 Escrita HTTP em `spec_test_run` é dry-run e o upload não sai. [Envio HTTP de artefato](docs/recursos-do-core.md#7-envio-http-de-artefato-content_from_artifact-body_from_artifact).
+- 🔍 `extrato_pdf` lê todos os PDFs da conversa. [Conectores TOTVS RM e extrato em PDF](docs/recursos-do-core.md#11-conectores-totvs-rm-e-extrato-em-pdf-totvs_rm-extrato_pdf).
+- 🔍 Chave inventada em `config` do approval passa sem aviso. [Rótulos e edição no card de aprovação](docs/recursos-do-core.md#8-rótulos-e-edição-no-card-de-aprovação-aprovar_itens).
+- 🔍 Com `on_reject: continue`, a guarda de escrita exigida é `aprovar.status == 'approved'` (`E-APPROVAL-ON-REJECT-CONTINUE-WRITE`). Ela difere de `aprovar.decision.decision` da §1. [Rótulos e edição no card de aprovação](docs/recursos-do-core.md#8-rótulos-e-edição-no-card-de-aprovação-aprovar_itens).
 
 ## Quando algo não for culpa da sua spec
 

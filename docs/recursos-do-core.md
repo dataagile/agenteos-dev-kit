@@ -2,24 +2,24 @@
 
 🔍 Tudo neste guia foi lido no código do Agente_OS (main `2e3a045b`, com o mesmo comportamento na produção TBC `cc0fa538`).
 📏 Nenhum dos recursos foi medido em run.
-A spec registra que cada exemplo YAML passou no `spec_validate` do sandbox-os em 27/11/2026.
+Cada exemplo YAML passou no spec_validate do sandbox-os em 27/11/2026.
 
 ## Índice
 
-- [1. Política de erro por nó](#1-política-de-erro-por-nó)
-- [2. Saída final do run](#2-saída-final-do-run)
-- [3. Loop aninhado com alias](#3-loop-aninhado-com-alias)
-- [4. Operações com PDF](#4-operações-com-pdf)
-- [5. Filtro e projeção de campos](#5-filtro-e-projeção-de-campos)
-- [6. Enriquecimento por chave composta](#6-enriquecimento-por-chave-composta)
-- [7. Envio HTTP de artefato](#7-envio-http-de-artefato)
-- [8. Rótulos e edição no card de aprovação](#8-rótulos-e-edição-no-card-de-aprovação)
-- [9. Configuração temporária no teste](#9-configuração-temporária-no-teste)
-- [10. Arquivamento e restauração de rascunho](#10-arquivamento-e-restauração-de-rascunho)
-- [11. Conectores TOTVS RM e extrato em PDF](#11-conectores-totvs-rm-e-extrato-em-pdf)
-- [12. Anexos do run](#12-anexos-do-run)
+- [1. Política de erro por nó (on_error)](#1-política-de-erro-por-nó-on_error)
+- [2. Saída final do run (output_from)](#2-saída-final-do-run-output_from)
+- [3. Loop aninhado com alias (config.as)](#3-loop-aninhado-com-alias-configas)
+- [4. Operações com PDF (document.*)](#4-operações-com-pdf-document)
+- [5. Filtro e projeção de campos (filter_by_field, map_fields)](#5-filtro-e-projeção-de-campos-filter_by_field-map_fields)
+- [6. Enriquecimento por chave composta (enrich)](#6-enriquecimento-por-chave-composta-enrich)
+- [7. Envio HTTP de artefato (content_from_artifact, body_from_artifact)](#7-envio-http-de-artefato-content_from_artifact-body_from_artifact)
+- [8. Rótulos e edição no card de aprovação (aprovar_itens)](#8-rótulos-e-edição-no-card-de-aprovação-aprovar_itens)
+- [9. Configuração temporária no teste (config_override)](#9-configuração-temporária-no-teste-config_override)
+- [10. Arquivamento e restauração de rascunho (spec_archive_draft)](#10-arquivamento-e-restauração-de-rascunho-spec_archive_draft)
+- [11. Conectores TOTVS RM e extrato em PDF (totvs_rm, extrato_pdf)](#11-conectores-totvs-rm-e-extrato-em-pdf-totvs_rm-extrato_pdf)
+- [12. Anexos do run (run.input.attachments)](#12-anexos-do-run-runinputattachments)
 
-## 1. Política de erro por nó
+## 1. Política de erro por nó (on_error)
 
 **O que faz.** Define se uma falha aborta o run ou permite que ele siga. Com `continue`, o passo entra em `output.steps_failed`.
 
@@ -82,7 +82,7 @@ nodes:
 
 **Origem.** `agent_spec_v1.json:177-181`, `agent_spec.py:1608-1647, 1749-1799`, `hatchet_app.py:234-265, 2421-2437`. PR #921 (`56db400c`).
 
-## 2. Saída final do run
+## 2. Saída final do run (output_from)
 
 **O que faz.** Escolhe a saída final exibida em `get_run` e `spec_run_status`. Usa `result` quando a saída selecionada tem esse campo.
 
@@ -137,7 +137,7 @@ nodes:
 
 **Origem.** `agent_spec_v1.json:70-74`, `agent_spec.py:1802-1855`, `hatchet_app.py:4577-4636`, `published/fin-pagamentos/v3.yaml:46`. PR #931 (`4ec23cca`).
 
-## 3. Loop aninhado com alias
+## 3. Loop aninhado com alias (config.as)
 
 **O que faz.** Dá um nome ao item do loop para referenciá-lo no corpo e em loops internos, inclusive em `when` e `condition`. `item` sempre aponta para o item do loop mais interno.
 
@@ -199,7 +199,7 @@ nodes:
 
 **Origem.** `agent_spec_v1.json:724-728`, `agent_spec.py:438-439, 598-665`, `executors.py:3703-3900`. PRs #920 (`828f29db`) e #939.
 
-## 4. Operações com PDF
+## 4. Operações com PDF (document.*)
 
 **O que faz.** `document.metadata` lê metadados, `document.split` recorta páginas, `document.merge` junta PDFs e `document.ocr` extrai texto. Recorte e junção gravam um novo PDF como artefato.
 
@@ -277,7 +277,7 @@ nodes:
 
 **Origem.** `packages/tools/src/tools/document.py:95-112, 130-187, 410-803`, `tool_catalog.json:17-41`. PR #915 (`0b09eba3`).
 
-## 5. Filtro e projeção de campos
+## 5. Filtro e projeção de campos (filter_by_field, map_fields)
 
 **O que faz.** `filter_by_field` retém itens por valor ou por chave. `map_fields` monta objetos com os campos escolhidos.
 
@@ -348,7 +348,7 @@ nodes:
 
 **Origem.** `agent_spec_v1.json:483-503`, `agent_spec.py:668-800`, `executors.py:5108-5342` (filtro sem operador em `5277-5279`). PR #924 (`98e827e1`) e PR #1226 (`starts_with`).
 
-## 6. Enriquecimento por chave composta
+## 6. Enriquecimento por chave composta (enrich)
 
 **O que faz.** Copia campos de uma lista de consulta para cada registro da lista principal, casando por uma ou mais chaves. Retorna `status`, `result` com cópias na ordem original, `unresolved` e `ambiguous`.
 
@@ -407,7 +407,7 @@ nodes:
 
 **Origem.** `executors.py:5744-5900`. PR #914 (`edcea7e0`) e PRs #1040 e #1246.
 
-## 7. Envio HTTP de artefato
+## 7. Envio HTTP de artefato (content_from_artifact, body_from_artifact)
 
 **O que faz.** Envia um arquivo que já é artefato do run, como um download com `response_as: binary`. Aceita multipart ou corpo binário.
 
@@ -426,9 +426,21 @@ config_schema:
   type: object
   required: [conexao_origem, conexao_drive, conexao_destino]
   properties:
-    conexao_origem: {type: string, x-ref: connection, title: "Origem do arquivo"}
-    conexao_drive:  {type: string, x-ref: connection, title: "Google Drive"}
-    conexao_destino: {type: string, x-ref: connection, title: "API que aceita octet-stream"}
+    conexao_origem:
+      type: string
+      x-ref: connection
+      title: "Origem do arquivo"
+      description: "Conexão HTTP da API de onde o arquivo será baixado."
+    conexao_drive:
+      type: string
+      x-ref: connection
+      title: "Google Drive"
+      description: "Conexão HTTP do Google Drive que recebe o arquivo em multipart."
+    conexao_destino:
+      type: string
+      x-ref: connection
+      title: "API que aceita octet-stream"
+      description: "Conexão HTTP da API que recebe o arquivo como corpo binário."
 trigger:
   type: chat
 nodes:
@@ -467,11 +479,11 @@ nodes:
     output: arquivo_cru
 ```
 
-**Armadilhas.** Escrita HTTP em `spec_test_run` (sandbox ou shadow) é dry-run. O upload só sai em um run que execute a escrita. O validador recusa `body` com `multipart`, `body_from_artifact` com `body` ou `multipart` (mensagem ilegível), corpo de artefato com GET e escrita sem `idempotency_key`. Pode emitir `W-HTTP-WRITE-SEM-APPROVAL`. No run, confira `unresolved_content_from_artifact`, `unresolved_body_from_artifact`, `artifact_outside_tenant` (chave fora de `run-artifacts/{tenant}/{run}/`) e `artifact_download_failed`.
+**Armadilhas.** Escrita HTTP em `spec_test_run` (sandbox ou shadow) é dry-run. O upload só sai em um run que execute a escrita. O validador recusa `body` com `multipart`, `body_from_artifact` com `body` ou `multipart` (mensagem ilegível), corpo de artefato com GET e escrita sem `idempotency_key`. O exemplo passa de propósito com o aviso `W-HTTP-WRITE-SEM-APPROVAL`. Numa spec real, a escrita vem depois de um approval (ARMADILHAS §1). No run, confira `unresolved_content_from_artifact`, `unresolved_body_from_artifact`, `artifact_outside_tenant` (chave fora de `run-artifacts/{tenant}/{run}/`) e `artifact_download_failed`.
 
 **Origem.** `agent_spec_v1.json:921-935, 1043-1074`, `executors.py:2894-2996` (dry-run em `2962`). PRs #913 e #1112.
 
-## 8. Rótulos e edição no card de aprovação
+## 8. Rótulos e edição no card de aprovação (aprovar_itens)
 
 **O que faz.** Personaliza os rótulos do card e permite aprovar itens com valores editados e observação.
 
@@ -494,7 +506,11 @@ config_schema:
   type: object
   required: [conexao_api]
   properties:
-    conexao_api: {type: string, x-ref: connection, title: "API das estimativas"}
+    conexao_api:
+      type: string
+      x-ref: connection
+      title: "API das estimativas"
+      description: "Conexão HTTP da API que lista as estimativas e recebe as decisões."
 trigger:
   type: chat
 nodes:
@@ -575,7 +591,7 @@ nodes:
 
 **Origem.** `agent_spec.py:1293-1309, 1462, 1505`, `hatchet_app.py:1328, 2484, 616`, `builder_map:122-133`. PRs #1091, #1073 e #1071.
 
-## 9. Configuração temporária no teste
+## 9. Configuração temporária no teste (config_override)
 
 **O que faz.** Sobrepõe a configuração efetiva de um rascunho em um test run. O gateway valida a sobreposição em dry-run, sem gravar a instância.
 
@@ -591,7 +607,7 @@ nodes:
 
 **Origem.** `mcp_server tools/spec_test_run.py:47, 89-134`, `agent-runtime routers/runs.py:507-552`. PR #985.
 
-## 10. Arquivamento e restauração de rascunho
+## 10. Arquivamento e restauração de rascunho (spec_archive_draft)
 
 **O que faz.** Arquiva ou restaura um rascunho que nunca foi publicado. Runs, aprovações e versões ficam disponíveis.
 
@@ -607,7 +623,7 @@ nodes:
 
 **Origem.** `tools/spec_archive_draft.py:20-67`, `api-gateway services/agent_archive.py:35-104`, `runs.py:671-693`. PR #1077.
 
-## 11. Conectores TOTVS RM e extrato em PDF
+## 11. Conectores TOTVS RM e extrato em PDF (totvs_rm, extrato_pdf)
 
 **O que faz.** `totvs_rm` consulta títulos, vincula documentos e chama operações da API do RM. `extrato_pdf` lê lançamentos de um extrato Itaú em PDF.
 
@@ -632,8 +648,16 @@ config_schema:
   type: object
   required: [conexao_rm, conexao_extrato]
   properties:
-    conexao_rm:      {type: string, x-ref: connection, title: "TOTVS RM"}
-    conexao_extrato: {type: string, x-ref: connection, title: "Extrato em PDF"}
+    conexao_rm:
+      type: string
+      x-ref: connection
+      title: "TOTVS RM"
+      description: "Conexão TOTVS RM para consultar títulos e chamar operações da API."
+    conexao_extrato:
+      type: string
+      x-ref: connection
+      title: "Extrato em PDF"
+      description: "Conexão extrato_pdf para ler lançamentos do PDF anexado."
 trigger:
   type: chat
 nodes:
@@ -714,7 +738,7 @@ nodes:
 
 **Origem.** `connectors/totvs_rm/connector.py:284-366, 490-660`, `connectors/extrato_pdf/connector.py:118-230`, `agent_spec_v1.json:737-790`. PRs #951 e #889.
 
-## 12. Anexos do run
+## 12. Anexos do run (run.input.attachments)
 
 **O que faz.** Expõe os metadados dos anexos recebidos no run. Chat, painel e `agent.run` fornecem `id`, `filename`, `mime` e `url_interna`. Canal fornece `filename`, `content_type`, `storage_key` e `size_bytes`.
 
@@ -764,7 +788,7 @@ nodes:
 
 **Armadilhas.** `{{input.attachments}}` não resolve. Run por agenda não tem anexo. `spec_test_run` recusa anexos em `input` com “input não pode conter: attachments”. Anexo de chat ou canal não vira artefato do run. Só `extrato_pdf` consome anexo. `document.*`, `content_from_artifact` e `body_from_artifact` exigem artefatos do run.
 
-**Origem.** `api-gateway routers/agents.py:1997-2004`, `channels/routers/webhooks.py:300-307`, `routers/internal_mcp_run.py:92-190`, `mcp_server tools/spec_test_run.py:48, 63-67`. A pesquisa não identifica um PR para este recurso.
+**Origem.** `api-gateway routers/agents.py:1997-2004`, `channels/routers/webhooks.py:300-307`, `routers/internal_mcp_run.py:92-190`, `mcp_server tools/spec_test_run.py:48, 63-67`. PRs #13 (anexos de canal), #1139 (agent_run com files), #1169 (limites) e #1135 (test_run recusa attachments).
 
 ## Pontos em aberto no core
 
