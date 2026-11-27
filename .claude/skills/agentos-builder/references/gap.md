@@ -87,25 +87,13 @@ nunca o corpo.
 
 ## 5. Canal, em ordem
 
-**Reportante, uma vez.** O chamado precisa de "Reportado por". Leia
-`.claude/agentos-builder.local.json` na raiz do repositório; se não existir ou
-faltar chave, pergunte nome e e-mail e grave:
-
-```json
-{"reporter_name": "Ana Analista", "reporter_email": "ana@cliente.com.br"}
-```
-
-O arquivo está no `.gitignore`; não é segredo, é o que vai no corpo do
-chamado. Nas próximas vezes só confirme ("continua sendo Ana?").
-
 1. **`mcp_client.feedback(category, message, context)`** — a plataforma abre
    o chamado no GLPI (o kit não tem credencial). `category`: `"erro"` se algo
    que devia funcionar falhou (vira Incidente); `"melhoria"` se falta recurso
    (vira Requisição). `context`:
 
    ```python
-   {"reporter_name": ..., "reporter_email": ...,          # obrigatórios
-    "slug": slug, "version": "0",
+   {"slug": slug, "version": "0",
     "tool": "<tool/nó que travou>", "step": "<derivacao|test_run|publish>",
     "run_id": "<se veio de um test run>", "kit_version": "<metadata.version do SKILL.md>"}
    ```
@@ -117,6 +105,7 @@ chamado. Nas próximas vezes só confirme ("continua sendo Ana?").
    Se o retorno vier **sem `ticket_id`** (plataforma ainda no contrato
    antigo), o relato foi entregue mesmo assim: diga "gap reportado" e grave
    `# Gap reportado: feedback — <data>`.
+   Se a plataforma responder `validation_failed` citando `context.reporter_name` ou `context.reporter_email`, a chave não tem dono: peça ao admin uma chave no seu nome ou, até lá, pergunte nome e e-mail e repasse em `context`.
 2. Se `feedback()` levantar `McpClientError` — **qualquer** código, inclusive
    `upstream_unavailable` (o GLPI não respondeu) e `unauthorized` — não há
    nada a perder tentando o fallback: `gh issue create --label gap --title

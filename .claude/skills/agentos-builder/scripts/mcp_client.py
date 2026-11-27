@@ -225,8 +225,9 @@ _FEEDBACK_CATEGORIES = ("erro", "melhoria", "feedback")
 
 def feedback(category: str, message: str, context: dict[str, str] | None = None) -> dict[str, Any]:
     """Abre chamado no GLPI pela tool `spec_feedback` (a plataforma abre; o kit não
-    tem credencial). `context.reporter_name`/`reporter_email` são obrigatórios —
-    é o "Reportado por" do chamado. `message` vai CRUA — passe por
+    tem credencial). Quem reporta é o dono da chave. `context.reporter_name` e
+    `context.reporter_email` são opcionais no kit e só valem para chave sem dono.
+    `message` vai CRUA — passe por
     `gap_redact.redact()` antes (references/gap.md §4). Primeira linha da message
     leva a classe: [ambiente] | [plataforma] | [kit].
     Devolve o dict da tool: {status, ticket_id, url, deduplicated}."""
@@ -237,7 +238,4 @@ def feedback(category: str, message: str, context: dict[str, str] | None = None)
     if len(message) > 4000:
         raise ValueError(f"message tem {len(message)} chars; máximo 4000")
     ctx = {k: str(v) for k, v in (context or {}).items() if v is not None}
-    for k in ("reporter_name", "reporter_email"):
-        if not ctx.get(k, "").strip():
-            raise ValueError(f"context.{k} é obrigatório — o chamado precisa de 'Reportado por' (references/gap.md §5)")
     return _call("spec.feedback", {"category": category, "message": message, "context": ctx})
