@@ -71,7 +71,7 @@ git show <sha>:a raiz deste repo: <drafts-or-published>/<slug>/<file>.yaml
 git show <sha>:a raiz deste repo: <drafts-or-published>/<slug>/<file>.yaml > a raiz deste repo: <drafts-or-published>/<slug>/<file>.yaml
 ```
 
-Always run the restored content through the validator before telling the user it's safe to use again: `.venv/bin/python .claude/skills/agentos-builder/scripts/validate_spec.py <path>` — a backup from before a schema/tooling change may no longer validate cleanly, and that's information the user needs, not something to paper over.
+Always run the restored content through the validator before telling the user it's safe to use again: `mcp_client.validate(content)` — a backup from before a schema/tooling change may no longer validate cleanly, and that's information the user needs, not something to paper over.
 
 ## When Backup is a prerequisite
 
